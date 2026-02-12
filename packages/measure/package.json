@@ -1,0 +1,33 @@
+{
+  "name": "@dye/measure",
+  "version": "0.0.1",
+  "description": "Text measurement, font metrics, canvas metrics for Dye",
+  "type": "module",
+  "main": "dist/measure.cjs",
+  "module": "dist/measure.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/measure.js",
+      "require": "./dist/measure.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/bounding": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

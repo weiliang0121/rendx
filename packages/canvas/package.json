@@ -1,0 +1,38 @@
+{
+  "name": "@dye/canvas",
+  "version": "0.0.1",
+  "description": "Canvas2D rendering implementation for Dye",
+  "type": "module",
+  "main": "dist/canvas.cjs",
+  "module": "dist/canvas.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/canvas.js",
+      "require": "./dist/canvas.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/gradient": "workspace:^",
+    "@dye/renderer": "workspace:^",
+    "@dye/style": "workspace:^",
+    "@dye/util": "workspace:^",
+    "@dye/measure": "workspace:^",
+    "@dye/types": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@dye/engine",
+  "version": "0.0.1",
+  "description": "Scene graph engine for Dye",
+  "type": "module",
+  "main": "dist/engine.cjs",
+  "module": "dist/engine.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/engine.js",
+      "require": "./dist/engine.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/bounding": "workspace:^",
+    "@dye/canvas": "workspace:^",
+    "@dye/ease": "workspace:^",
+    "@dye/interpolate": "workspace:^",
+    "@dye/path": "workspace:^",
+    "@dye/renderer": "workspace:^",
+    "@dye/shape": "workspace:^",
+    "@dye/svg": "workspace:^",
+    "@dye/types": "workspace:^",
+    "@dye/util": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

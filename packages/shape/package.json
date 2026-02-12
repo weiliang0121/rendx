@@ -1,0 +1,35 @@
+{
+  "name": "@dye/shape",
+  "version": "0.0.1",
+  "description": "Basic shape generators for Dye",
+  "type": "module",
+  "main": "dist/shape.cjs",
+  "module": "dist/shape.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/shape.js",
+      "require": "./dist/shape.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/curve": "workspace:^",
+    "@dye/path": "workspace:^",
+    "@dye/util": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@dye/curve",
+  "version": "0.0.1",
+  "description": "Curve interpolation algorithms for Dye",
+  "type": "module",
+  "main": "dist/curve.cjs",
+  "module": "dist/curve.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/curve.js",
+      "require": "./dist/curve.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/path": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@dye/ease",
+  "version": "0.0.1",
+  "description": "Easing functions for Dye",
+  "type": "module",
+  "main": "dist/ease.cjs",
+  "module": "dist/ease.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/ease.js",
+      "require": "./dist/ease.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@dye/renderer",
+  "version": "0.0.1",
+  "description": "Low-level renderer interface definitions for Dye",
+  "type": "module",
+  "main": "dist/renderer.cjs",
+  "module": "dist/renderer.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/renderer.js",
+      "require": "./dist/renderer.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/gradient": "workspace:^",
+    "@dye/types": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@dye/bounding",
+  "version": "0.0.1",
+  "description": "Bounding box computation for Dye",
+  "type": "module",
+  "main": "dist/bounding.cjs",
+  "module": "dist/bounding.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/bounding.js",
+      "require": "./dist/bounding.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

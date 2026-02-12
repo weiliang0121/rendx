@@ -1,0 +1,36 @@
+{
+  "name": "@dye/svg",
+  "version": "0.0.1",
+  "description": "SVG rendering implementation for Dye",
+  "type": "module",
+  "main": "dist/svg.cjs",
+  "module": "dist/svg.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/svg.js",
+      "require": "./dist/svg.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/gradient": "workspace:^",
+    "@dye/renderer": "workspace:^",
+    "@dye/style": "workspace:^",
+    "@dye/types": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}

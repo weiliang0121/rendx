@@ -1,0 +1,33 @@
+{
+  "name": "@dye/style",
+  "version": "0.0.1",
+  "description": "DOM/SVG element attribute and style utilities for Dye",
+  "type": "module",
+  "main": "dist/style.cjs",
+  "module": "dist/style.js",
+  "types": "types/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/main.d.ts",
+      "import": "./dist/style.js",
+      "require": "./dist/style.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@dye/types": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "wei.liang",
+  "license": "MIT"
+}
