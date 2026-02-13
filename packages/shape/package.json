@@ -20,7 +20,7 @@
   "dependencies": {
     "@dye/curve": "workspace:^",
     "@dye/path": "workspace:^",
-    "@dye/util": "workspace:^"
+    "@dye/core": "workspace:^"
   },
   "sideEffects": false,
   "files": [

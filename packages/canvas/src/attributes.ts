@@ -1,9 +1,9 @@
-import {isNone, isNil, isStr, isNum} from '@dye/util';
-import {convertFontOptionsToCSS} from '@dye/measure';
+import {isNone, isNil, isStr, isNum} from '@dye/core';
+import {convertFontOptionsToCSS} from '@dye/dom';
 import {createCanvasGradient} from '@dye/gradient';
 
-import type {ClipPath, GradientOptions} from '@dye/renderer';
-import type {AO} from '@dye/types';
+import type {FontOptions} from '@dye/dom';
+import type {ClipPath, GradientOptions, AO} from '@dye/core';
 
 export type Gradients = Map<string, GradientOptions>;
 export type ClipPaths = Map<string, ClipPath>;
@@ -27,7 +27,7 @@ const getRef = (url: string) => {
  */
 const setCompositeOperation = (ctx: CanvasRenderingContext2D, attrs: AO): void => {
   const {globalCompositeOperation: gco} = attrs;
-  if (isStr(gco)) ctx.globalCompositeOperation = gco as any;
+  if (isStr(gco)) ctx.globalCompositeOperation = gco as GlobalCompositeOperation;
 };
 
 /**
@@ -67,6 +67,8 @@ const setGlobalAlpha = (ctx: CanvasRenderingContext2D, fillOrStrokeOpacity: numb
  * @param ctx CanvasRenderingContext2D 上下文
  * @param attrs 属性对象
  */
+let _dashCache: {key: string; dash: number[]} | null = null;
+
 const setStrokeAttributes = (ctx: CanvasRenderingContext2D, attrs: AO): void => {
   const {strokeWidth, strokeLinecap, strokeLinejoin, strokeMiterlimit, strokeDasharray, strokeDashoffset} = attrs;
   if (isNum(strokeWidth)) ctx.lineWidth = strokeWidth;
@@ -74,7 +76,12 @@ const setStrokeAttributes = (ctx: CanvasRenderingContext2D, attrs: AO): void => 
   if (isStr(strokeLinejoin)) ctx.lineJoin = strokeLinejoin as CanvasLineJoin;
   if (isNum(strokeMiterlimit)) ctx.miterLimit = strokeMiterlimit;
   if (isNum(strokeDashoffset)) ctx.lineDashOffset = strokeDashoffset;
-  if (isStr(strokeDasharray)) ctx.setLineDash(strokeDasharray.split(',').map(x => Number(x.trim())));
+  if (isStr(strokeDasharray)) {
+    if (!_dashCache || _dashCache.key !== strokeDasharray) {
+      _dashCache = {key: strokeDasharray, dash: strokeDasharray.split(',').map((x: string) => Number(x.trim()))};
+    }
+    ctx.setLineDash(_dashCache.dash);
+  }
 };
 
 /**
@@ -123,11 +130,37 @@ const DOMINANT_BASELINE_MAP: Record<string, CanvasTextBaseline> = {
  * @param ctx CanvasRenderingContext2D 上下文
  * @param attrs 属性对象
  */
+let _fontCache: {key: string; css: string} | null = null;
+
 const setFont = (ctx: CanvasRenderingContext2D, attrs: AO) => {
   const {fontFamily, fontSize, fontStyle, fontWeight, textAnchor, dominantBaseline} = attrs;
-  ctx.font = convertFontOptionsToCSS({fontFamily, fontSize, fontStyle, fontWeight} as any);
+  const fontKey = `${fontStyle}|${fontWeight}|${fontSize}|${fontFamily}`;
+  if (!_fontCache || _fontCache.key !== fontKey) {
+    const fontOpts: Partial<FontOptions> = {fontFamily, fontSize, fontStyle, fontWeight};
+    _fontCache = {key: fontKey, css: convertFontOptionsToCSS(fontOpts)};
+  }
+  ctx.font = _fontCache.css;
   if (isStr(textAnchor)) ctx.textAlign = TEXT_ALIGN_MAP[textAnchor];
   if (isStr(dominantBaseline)) ctx.textBaseline = DOMINANT_BASELINE_MAP[dominantBaseline];
+};
+
+/** 绘制执行器 —— 将 fill/stroke 的方法选择抽象为静态对象 */
+interface DrawOps {
+  shape(ctx: CanvasRenderingContext2D): void;
+  path(ctx: CanvasRenderingContext2D, path: Path2D): void;
+  text(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void;
+}
+
+const FILL_OPS: DrawOps = {
+  shape: ctx => ctx.fill(),
+  path: (ctx, path) => ctx.fill(path),
+  text: (ctx, text, x, y) => ctx.fillText(text, x, y),
+};
+
+const STROKE_OPS: DrawOps = {
+  shape: ctx => ctx.stroke(),
+  path: (ctx, path) => ctx.stroke(path),
+  text: (ctx, text, x, y) => ctx.strokeText(text, x, y),
 };
 
 /**
@@ -139,17 +172,15 @@ const setFont = (ctx: CanvasRenderingContext2D, attrs: AO) => {
  * @param gradients 渐变对象
  */
 const draw = (ctx: CanvasRenderingContext2D, target: FillOrStrokeTarget, isFill: boolean, attrs: AO, gradients: Gradients) => {
-  if (setFillOrStroke(ctx, gradients, isFill, attrs)) {
-    if (target.path) {
-      isFill ? ctx.fill(target.path) : ctx.stroke(target.path);
-    } else if (!isNil(target.text)) {
-      const {x = 0, y = 0} = target;
-      setFont(ctx, attrs);
-      isFill ? ctx.fillText(target.text, x, y) : ctx.strokeText(target.text, x, y);
-    } else {
-      isFill ? ctx.fill() : ctx.stroke();
-    }
+  if (!setFillOrStroke(ctx, gradients, isFill, attrs)) return;
+  const ops = isFill ? FILL_OPS : STROKE_OPS;
+
+  if (target.path) return ops.path(ctx, target.path);
+  if (!isNil(target.text)) {
+    setFont(ctx, attrs);
+    return ops.text(ctx, target.text, target.x ?? 0, target.y ?? 0);
   }
+  ops.shape(ctx);
 };
 
 /**

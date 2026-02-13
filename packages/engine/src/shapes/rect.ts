@@ -2,10 +2,10 @@ import {BoundingBox} from '@dye/bounding';
 
 import {Shape} from '../core';
 
-import type {Point} from '@dye/types';
+import type {Point} from '@dye/core';
 
 export class RectShape extends Shape {
-  command: string = 'rect';
+  command = 'rect' as const;
 
   x: number = 0;
   y: number = 0;

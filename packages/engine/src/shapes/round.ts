@@ -5,7 +5,7 @@ import {Path} from '@dye/path';
 import {Shape} from '../core';
 
 export class RoundShape extends Shape {
-  command: string = 'path';
+  command = 'path' as const;
 
   x: number = 0;
   y: number = 0;

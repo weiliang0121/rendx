@@ -1,9 +1,9 @@
 import {Shape} from '../core';
 
-import type {Point} from '@dye/types';
+import type {Point} from '@dye/core';
 
 export class TextShape extends Shape {
-  command: string = 'text';
+  command = 'text' as const;
 
   x: number = 0;
   y: number = 0;

@@ -15,6 +15,8 @@ export class SimulatedEvent {
 
   truth: boolean = true;
 
+  #path: Graphics[] | null = null;
+
   constructor(type: string, target: Graphics, nativeEvent: Event) {
     this.type = type;
     this.target = target;
@@ -30,8 +32,10 @@ export class SimulatedEvent {
     this.bubbles = false;
   }
 
-  composedPath() {
-    return this.target.path().reverse();
+  /** 返回从 target 到 root 的路径（缓存） */
+  composedPath(): Graphics[] {
+    if (!this.#path) this.#path = this.target.path().reverse();
+    return this.#path;
   }
 
   copy() {
@@ -44,6 +48,7 @@ export class SimulatedEvent {
     event.offsetY = this.offsetY;
     event.worldX = this.worldX;
     event.worldY = this.worldY;
+    event.#path = this.#path;
     return event;
   }
 }

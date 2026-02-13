@@ -4,12 +4,12 @@ import {Path} from '@dye/path';
 
 import {Shape} from '../core';
 
-import type {Point} from '@dye/types';
+import type {Point} from '@dye/core';
 
 export class RectBufferShape extends Shape {
-  type: number = 1;
+  type: number = 3;
 
-  command: string = 'path';
+  command = 'path' as const;
 
   mode: 'render' | 'compute' = 'render';
 

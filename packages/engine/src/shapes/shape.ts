@@ -15,7 +15,7 @@ import {RectBufferShape} from './rect-buffer';
 
 import type {Shape} from '../core';
 
-const shapes: any = {
+const shapes: Record<string, new () => Shape> = {
   text: TextShape,
   circle: CircleShape,
   rect: RectShape,
@@ -28,8 +28,11 @@ const shapes: any = {
   arc: ArcShape,
   symbol: SymbolShape,
   round: RoundShape,
-
   rectBuffer: RectBufferShape,
 };
 
-export const createShape = (type: string) => new shapes[type]() as Shape;
+export const createShape = (type: string): Shape => {
+  const Ctor = shapes[type];
+  if (!Ctor) throw new Error(`Unknown shape type: ${type}`);
+  return new Ctor();
+};

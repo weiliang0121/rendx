@@ -19,8 +19,7 @@
   },
   "dependencies": {
     "gl-matrix": "^3.4.4",
-    "@dye/util": "workspace:^",
-    "@dye/types": "workspace:^"
+    "@dye/core": "workspace:^"
   },
   "sideEffects": false,
   "files": [

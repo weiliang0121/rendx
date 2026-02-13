@@ -1,9 +1,6 @@
 import type {SymbolCreator} from './types';
 
 export const createEyeSymbol: SymbolCreator = (path, {cx, cy, r}) => {
-  cx = +cx;
-  cy = +cy;
-  r = +r;
   path.M(cx, cy - r);
   path.A(r, r, 0, 1, 0, cx, cy + r);
   path.A(r, r, 0, 1, 0, cx, cy - r);
@@ -11,8 +8,6 @@ export const createEyeSymbol: SymbolCreator = (path, {cx, cy, r}) => {
 };
 
 export const createClosedEyeSymbol: SymbolCreator = (path, {cx, cy, r}) => {
-  cx = +cx;
-  cy = +cy;
   const rx = (r * 2) / 3;
   const ry = r / 2;
   const r2 = r / 5;

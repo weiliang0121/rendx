@@ -1,6 +1,8 @@
-import {lerp, interpolateColor} from '@dye/interpolate';
+import {interpolateColor} from '@dye/interpolate';
 
-import type {AO} from '@dye/types';
+import {BaseTransform} from './base';
+
+import type {AO} from '@dye/core';
 
 interface TransformAttrs {
   opacity?: [number, number];
@@ -8,73 +10,35 @@ interface TransformAttrs {
   fillOpacity?: [number, number];
   stroke?: [string, string];
   strokeOpacity?: [number, number];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
-export class AttributeTransform {
-  V: AO = {};
+export class AttributeTransform extends BaseTransform {
+  V: AO;
   attrs: TransformAttrs = {};
-  #duration: number = 0;
-  #delay: number = 0;
-  status: 'start' | 'waiting' | 'running' | 'last' | 'end' = 'start';
-  #time: number = -1;
-  // #easing: string = 'linear';
 
   constructor(values: AO) {
+    super();
     this.V = values;
   }
 
-  // tips: 基于设计的问题，Attributes 的属性应该在 Transform 的方法调用前就已经设置好
+  /** 设置属性动画目标值（属性应在调用前已设置初始值） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attr(key: string, value: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.attrs[key as any] = [this.V[key] ?? value, value];
     this.status = 'start';
-    this.#time = -1;
+    this._time = -1;
     return this;
   }
 
-  duration(time: number) {
-    this.#duration = time;
-    return this;
-  }
-
-  delay(time: number) {
-    this.#delay = time;
-    return this;
-  }
-
-  // easing(easing: string) {
-  //   this.#easing = easing;
-  //   return this;
-  // }
-
-  // waiting running end
-
-  interpolate(time: number) {
-    if (this.status === 'end') return;
-
-    if (this.status === 'last') {
-      this.status = 'end';
-      return;
-    }
-
-    if (this.#time === -1) this.#time = time;
-
-    time -= this.#time;
-
-    if (time < this.#delay) {
-      this.status = 'waiting';
-      return;
-    }
-    if (time > this.#delay + this.#duration) this.status = 'last';
-    else this.status = 'running';
-
-    const t = Math.max(0, Math.min(1, (time - this.#delay) / this.#duration));
-
+  protected apply(t: number) {
     const {opacity, fill, fillOpacity, stroke, strokeOpacity} = this.attrs;
-    if (opacity) this.V.opacity = lerp(opacity[0], opacity[1])(t);
+    if (opacity) this.V.opacity = opacity[0] + (opacity[1] - opacity[0]) * t;
     if (fill) this.V.fill = interpolateColor(fill[0], fill[1])(t);
-    if (fillOpacity) this.V.fillOpacity = lerp(fillOpacity[0], fillOpacity[1])(t);
+    if (fillOpacity) this.V.fillOpacity = fillOpacity[0] + (fillOpacity[1] - fillOpacity[0]) * t;
     if (stroke) this.V.stroke = interpolateColor(stroke[0], stroke[1])(t);
-    if (strokeOpacity) this.V.strokeOpacity = lerp(strokeOpacity[0], strokeOpacity[1])(t);
+    if (strokeOpacity) this.V.strokeOpacity = strokeOpacity[0] + (strokeOpacity[1] - strokeOpacity[0]) * t;
   }
 }

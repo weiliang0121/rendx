@@ -19,9 +19,8 @@
   },
   "dependencies": {
     "@dye/gradient": "workspace:^",
-    "@dye/renderer": "workspace:^",
-    "@dye/style": "workspace:^",
-    "@dye/types": "workspace:^"
+    "@dye/dom": "workspace:^",
+    "@dye/core": "workspace:^"
   },
   "devDependencies": {
     "@dye/shape": "workspace:^",

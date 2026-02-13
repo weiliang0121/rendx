@@ -15,7 +15,10 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test": "vitest run --config ../../vitest.config.ts",
+    "test:watch": "vitest --config ../../vitest.config.ts",
+    "test:coverage": "vitest run --coverage --config ../../vitest.config.ts"
   },
   "dependencies": {
     "@dye/bounding": "workspace:^",
@@ -23,11 +26,9 @@
     "@dye/ease": "workspace:^",
     "@dye/interpolate": "workspace:^",
     "@dye/path": "workspace:^",
-    "@dye/renderer": "workspace:^",
     "@dye/shape": "workspace:^",
     "@dye/svg": "workspace:^",
-    "@dye/types": "workspace:^",
-    "@dye/util": "workspace:^",
+    "@dye/core": "workspace:^",
     "eventemitter3": "^5.0.4",
     "gl-matrix": "^3.4.4"
   },

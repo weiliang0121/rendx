@@ -10,6 +10,20 @@ import {createClosedEyeSymbol, createEyeSymbol} from './eye';
 import {createResetSymbol} from './reset';
 import {createSelectSymbol} from './select';
 
+// 统一 re-export 所有 symbol
+export * from './types';
+export * from './circle';
+export * from './cross';
+export * from './diamond';
+export * from './square';
+export * from './star';
+export * from './triangle';
+export * from './wye';
+export * from './line';
+export * from './eye';
+export * from './reset';
+export * from './select';
+
 const fillSymbolMap: Record<string, SymbolCreator> = {
   circle: createCircleSymbol,
   cross: createCrossSymbol,

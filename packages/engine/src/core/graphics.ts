@@ -1,11 +1,11 @@
 import {mat2d, vec2} from 'gl-matrix';
 
-import {uid8, uniqueArray, isNil} from '@dye/util';
+import {uid8, uniqueArray, isNil} from '@dye/core';
 
 import {GraphicsTransform} from '../transforms';
 import {EventTarget} from '../events/target';
 
-import type {AO, GF, Mat2d} from '@dye/types';
+import type {AO, GF, Mat2d} from '@dye/core';
 
 export class Graphics extends EventTarget {
   type: number = 0;
@@ -14,10 +14,10 @@ export class Graphics extends EventTarget {
   name: string = '';
   className: string = '';
 
-  parent: any = null;
-  children: any[] = [];
+  parent: Graphics | null = null;
+  children: Graphics[] = [];
 
-  #nameMap: Map<string, any> = new Map();
+  #nameMap: Map<string, Graphics> = new Map();
 
   z: number = 0;
 
@@ -42,10 +42,24 @@ export class Graphics extends EventTarget {
 
   #classlist: string[] = [];
 
-  // TODO: 私有变量使得外部访问困难，访问变换应该是一个很常见的需求
-  #translate: vec2 = vec2.fromValues(0, 0);
-  #rotate: number = 0;
-  #scale: vec2 = vec2.fromValues(1, 1);
+  _translate: vec2 = vec2.fromValues(0, 0);
+  _rotate: number = 0;
+  _scale: vec2 = vec2.fromValues(1, 1);
+
+  /** 当前平移值 [tx, ty]（只读） */
+  get translation(): Readonly<vec2> {
+    return this._translate;
+  }
+
+  /** 当前旋转弧度（只读） */
+  get rotation(): number {
+    return this._rotate;
+  }
+
+  /** 当前缩放值 [sx, sy]（只读） */
+  get scaling(): Readonly<vec2> {
+    return this._scale;
+  }
 
   matrix: mat2d = mat2d.create();
   worldMatrix: mat2d = mat2d.create();
@@ -123,7 +137,7 @@ export class Graphics extends EventTarget {
     if (this.#nameMap.has(g.name)) this.#nameMap.delete(g.name);
   }
 
-  add(child: any) {
+  add(child: Graphics) {
     if (child.parent) child.parent.remove(child);
     child.parent = this;
     this.children.push(child);
@@ -133,7 +147,7 @@ export class Graphics extends EventTarget {
     return this;
   }
 
-  unshift(child: any) {
+  unshift(child: Graphics) {
     if (child.parent) child.parent.remove(child);
     child.parent = this;
     this.children.unshift(child);
@@ -142,7 +156,7 @@ export class Graphics extends EventTarget {
     return this;
   }
 
-  remove(child: any) {
+  remove(child: Graphics) {
     const index = this.children.indexOf(child);
     if (index !== -1) {
       const node = this.children[index];
@@ -165,7 +179,7 @@ export class Graphics extends EventTarget {
     return this.name === name;
   }
 
-  equals(target: any) {
+  equals(target: Graphics) {
     return this.uid === target.uid;
   }
 
@@ -185,11 +199,11 @@ export class Graphics extends EventTarget {
   }
 
   query(className: string, deep: boolean = false) {
-    const result: any[] = [];
-    const queue: any[] = [...this.children];
+    const result: Graphics[] = [];
+    const queue: Graphics[] = [...this.children];
 
     while (queue.length > 0) {
-      const node = queue.shift();
+      const node = queue.shift()!;
       if (node.hasClassName(className)) result.push(node);
       if (deep) queue.push(...node.children);
     }
@@ -201,15 +215,15 @@ export class Graphics extends EventTarget {
     return this.find(name, deep) != null;
   }
 
-  root() {
+  root(): Graphics {
     return this.parent ? this.parent.root() : this;
   }
 
-  path() {
+  path(): Graphics[] {
     return this.parent ? this.parent.path().concat(this) : [this];
   }
 
-  source(target: any) {
+  source(target: Graphics) {
     return this.path().includes(target);
   }
 
@@ -242,7 +256,7 @@ export class Graphics extends EventTarget {
   }
 
   translate(tx: number, ty: number) {
-    this.#translate = vec2.fromValues(tx, ty);
+    this._translate = vec2.fromValues(tx, ty);
     if (this.transform) {
       this.transform.V.tx = tx;
       this.transform.V.ty = ty;
@@ -251,55 +265,47 @@ export class Graphics extends EventTarget {
     return this;
   }
 
-  translateValue() {
-    return this.#translate;
-  }
-
   translateX(tx: number) {
-    this.#translate[0] += tx;
-    if (this.transform) this.transform.V.tx = this.#translate[0];
+    this._translate[0] += tx;
+    if (this.transform) this.transform.V.tx = this._translate[0];
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
   translateY(ty: number) {
-    this.#translate[1] += ty;
-    if (this.transform) this.transform.V.ty = this.#translate[1];
+    this._translate[1] += ty;
+    if (this.transform) this.transform.V.ty = this._translate[1];
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
   translateXY(tx: number, ty: number) {
-    this.#translate[0] += tx;
-    this.#translate[1] += ty;
+    this._translate[0] += tx;
+    this._translate[1] += ty;
     if (this.transform) {
-      this.transform.V.tx = this.#translate[0];
-      this.transform.V.ty = this.#translate[1];
+      this.transform.V.tx = this._translate[0];
+      this.transform.V.ty = this._translate[1];
     }
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
-  rotateValue() {
-    return this.#rotate;
-  }
-
   rotate(radian: number) {
-    this.#rotate = radian;
+    this._rotate = radian;
     if (this.transform) this.transform.V.rotate = radian;
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
   rotateZ(radian: number) {
-    this.#rotate += radian;
-    if (this.transform) this.transform.V.rotate = this.#rotate;
+    this._rotate += radian;
+    if (this.transform) this.transform.V.rotate = this._rotate;
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
   scale(sx: number, sy: number) {
-    this.#scale = vec2.fromValues(sx, sy);
+    this._scale = vec2.fromValues(sx, sy);
     if (this.transform) {
       this.transform.V.sx = sx;
       this.transform.V.sy = sy;
@@ -308,30 +314,26 @@ export class Graphics extends EventTarget {
     return this;
   }
 
-  scaleValue() {
-    return this.#scale;
-  }
-
   scaleX(sx: number) {
-    this.#scale[0] *= sx;
-    if (this.transform) this.transform.V.sx = this.#scale[0];
+    this._scale[0] *= sx;
+    if (this.transform) this.transform.V.sx = this._scale[0];
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
   scaleY(sy: number) {
-    this.#scale[1] *= sy;
-    if (this.transform) this.transform.V.sy = this.#scale[1];
+    this._scale[1] *= sy;
+    if (this.transform) this.transform.V.sy = this._scale[1];
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
 
   scaleXY(sx: number, sy: number) {
-    this.#scale[0] *= sx;
-    this.#scale[1] *= sy;
+    this._scale[0] *= sx;
+    this._scale[1] *= sy;
     if (this.transform) {
-      this.transform.V.sx = this.#scale[0];
-      this.transform.V.sy = this.#scale[1];
+      this.transform.V.sx = this._scale[0];
+      this.transform.V.sy = this._scale[1];
     }
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
@@ -339,9 +341,9 @@ export class Graphics extends EventTarget {
 
   useTransform() {
     if (this.transform) return this;
-    const [tx, ty] = this.#translate;
-    const [sx, sy] = this.#scale;
-    const rotate = this.#rotate;
+    const [tx, ty] = this._translate;
+    const [sx, sy] = this._scale;
+    const rotate = this._rotate;
     this.transform = new GraphicsTransform({tx, ty, sx, sy, rotate});
     return this;
   }
@@ -360,9 +362,9 @@ export class Graphics extends EventTarget {
   #updateMat2d() {
     if (!this.needUpdate) return;
     mat2d.identity(this.matrix);
-    mat2d.translate(this.matrix, this.matrix, this.#translate);
-    mat2d.rotate(this.matrix, this.matrix, this.#rotate);
-    mat2d.scale(this.matrix, this.matrix, this.#scale);
+    mat2d.translate(this.matrix, this.matrix, this._translate);
+    mat2d.rotate(this.matrix, this.matrix, this._rotate);
+    mat2d.scale(this.matrix, this.matrix, this._scale);
     this.needUpdate = false;
     this.worldMatrixNeedUpdate = true;
   }

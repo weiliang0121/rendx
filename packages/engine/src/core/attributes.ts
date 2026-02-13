@@ -1,12 +1,9 @@
-import {uid8, isNil} from '@dye/util';
+import {uid8, isNil} from '@dye/core';
 
 import {AttributeTransform, ClipBoxTransform} from '../transforms';
 
-import type {ClipPath, GradientOptions} from '@dye/renderer';
 import type {BoundingBox} from '@dye/bounding';
-import type {AO} from '@dye/types';
-
-export type {GradientOptions} from '@dye/renderer';
+import type {ClipPath, GradientOptions, AO} from '@dye/core';
 
 export class Attributes {
   uid: string = uid8();
@@ -23,6 +20,7 @@ export class Attributes {
 
   #boundingBox: BoundingBox | null = null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   set(key: string, value: any) {
     this.values[key] = value;
     if (this.autoNeedUpdate) this.needUpdate = true;

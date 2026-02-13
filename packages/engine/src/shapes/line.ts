@@ -3,7 +3,7 @@ import {BoundingBox} from '@dye/bounding';
 import {Shape} from '../core';
 
 export class LineShape extends Shape {
-  command: string = 'line';
+  command = 'line' as const;
 
   x1: number = 0;
   y1: number = 0;

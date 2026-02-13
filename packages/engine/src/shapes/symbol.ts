@@ -5,7 +5,7 @@ import {Path} from '@dye/path';
 import {Shape} from '../core';
 
 export class SymbolShape extends Shape {
-  command: string = 'path';
+  command = 'path' as const;
 
   r: number = 1;
   symbol: string = 'circle';

@@ -36,10 +36,8 @@ export class EventDispatcher {
 
   capture(event: SimulatedEvent) {
     event.eventPhase = 1;
-    event
-      .composedPath()
-      .reverse()
-      .forEach((node: any) => this.exec(event, node));
+    const path = event.composedPath();
+    for (let i = path.length - 1; i >= 0; i--) this.exec(event, path[i]);
   }
 
   target(event: SimulatedEvent) {
@@ -49,7 +47,9 @@ export class EventDispatcher {
 
   bubble(event: SimulatedEvent) {
     event.eventPhase = 3;
-    if (event.bubbles) event.composedPath().forEach((node: any) => this.exec(event, node));
+    if (!event.bubbles) return;
+    const path = event.composedPath();
+    for (let i = 0; i < path.length; i++) this.exec(event, path[i]);
   }
 
   flow(event: SimulatedEvent) {

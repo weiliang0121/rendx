@@ -1,84 +1,80 @@
+/**
+ * SVG 路径命令构建器
+ *
+ * 使用直接字符串拼接（+=）替代 string[] + join，
+ * V8 引擎对 += 使用 cons string（rope）优化，amortized O(1)，
+ * 消除了数组分配、push 和 join 的开销。
+ */
 export class Path {
-  #path: string[] = [];
-  #pathStr: string = '';
+  #d = '';
 
   toString() {
-    if (this.#pathStr === '') this.#pathStr = this.#path.join('');
-    return this.#pathStr;
+    return this.#d;
   }
 
   clear() {
-    this.#path = [];
-    this.#pathStr = '';
+    this.#d = '';
   }
 
+  // 相对坐标命令
   h(x: number) {
-    this.#path.push(`h${x} `);
+    this.#d += `h${x} `;
     return this;
   }
-
   v(y: number) {
-    this.#path.push(`v${y} `);
+    this.#d += `v${y} `;
     return this;
   }
-
   l(x: number, y: number) {
-    this.#path.push(`l${x} ${y} `);
+    this.#d += `l${x} ${y} `;
     return this;
   }
-
   q(x1: number, y1: number, x: number, y: number) {
-    this.#path.push(`q${x1} ${y1} ${x} ${y} `);
+    this.#d += `q${x1} ${y1} ${x} ${y} `;
     return this;
   }
-
   c(x1: number, y1: number, x2: number, y2: number, x: number, y: number) {
-    this.#path.push(`c${x1} ${y1} ${x2} ${y2} ${x} ${y} `);
+    this.#d += `c${x1} ${y1} ${x2} ${y2} ${x} ${y} `;
     return this;
   }
-
   a(rx: number, ry: number, angle: number, largeArcFlag: number, sweepFlag: number, x: number, y: number) {
-    this.#path.push(`a${rx} ${ry} ${angle} ${largeArcFlag} ${sweepFlag} ${x} ${y} `);
+    this.#d += `a${rx} ${ry} ${angle} ${largeArcFlag} ${sweepFlag} ${x} ${y} `;
     return this;
   }
 
+  // 绝对坐标命令
   M(x: number, y: number) {
-    this.#path.push(`M${x} ${y} `);
+    this.#d += `M${x} ${y} `;
     return this;
   }
-
   H(x: number) {
-    this.#path.push(`H${x} `);
+    this.#d += `H${x} `;
     return this;
   }
-
   V(y: number) {
-    this.#path.push(`V${y} `);
+    this.#d += `V${y} `;
     return this;
   }
-
   L(x: number, y: number) {
-    this.#path.push(`L${x} ${y} `);
+    this.#d += `L${x} ${y} `;
     return this;
   }
-
   Q(x1: number, y1: number, x: number, y: number) {
-    this.#path.push(`Q${x1} ${y1} ${x} ${y} `);
+    this.#d += `Q${x1} ${y1} ${x} ${y} `;
     return this;
   }
-
   C(x1: number, y1: number, x2: number, y2: number, x: number, y: number) {
-    this.#path.push(`C${x1} ${y1} ${x2} ${y2} ${x} ${y} `);
+    this.#d += `C${x1} ${y1} ${x2} ${y2} ${x} ${y} `;
     return this;
   }
-
   A(rx: number, ry: number, angle: number, largeArcFlag: number, sweepFlag: number, x: number, y: number) {
-    this.#path.push(`A${rx} ${ry} ${angle} ${largeArcFlag} ${sweepFlag} ${x} ${y} `);
+    this.#d += `A${rx} ${ry} ${angle} ${largeArcFlag} ${sweepFlag} ${x} ${y} `;
     return this;
   }
 
+  // 闭合路径
   Z() {
-    this.#path.push('Z ');
+    this.#d += 'Z ';
     return this;
   }
 }

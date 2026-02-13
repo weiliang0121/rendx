@@ -2,10 +2,10 @@ import {BoundingBox} from '@dye/bounding';
 
 import {Shape} from '../core';
 
-import {Point} from '@dye/types';
+import {Point} from '@dye/core';
 
 export class CircleShape extends Shape {
-  command: string = 'circle';
+  command = 'circle' as const;
 
   cx: number = 0;
   cy: number = 0;

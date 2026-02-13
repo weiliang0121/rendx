@@ -3,9 +3,9 @@ import {mat2d, vec2} from 'gl-matrix';
 import {Graphics, Shape, Attributes} from '../core';
 import {createShape} from '../shapes';
 
-import {isHit} from '../canvas-hit';
+import {isHit} from '../core/canvas-hit';
 
-import type {AO, Point} from '@dye/types';
+import type {AO, Point} from '@dye/core';
 
 export class Node extends Graphics {
   type: number = 3;

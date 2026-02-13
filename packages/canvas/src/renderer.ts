@@ -1,14 +1,10 @@
-import {setAttrs, setStyles, createCanvasEl} from '@dye/style';
+import {setAttrs, setStyles, createCanvasEl} from '@dye/dom';
 
 import {fillAndStrokeTarget, clip} from './attributes';
 
-import type {IGraphicsRenderer, ClipPath} from '@dye/renderer';
-import type {GradientOptions} from '@dye/gradient';
-import type {AO, GF, Size} from '@dye/types';
+import type {IGraphicsRenderer, ClipPath, GradientOptions, AO, GF, Size} from '@dye/core';
 
 import type {Gradients, ClipPaths} from './attributes';
-
-export type {GradientOptions} from '@dye/gradient';
 
 const DEFAULT_SIZE: Size = {width: 300, height: 150};
 

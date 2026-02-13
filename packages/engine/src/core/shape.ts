@@ -1,8 +1,10 @@
 import {BoundingBox} from '@dye/bounding';
-import {uid8} from '@dye/util';
+import {uid8} from '@dye/core';
 
-import type {Point} from '@dye/types';
+import type {Point} from '@dye/core';
 import type {Path} from '@dye/path';
+
+export type ShapeCommand = 'text' | 'circle' | 'rect' | 'line' | 'path' | '';
 
 export class Shape {
   uid: string = uid8();
@@ -11,7 +13,7 @@ export class Shape {
 
   name: string = '';
 
-  command: string = '';
+  command: ShapeCommand = '';
 
   boundingBox: BoundingBox = new BoundingBox();
 
@@ -26,10 +28,10 @@ export class Shape {
     this.boundingBox = box;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   options(..._args: any[]) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   from(..._args: any[]) {}
 
   build() {
@@ -61,7 +63,7 @@ export class Shape {
   hit(point: Point) {
     if (!this.boundingBox) this.box();
     if (!this.boundingBox) return false;
-    return this.boundingBox.in(...point);
+    return this.boundingBox.containsPoint(point[0], point[1]);
   }
 
   clear() {

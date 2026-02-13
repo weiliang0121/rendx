@@ -1,14 +1,14 @@
 import {BoundingBox} from '@dye/bounding';
 import {createShape} from '@dye/shape';
-import {extent} from '@dye/util';
+import {extent} from '@dye/core';
 import {Path} from '@dye/path';
 
 import {Shape} from '../core';
 
-import type {Point} from '@dye/types';
+import type {Point} from '@dye/core';
 
 export class CurveShape extends Shape {
-  command: string = 'path';
+  command = 'path' as const;
 
   segments: Point[][] = [];
   curve: string = 'linear';

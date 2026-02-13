@@ -1,8 +1,9 @@
+import type {Path} from '@dye/path';
 import type {SymbolCreator} from './types';
 
-const createTriangle = (path: any, cx: number, cy: number, r: number, points: [number, number][]) => {
+const createTriangle = (path: Path, cx: number, cy: number, r: number, points: [number, number][]) => {
   path.M(cx + points[0][0] * r, cy + points[0][1] * r);
-  points.slice(1).forEach(([dx, dy]) => path.L(cx + dx * r, cy + dy * r));
+  for (let i = 1; i < points.length; i++) path.L(cx + points[i][0] * r, cy + points[i][1] * r);
   path.Z();
 };
 

@@ -1,20 +1,17 @@
-export * from './shape';
-export * from './circle';
-export * from './line';
-export * from './rect';
-export * from './area';
-export * from './sector';
-export * from './arc';
-export * from './box';
+// 工厂
+export * from './factory';
 
+// 基础几何
+export * from './primitives';
+
+// 极坐标图形
+export * from './polar';
+
+// 数据图表图形
+export * from './data';
+
+// 符号
 export * from './symbols';
-export * from './symbols/circle';
-export * from './symbols/cross';
-export * from './symbols/diamond';
-export * from './symbols/square';
-export * from './symbols/star';
-export * from './symbols/triangle';
-export * from './symbols/wye';
-export * from './symbols/types';
 
+// 通用 UI 组件
 export * from './general/indicator-box';

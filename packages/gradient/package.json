@@ -18,8 +18,8 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@dye/style": "workspace:^",
-    "@dye/types": "workspace:^"
+    "@dye/dom": "workspace:^",
+    "@dye/core": "workspace:^"
   },
   "sideEffects": false,
   "files": [

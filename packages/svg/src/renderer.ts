@@ -1,14 +1,11 @@
-import {createSvgEl, getSvgElByTag, setSVGAttrs, setStyles} from '@dye/style';
+import {createSvgEl, getSvgElByTag, setSVGAttrs, setStyles} from '@dye/dom';
 import {createSVGGradient} from '@dye/gradient';
 
-import type {IGraphicsRenderer, ClipPath} from '@dye/renderer';
-import type {GradientOptions} from '@dye/gradient';
-import type {AO, Size} from '@dye/types';
+import {r2d} from '@dye/core';
 
-export type {GradientOptions} from '@dye/gradient';
+import type {IGraphicsRenderer, ClipPath, GradientOptions, AO, Size} from '@dye/core';
 
 const DEFAULT_SIZE: Size = {width: 300, height: 150};
-const r2d = 180 / Math.PI;
 
 export class SvgRenderer implements IGraphicsRenderer {
   #size: Size;
