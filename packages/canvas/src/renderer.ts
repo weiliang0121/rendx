@@ -128,6 +128,12 @@ export class CanvasRenderer implements IGraphicsRenderer {
     fillAndStrokeTarget(this.#ctx, {path: new Path2D(path)}, this.#gradients, this.#attributes);
   }
 
+  image(source: CanvasImageSource | string, x: number, y: number, width: number, height: number): void {
+    if (typeof source === 'string') return;
+    clip(this.#ctx, this.#clipPaths, this.#attributes);
+    this.#ctx.drawImage(source, x, y, width, height);
+  }
+
   clipPath(clipPath: ClipPath): void {
     this.#clipPaths.set(clipPath.id, clipPath);
   }

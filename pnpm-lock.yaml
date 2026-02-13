@@ -136,6 +136,18 @@ importers:
         specifier: workspace:^
         version: link:../dom
 
+  packages/grid-plugin:
+    dependencies:
+      '@dye/engine':
+        specifier: workspace:^
+        version: link:../engine
+
+  packages/history-plugin:
+    dependencies:
+      '@dye/engine':
+        specifier: workspace:^
+        version: link:../engine
+
   packages/interpolate:
     dependencies:
       '@dye/core':
@@ -144,6 +156,12 @@ importers:
       gl-matrix:
         specifier: ^3.4.4
         version: 3.4.4
+
+  packages/minimap-plugin:
+    dependencies:
+      '@dye/engine':
+        specifier: workspace:^
+        version: link:../engine
 
   packages/path: {}
 

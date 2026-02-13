@@ -5,3 +5,5 @@ export * from './shapes';
 export * from './events';
 export * from './app';
 export * from './transforms';
+export * from './serialization';
+export * from './plugin';

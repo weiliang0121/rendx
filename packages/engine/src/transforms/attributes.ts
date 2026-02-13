@@ -26,8 +26,7 @@ export class AttributeTransform extends BaseTransform {
   /** 设置属性动画目标值（属性应在调用前已设置初始值） */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attr(key: string, value: any) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.attrs[key as any] = [this.V[key] ?? value, value];
+    this.attrs[key] = [this.V[key] ?? value, value];
     this.status = 'start';
     this._time = -1;
     return this;

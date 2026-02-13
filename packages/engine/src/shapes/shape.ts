@@ -12,6 +12,7 @@ import {SymbolShape} from './symbol';
 import {RoundShape} from './round';
 
 import {RectBufferShape} from './rect-buffer';
+import {ImageShape} from './image';
 
 import type {Shape} from '../core';
 
@@ -29,6 +30,7 @@ const shapes: Record<string, new () => Shape> = {
   symbol: SymbolShape,
   round: RoundShape,
   rectBuffer: RectBufferShape,
+  image: ImageShape,
 };
 
 export const createShape = (type: string): Shape => {

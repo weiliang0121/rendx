@@ -123,6 +123,13 @@ export class SvgRenderer implements IGraphicsRenderer {
     this.#g.appendChild(this.#addEl<SVGPathElement>('path', {d: path}));
   }
 
+  image(source: CanvasImageSource | string, x: number, y: number, width: number, height: number): void {
+    const href = typeof source === 'string' ? source : (source as HTMLImageElement).src ?? '';
+    const el = this.#addEl<SVGImageElement>('image', {href, x, y, width, height});
+    el.setAttribute('preserveAspectRatio', 'none');
+    this.#g.appendChild(el);
+  }
+
   clipPath(clipPath: ClipPath): void {
     const el = createSvgEl<SVGClipPathElement>('clipPath');
     el.setAttribute('id', clipPath.id);

@@ -12,4 +12,6 @@ export * from './line';
 export * from './rect';
 export * from './circle';
 
+export * from './image';
+
 export * from './shape';

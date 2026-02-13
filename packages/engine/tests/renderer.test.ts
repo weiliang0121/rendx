@@ -48,6 +48,7 @@ function createMockRenderer(): MockRenderer {
     rect: vi.fn(() => calls.push('rect')),
     line: vi.fn(() => calls.push('line')),
     path: vi.fn(() => calls.push('path')),
+    image: vi.fn(() => calls.push('image')),
     gradient: vi.fn(() => calls.push('gradient')),
     clipPath: vi.fn(() => calls.push('clipPath')),
     resize: vi.fn(),
@@ -169,6 +170,34 @@ describe('Renderer', () => {
       const setTransformIdx = mock.calls.indexOf('setTransform');
       expect(gradientIdx).toBeLessThan(setTransformIdx);
       expect(clipPathIdx).toBeLessThan(setTransformIdx);
+    });
+
+    it('渲染 image 节点（source 已加载）', () => {
+      const mock = createMockRenderer();
+      const renderer = new Renderer({renderer: mock});
+      const node = Node.create('image', {});
+      // 模拟已加载的图片：直接设置 source
+      const fakeImg = document.createElement('img');
+      const shape = node.shape as import('../src/shapes/image').ImageShape;
+      shape.fromElement(fakeImg, 10, 20, 64, 64);
+      node.update();
+      renderer.draw([node]);
+
+      expect(mock.calls).toEqual(['clear', 'save', 'setTransform', 'setAttributes', 'image', 'restore']);
+      expect(mock.image).toHaveBeenCalledWith(fakeImg, 10, 20, 64, 64);
+    });
+
+    it('image source 未加载时跳过绘制', () => {
+      const mock = createMockRenderer();
+      const renderer = new Renderer({renderer: mock});
+      const node = Node.create('image', {});
+      // shape.source 默认为 null，不应调用 r.image()
+      node.update();
+      renderer.draw([node]);
+
+      expect(mock.image).not.toHaveBeenCalled();
+      // 但 save/restore 仍会被调用（节点 renderable）
+      expect(mock.calls).toEqual(['clear', 'save', 'setTransform', 'setAttributes', 'restore']);
     });
   });
 });

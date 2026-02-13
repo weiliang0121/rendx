@@ -1,10 +1,10 @@
 import {BoundingBox} from '@dye/bounding';
 import {uid8} from '@dye/core';
 
-import type {Point} from '@dye/core';
+import type {AO, Point} from '@dye/core';
 import type {Path} from '@dye/path';
 
-export type ShapeCommand = 'text' | 'circle' | 'rect' | 'line' | 'path' | '';
+export type ShapeCommand = 'text' | 'circle' | 'rect' | 'line' | 'path' | 'image' | '';
 
 export class Shape {
   uid: string = uid8();
@@ -27,6 +27,17 @@ export class Shape {
   setBox(box: BoundingBox) {
     this.boundingBox = box;
   }
+
+  /** 按属性名列表获取值（序列化用），避免 as any */
+  getProps(keys: string[]): unknown[] {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const self = this as Record<string, any>;
+    return keys.map(k => self[k]);
+  }
+
+  /** 接收节点属性（子类按需 override，如 TextShape 用于文本测量） */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setAttrs(_attrs: AO) {}
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   options(..._args: any[]) {}

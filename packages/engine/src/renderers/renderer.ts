@@ -8,6 +8,11 @@ import type {IGraphicsRenderer} from '@dye/core';
 import type {Mat2d, Point, Size} from '@dye/core';
 
 import type {Node} from '../scene';
+import type {TextShape} from '../shapes/text';
+import type {CircleShape} from '../shapes/circle';
+import type {RectShape} from '../shapes/rect';
+import type {LineShape} from '../shapes/line';
+import type {ImageShape} from '../shapes/image';
 
 export interface RendererConfig {
   width: number;
@@ -25,27 +30,28 @@ const DEFAULT_CONFIG: RendererConfig = {
 type DrawFn = (renderer: IGraphicsRenderer, node: Node) => void;
 
 const drawText: DrawFn = (r, n) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const {x, y, text} = n.shape as any;
+  const {x, y, text} = n.shape as TextShape;
   r.text(text, x, y);
 };
 const drawCircle: DrawFn = (r, n) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const {cx, cy, r: radius} = n.shape as any;
+  const {cx, cy, r: radius} = n.shape as CircleShape;
   r.circle(cx, cy, radius);
 };
 const drawRect: DrawFn = (r, n) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const {x, y, width, height} = n.shape as any;
+  const {x, y, width, height} = n.shape as RectShape;
   r.rect(x, y, width, height);
 };
 const drawLine: DrawFn = (r, n) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const {x1, y1, x2, y2} = n.shape as any;
+  const {x1, y1, x2, y2} = n.shape as LineShape;
   r.line(x1, y1, x2, y2);
 };
 const drawPath: DrawFn = (r, n) => {
   r.path(n.shape.path());
+};
+const drawImage: DrawFn = (r, n) => {
+  const {source, x, y, width, height} = n.shape as ImageShape;
+  if (!source) return;
+  r.image(source, x, y, width, height);
 };
 
 const DRAW_MAP: Record<string, DrawFn> = {
@@ -54,6 +60,7 @@ const DRAW_MAP: Record<string, DrawFn> = {
   rect: drawRect,
   line: drawLine,
   path: drawPath,
+  image: drawImage,
 };
 
 export class Renderer {

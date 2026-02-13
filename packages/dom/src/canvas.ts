@@ -1,7 +1,7 @@
 import {BoundingBox} from '@dye/bounding';
 
-const canvas = new OffscreenCanvas(1, 1);
-const ctx = canvas.getContext('2d');
+const canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : null;
+const ctx = canvas?.getContext('2d') ?? null;
 
 export const getTextBoundingBoxByCanvas = (font: string, text: string) => {
   if (!ctx) return null;

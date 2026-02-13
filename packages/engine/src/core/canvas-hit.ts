@@ -2,7 +2,7 @@ import {isEmpty, isNone, isNum, isStr} from '@dye/core';
 
 import type {AO, Point} from '@dye/core';
 
-const isEmptyOrNone = (v: any) => isEmpty(v) || isNone(v);
+const isEmptyOrNone = (v: unknown) => isEmpty(v) || isNone(v);
 
 export function setCanvasRenderingContext2StrokeAttrs(ctx: OffscreenCanvasRenderingContext2D, attributes: AO) {
   const {strokeWidth, strokeLinecap, strokeLinejoin, strokeMiterlimit, strokeDasharray, strokeDashoffset} = attributes;
