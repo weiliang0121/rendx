@@ -1,5 +1,18 @@
 # @vis/shape
 
+## 0.1.0
+
+### Minor Changes
+
+- [`cc65501`](https://github.com/weiliang0121/rendx/commit/cc6550104e620d584321faaa05e7b92cd30cf00c) - 发布第一个正式版本
+
+### Patch Changes
+
+- Updated dependencies [[`cc65501`](https://github.com/weiliang0121/rendx/commit/cc6550104e620d584321faaa05e7b92cd30cf00c)]:
+  - rendx-curve@0.1.0
+  - rendx-core@0.1.0
+  - rendx-path@0.1.0
+
 ## 0.0.1
 
 ### Patch Changes

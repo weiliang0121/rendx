@@ -1,6 +1,6 @@
 {
   "name": "rendx-svg",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "SVG renderer implementation for Rendx",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

@@ -1,6 +1,6 @@
 {
   "name": "rendx-core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Core types and utility functions for Rendx rendering engine",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

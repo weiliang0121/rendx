@@ -1,5 +1,11 @@
 # @vis/ease
 
+## 0.1.0
+
+### Minor Changes
+
+- [`cc65501`](https://github.com/weiliang0121/rendx/commit/cc6550104e620d584321faaa05e7b92cd30cf00c) - 发布第一个正式版本
+
 ## 0.0.1
 
 ### Patch Changes

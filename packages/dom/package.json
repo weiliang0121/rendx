@@ -1,6 +1,6 @@
 {
   "name": "rendx-dom",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "DOM and SVG element manipulation utilities",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

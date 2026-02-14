@@ -1,6 +1,6 @@
 {
   "name": "rendx-path",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "SVG path builder and parser",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
