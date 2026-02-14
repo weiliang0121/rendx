@@ -1,0 +1,51 @@
+{
+  "name": "rendx-element-plugin",
+  "version": "0.0.1",
+  "description": "Element management plugin for Rendx engine — graph node CRUD, ports, and custom type registry",
+  "license": "MIT",
+  "author": "wei.liang (https://github.com/weiliang0121)",
+  "type": "module",
+  "keywords": [
+    "rendx",
+    "2d",
+    "canvas",
+    "graph",
+    "element",
+    "node",
+    "plugin"
+  ],
+  "homepage": "https://weiliang0121.github.io/rendx/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weiliang0121/rendx.git",
+    "directory": "packages/element-plugin"
+  },
+  "main": "dist/main.cjs",
+  "module": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js",
+      "require": "./dist/main.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "rendx-engine": "workspace:^"
+  },
+  "devDependencies": {
+    "rendx-canvas": "workspace:^",
+    "rendx-svg": "workspace:^"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

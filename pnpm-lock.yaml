@@ -68,6 +68,9 @@ importers:
 
   apps/playground:
     dependencies:
+      rendx-element-plugin:
+        specifier: workspace:^
+        version: link:../../packages/element-plugin
       rendx-engine:
         specifier: workspace:^
         version: link:../../packages/engine
@@ -121,6 +124,19 @@ importers:
         version: link:../core
 
   packages/ease: {}
+
+  packages/element-plugin:
+    dependencies:
+      rendx-engine:
+        specifier: workspace:^
+        version: link:../engine
+    devDependencies:
+      rendx-canvas:
+        specifier: workspace:^
+        version: link:../canvas
+      rendx-svg:
+        specifier: workspace:^
+        version: link:../svg
 
   packages/engine:
     dependencies:

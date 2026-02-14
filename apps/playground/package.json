@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "rendx-engine": "workspace:^"
+    "rendx-engine": "workspace:^",
+    "rendx-element-plugin": "workspace:^"
   },
   "devDependencies": {
     "monaco-editor": "^0.52.2",

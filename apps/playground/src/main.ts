@@ -127,10 +127,15 @@ async function runCode() {
   try {
     // Dynamic import the engine so user code can reference it
     const engine = await import('rendx-engine');
+    const elementPlugin = await import('rendx-element-plugin');
 
     // Create a module blob with the user's code
     // Replace import statements to inject the engine module
-    const wrappedCode = code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-engine['"]\s*;?/g, 'const {$1} = __rendx_engine__;').replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-engine['"]\s*;?/g, 'const $1 = __rendx_engine__;');
+    const wrappedCode = code
+      .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-engine['"]\s*;?/g, 'const {$1} = __rendx_engine__;')
+      .replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-engine['"]\s*;?/g, 'const $1 = __rendx_engine__;')
+      .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-element-plugin['"]\s*;?/g, 'const {$1} = __rendx_element_plugin__;')
+      .replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-element-plugin['"]\s*;?/g, 'const $1 = __rendx_element_plugin__;');
 
     // Provide container element
     const containerEl = document.createElement('div');
@@ -140,13 +145,14 @@ async function runCode() {
     // Execute using Function constructor (safer than eval, same origin)
     const fn = new Function(
       '__rendx_engine__',
+      '__rendx_element_plugin__',
       'container',
       `"use strict";
       ${wrappedCode}
       `,
     );
 
-    const result = fn(engine, containerEl);
+    const result = fn(engine, elementPlugin, containerEl);
 
     // Try to capture the app instance for cleanup
     if (result && typeof result.dispose === 'function') {

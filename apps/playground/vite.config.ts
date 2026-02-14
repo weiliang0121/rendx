@@ -17,6 +17,7 @@ export default defineConfig({
       'rendx-core': path.resolve(__dirname, '../../packages/core/src/main.ts'),
       'rendx-gradient': path.resolve(__dirname, '../../packages/gradient/src/main.ts'),
       'rendx-dom': path.resolve(__dirname, '../../packages/dom/src/main.ts'),
+      'rendx-element-plugin': path.resolve(__dirname, '../../packages/element-plugin/src/main.ts'),
     },
   },
   server: {

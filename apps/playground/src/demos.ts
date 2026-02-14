@@ -47,6 +47,9 @@ import serialization from './demos/serialization.js?raw';
 import plugin from './demos/plugin.js?raw';
 import randomCircles from './demos/random-circles.js?raw';
 
+// --- Plugin: Element Plugin ---
+import elementPluginDemo from './demos/element-plugin.js?raw';
+
 export interface Demo {
   name: string;
   code: string;
@@ -101,4 +104,7 @@ export const demos: Demo[] = [
   {name: '序列化 Serialization', code: serialization},
   {name: '插件系统 Plugin', code: plugin},
   {name: '随机圆 Random Circles', code: randomCircles},
+
+  // ── Plugin: Element Plugin ──
+  {name: '元素插件 Element Plugin', code: elementPluginDemo},
 ];
