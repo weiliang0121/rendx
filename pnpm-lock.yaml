@@ -68,12 +68,18 @@ importers:
 
   apps/playground:
     dependencies:
+      rendx-curve:
+        specifier: workspace:^
+        version: link:../../packages/curve
       rendx-element-plugin:
         specifier: workspace:^
         version: link:../../packages/element-plugin
       rendx-engine:
         specifier: workspace:^
         version: link:../../packages/engine
+      rendx-path:
+        specifier: workspace:^
+        version: link:../../packages/path
     devDependencies:
       monaco-editor:
         specifier: ^0.52.2

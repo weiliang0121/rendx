@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "rendx-engine": "workspace:^",
-    "rendx-element-plugin": "workspace:^"
+    "rendx-element-plugin": "workspace:^",
+    "rendx-path": "workspace:^",
+    "rendx-curve": "workspace:^"
   },
   "devDependencies": {
     "monaco-editor": "^0.52.2",

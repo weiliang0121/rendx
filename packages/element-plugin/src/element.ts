@@ -13,14 +13,20 @@ import {Group} from 'rendx-engine';
 
 import type {Element, ElementBase, ElementContext, ElementData, ElementDef, GraphQuery} from './types';
 
+/** 依赖更新回调 — 由 Graph 注入，用于触发依赖者重绘 */
+export type OnUpdateCallback = (id: string) => void;
+
 export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
   readonly group: Group;
+  readonly layer: 'nodes' | 'edges';
+  readonly deps: ReadonlyArray<string>;
 
   #def: ElementDef<T>;
   #data: ElementData<T>;
   #graph: GraphQuery;
   #cleanups: (() => void)[] = [];
   #mounted = false;
+  #onUpdate: OnUpdateCallback | null = null;
 
   get id(): string {
     return this.#data.id;
@@ -34,10 +40,12 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
     return this.#mounted;
   }
 
-  constructor(def: ElementDef<T>, data: ElementData<T>, graph: GraphQuery) {
+  constructor(def: ElementDef<T>, data: ElementData<T>, graph: GraphQuery, layer: 'nodes' | 'edges' = 'nodes', deps: string[] = []) {
     this.#def = def;
     this.#data = {...data};
     this.#graph = graph;
+    this.layer = layer;
+    this.deps = deps;
 
     // 创建 Group 容器，设置名称和初始位移
     this.group = new Group();
@@ -63,6 +71,8 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
     // 仅位移变化 → 不重建子树，只更新 translate
     if (this.#isPositionOnlyChange(prev, partial)) {
       this.group.translate(this.#data.x, this.#data.y);
+      // 位移也要通知依赖者（edge 需要跟随 node 移动）
+      this.#onUpdate?.(this.#data.id);
       return;
     }
 
@@ -74,6 +84,9 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
     // 重建子树
     this.#teardown();
     this.#render();
+
+    // 通知 graph 本 element 已更新，触发依赖者重绘
+    this.#onUpdate?.(this.#data.id);
   }
 
   dispose(): void {
@@ -87,6 +100,17 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
   /** @internal */
   _setMounted(mounted: boolean): void {
     this.#mounted = mounted;
+  }
+
+  /** @internal 注册更新回调（由 Graph 调用） */
+  _setOnUpdate(cb: OnUpdateCallback): void {
+    this.#onUpdate = cb;
+  }
+
+  /** @internal 依赖的 element 变了，重建子树（不改 data） */
+  _invalidate(): void {
+    this.#teardown();
+    this.#render();
   }
 
   // ========================

@@ -4,9 +4,10 @@
  * 职责：
  * 1. 注册 Element 类型（register）
  * 2. 实例化 Element 并自动挂载到 scene（add）
- * 3. 跟踪所有 Element 实例的生命周期
- * 4. 通过 bus + state 通知其他插件
- * 5. app.dispose() 时自动清理
+ * 3. 分层渲染：nodes 层 (zIndex 1) + edges 层 (zIndex 0)
+ * 4. 依赖追踪：deps 声明，node 更新自动触发 edge 重绘
+ * 5. 通过 bus + state 通知其他插件
+ * 6. app.dispose() 时自动清理
  *
  * @example
  * ```ts
@@ -14,21 +15,30 @@
  * app.use(graph);
  *
  * graph.register('card', Card);
+ * graph.register('edge', Edge);
  *
- * const el = graph.add('card', { id: 'c1', x: 100, y: 50, width: 200, height: 80, title: 'Hi' });
- * el.update({ title: 'Updated' });
+ * const n1 = graph.add('card', { id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A' });
+ * const e1 = graph.add('edge', { id: 'e1', x: 0, y: 0, source: 'n1', target: 'n2' },
+ *   { layer: 'edges', deps: ['n1', 'n2'] });
  *
- * graph.remove('c1');
+ * // n1 移动 → e1 自动重绘
+ * n1.update({ x: 200 });
  * ```
  */
 
 import {ElementImpl} from './element';
 
 import type {App, Plugin} from 'rendx-engine';
-import type {Element, ElementData, ElementDef, GraphQuery} from './types';
+import type {Element, ElementData, ElementDef, ElementOptions, GraphQuery} from './types';
 
 export class GraphPlugin implements Plugin, GraphQuery {
   name = 'graph';
+
+  /** 声明两个渲染层 — edges 在下方，nodes 在上方 */
+  layers = [
+    {name: 'graph:edges', zIndex: 0},
+    {name: 'graph:nodes', zIndex: 1},
+  ];
 
   state = [
     {
@@ -43,6 +53,13 @@ export class GraphPlugin implements Plugin, GraphQuery {
   #defs = new Map<string, ElementDef<Record<string, unknown>>>();
 
   #elements = new Map<string, ElementImpl<Record<string, unknown>>>();
+
+  /** 反向索引：elementId → 依赖它的 element id 集合 */
+  #dependents = new Map<string, Set<string>>();
+
+  /** 批量操作中是否正在进行，防止中间态 syncState / bus emit */
+  #batching = false;
+  #batchDirty = false;
 
   install(app: App): void {
     this.#app = app;
@@ -73,13 +90,14 @@ export class GraphPlugin implements Plugin, GraphQuery {
 
   /**
    * 添加 Element 实例。
-   * 自动实例化、挂载到 scene、跟踪管理。
+   * 自动实例化、挂载到对应层、跟踪管理。
    *
    * @param type - 已注册的类型名称
    * @param data - 元素数据（id + x/y + 用户自定义字段）
+   * @param options - 可选：layer (挂载层) + deps (依赖列表)
    * @returns Element 实例
    */
-  add<T>(type: string, data: ElementData<T>): Element<T> {
+  add<T>(type: string, data: ElementData<T>, options?: ElementOptions): Element<T> {
     if (!this.#app) throw new Error('Graph plugin is not installed. Call app.use(graph) first.');
 
     const def = this.#defs.get(type);
@@ -89,17 +107,45 @@ export class GraphPlugin implements Plugin, GraphQuery {
       throw new Error(`Element "${data.id}" already exists.`);
     }
 
-    // 实例化
-    const el = new ElementImpl<T>(def as ElementDef<T>, data, this);
+    const layer = options?.layer ?? 'nodes';
+    const deps = options?.deps ?? [];
 
-    // 挂载到 scene
-    this.#app.scene.add(el.group);
+    // 实例化
+    const el = new ElementImpl<T>(def as ElementDef<T>, data, this, layer, deps);
+
+    // 注册依赖追踪回调
+    el._setOnUpdate((updatedId: string) => {
+      this.#invalidateDependents(updatedId);
+    });
+
+    // 挂载到对应层
+    const targetLayer = this.#app.getLayer(layer === 'edges' ? 'graph:edges' : 'graph:nodes');
+    if (targetLayer) {
+      targetLayer.add(el.group);
+    } else {
+      // 回退到默认 scene
+      this.#app.scene.add(el.group);
+    }
     el._setMounted(true);
+
+    // 建立依赖反向索引
+    for (const depId of deps) {
+      let set = this.#dependents.get(depId);
+      if (!set) {
+        set = new Set();
+        this.#dependents.set(depId, set);
+      }
+      set.add(data.id);
+    }
 
     // 跟踪
     this.#elements.set(data.id, el as ElementImpl<Record<string, unknown>>);
-    this.#syncState();
-    this.#app.bus.emit('graph:added');
+    if (!this.#batching) {
+      this.#syncState();
+      this.#app.bus.emit('graph:added');
+    } else {
+      this.#batchDirty = true;
+    }
 
     return el;
   }
@@ -112,17 +158,63 @@ export class GraphPlugin implements Plugin, GraphQuery {
     const el = this.#elements.get(id);
     if (!el) return false;
 
-    // 从 scene 卸载
+    // 从 scene/层 卸载
     if (this.#app && el.group.parent) {
       el.group.parent.remove(el.group);
     }
     el.dispose();
 
+    // 清理依赖反向索引
+    for (const depId of el.deps) {
+      const set = this.#dependents.get(depId);
+      if (set) {
+        set.delete(id);
+        if (set.size === 0) this.#dependents.delete(depId);
+      }
+    }
+    // 也清理以此 element 为依赖目标的反向索引
+    this.#dependents.delete(id);
+
     this.#elements.delete(id);
-    this.#syncState();
-    this.#app?.bus.emit('graph:removed');
+    if (!this.#batching) {
+      this.#syncState();
+      this.#app?.bus.emit('graph:removed');
+    } else {
+      this.#batchDirty = true;
+    }
 
     return true;
+  }
+
+  // ========================
+  // Batch Operations
+  // ========================
+
+  /**
+   * 批量操作 — 在回调内的 add/remove 不会逐次触发 syncState 和 bus emit。
+   * 回调执行完毕后统一同步一次。
+   *
+   * @example
+   * ```ts
+   * graph.batch(() => {
+   *   graph.add('card', {...});
+   *   graph.add('card', {...});
+   *   graph.add('edge', {...}, { layer: 'edges', deps: [...] });
+   * });
+   * ```
+   */
+  batch(fn: () => void): void {
+    this.#batching = true;
+    this.#batchDirty = false;
+    try {
+      fn();
+    } finally {
+      this.#batching = false;
+      if (this.#batchDirty) {
+        this.#syncState();
+        this.#app?.bus.emit('graph:added');
+      }
+    }
   }
 
   // ========================
@@ -167,6 +259,7 @@ export class GraphPlugin implements Plugin, GraphQuery {
     }
     this.#elements.clear();
     this.#defs.clear();
+    this.#dependents.clear();
     this.#app = null;
   }
 
@@ -177,6 +270,19 @@ export class GraphPlugin implements Plugin, GraphQuery {
   #syncState(): void {
     if (!this.#app) return;
     this.#app.setState('graph:elements', this.getIds());
+  }
+
+  /**
+   * 当 elementId 的数据变化时，找出所有 deps 包含它的 element 并重绘。
+   * 使用反向索引 #dependents 实现 O(依赖者数量) 查找，避免全量遍历。
+   */
+  #invalidateDependents(elementId: string): void {
+    const depSet = this.#dependents.get(elementId);
+    if (!depSet) return;
+    for (const depElId of depSet) {
+      const depEl = this.#elements.get(depElId);
+      if (depEl) depEl._invalidate();
+    }
   }
 }
 

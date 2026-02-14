@@ -1,5 +1,7 @@
 const {App, Node, Group} = __rendx_engine__;
 const {createElement, graphPlugin} = __rendx_element_plugin__;
+const {Path} = __rendx_path__;
+const {bumpX} = __rendx_curve__;
 
 const app = new App({width: 800, height: 600});
 app.mount(container);
@@ -113,7 +115,7 @@ const ListNode = createElement((ctx, data) => {
   });
 });
 
-// BezierEdge: 通过 graph 查询两端 node 来画贝塞尔连接线
+// BezierEdge: 通过 graph 查询两端 node，用 rendx-curve 的 bumpX 画平滑曲线
 const BezierEdge = createElement((_ctx, data, graph) => {
   const src = graph.get(data.source);
   const tgt = graph.get(data.target);
@@ -124,20 +126,25 @@ const BezierEdge = createElement((_ctx, data, graph) => {
   const to = resolvePort(tgt.data, data.targetPort, 'left');
   if (!from || !to) return;
 
-  // 贝塞尔曲线（全局坐标 → 减去当前 group 的 translate）
+  // 全局坐标 → 减去当前 group 的 translate
   const ox = data.x;
   const oy = data.y;
-  const dx = Math.abs(to[0] - from[0]) * 0.5;
-  const d = `M ${from[0] - ox} ${from[1] - oy} C ${from[0] - ox + dx} ${from[1] - oy}, ${to[0] - ox - dx} ${to[1] - oy}, ${to[0] - ox} ${to[1] - oy}`;
 
-  const path = Node.create('path', {
+  // 使用 rendx-path + rendx-curve 生成平滑曲线
+  const p = new Path();
+  bumpX(p, [
+    [from[0] - ox, from[1] - oy],
+    [to[0] - ox, to[1] - oy],
+  ]);
+
+  const pathNode = Node.create('path', {
     stroke: data.color ?? '#999',
     strokeWidth: 2,
     fill: 'none',
     opacity: 0.7,
   });
-  path.shape.from(d);
-  _ctx.group.add(path);
+  pathNode.shape.from(p.toString());
+  _ctx.group.add(pathNode);
 });
 
 // 端口坐标解析 — 用户根据自己的布局约定编写
@@ -213,55 +220,73 @@ const agg = graph.add('card', {
   borderColor: '#51cf66',
 });
 
-// ── 4. 添加边实例（Edge 也是 Element，通过 graph 查询两端 node） ──
+// ── 4. 添加边实例（分层 + 依赖追踪：node 移动时 edge 自动重绘） ──
 
-graph.add('edge', {
-  id: 'e1',
-  x: 0,
-  y: 0,
-  source: 'queue-ctrl',
-  target: 'processor',
-  sourcePort: {row: 'in1', side: 'right'},
-  targetPort: {row: 'src', side: 'left'},
-  color: '#6e8efb',
-});
+graph.add(
+  'edge',
+  {
+    id: 'e1',
+    x: 0,
+    y: 0,
+    source: 'queue-ctrl',
+    target: 'processor',
+    sourcePort: {row: 'in1', side: 'right'},
+    targetPort: {row: 'src', side: 'left'},
+    color: '#6e8efb',
+  },
+  {layer: 'edges', deps: ['queue-ctrl', 'processor']},
+);
 
-graph.add('edge', {
-  id: 'e2',
-  x: 0,
-  y: 0,
-  source: 'queue-ctrl',
-  target: 'processor',
-  sourcePort: {row: 'in2', side: 'right'},
-  targetPort: {row: 'filter', side: 'left'},
-  color: '#6e8efb',
-});
+graph.add(
+  'edge',
+  {
+    id: 'e2',
+    x: 0,
+    y: 0,
+    source: 'queue-ctrl',
+    target: 'processor',
+    sourcePort: {row: 'in2', side: 'right'},
+    targetPort: {row: 'filter', side: 'left'},
+    color: '#6e8efb',
+  },
+  {layer: 'edges', deps: ['queue-ctrl', 'processor']},
+);
 
-graph.add('edge', {
-  id: 'e3',
-  x: 0,
-  y: 0,
-  source: 'queue-ctrl',
-  target: 'aggregator',
-  sourcePort: {row: 'in3', side: 'right'},
-  targetPort: {side: 'left'},
-  color: '#51cf66',
-});
+graph.add(
+  'edge',
+  {
+    id: 'e3',
+    x: 0,
+    y: 0,
+    source: 'queue-ctrl',
+    target: 'aggregator',
+    sourcePort: {row: 'in3', side: 'right'},
+    targetPort: {side: 'left'},
+    color: '#51cf66',
+  },
+  {layer: 'edges', deps: ['queue-ctrl', 'aggregator']},
+);
 
-graph.add('edge', {
-  id: 'e4',
-  x: 0,
-  y: 0,
-  source: 'processor',
-  target: 'aggregator',
-  sourcePort: {row: 'output', side: 'right'},
-  targetPort: {side: 'left'},
-  color: '#f59f00',
-});
+graph.add(
+  'edge',
+  {
+    id: 'e4',
+    x: 0,
+    y: 0,
+    source: 'processor',
+    target: 'aggregator',
+    sourcePort: {row: 'output', side: 'right'},
+    targetPort: {side: 'left'},
+    color: '#f59f00',
+  },
+  {layer: 'edges', deps: ['processor', 'aggregator']},
+);
 
 app.render();
 
 console.log('Graph Plugin — createElement + graphPlugin demo');
 console.log('Elements:', graph.getIds());
-console.log('Nodes:', graph.getAll().filter(e => !e.data.source).length);
-console.log('Edges:', graph.getAll().filter(e => e.data.source).length);
+console.log('Nodes:', graph.getAll().filter(e => e.layer === 'nodes').length);
+console.log('Edges:', graph.getAll().filter(e => e.layer === 'edges').length);
+console.log('Layers: graph:nodes (zIndex 1), graph:edges (zIndex 0)');
+console.log('Features: rendx-curve bumpX, layer separation, dependency auto-invalidation');

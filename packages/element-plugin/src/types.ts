@@ -32,6 +32,28 @@ export interface ElementBase {
 export type ElementData<T = Record<string, unknown>> = ElementBase & T;
 
 // ========================
+// Element Options (add 时的元数据)
+// ========================
+
+/** graph.add() 的选项 — 控制元素的挂载层和依赖关系 */
+export interface ElementOptions {
+  /**
+   * 挂载到哪个图层。
+   * - 'nodes' → graph:nodes 层（zIndex 1，在上方）
+   * - 'edges' → graph:edges 层（zIndex 0，在下方）
+   * - 不指定 → 默认 'nodes'
+   */
+  layer?: 'nodes' | 'edges';
+
+  /**
+   * 依赖的其他 element id 列表。
+   * 当被依赖的 element 更新时，本 element 会自动重建子树。
+   * 典型场景：edge 声明 deps: [sourceId, targetId]，node 移动后 edge 自动重绘。
+   */
+  deps?: string[];
+}
+
+// ========================
 // Render Context（render fn 的上下文）
 // ========================
 
@@ -94,10 +116,15 @@ export interface Element<T = Record<string, unknown>> {
   readonly group: Group;
   /** 是否已挂载到 scene */
   readonly mounted: boolean;
+  /** 所在图层 */
+  readonly layer: 'nodes' | 'edges';
+  /** 依赖的 element id 列表 */
+  readonly deps: ReadonlyArray<string>;
 
   /**
    * 更新数据 — 合并 partial → 清空 children → 重跑 render fn。
    * 位置变化只更新 translate，不重建子树。
+   * 更新完成后，自动触发依赖本 element 的其他 element 重绘。
    */
   update(partial: Partial<ElementData<T>>): void;
 

@@ -516,4 +516,202 @@ describe('Element 实例', () => {
       expect(results.ids).toContain('c1');
     });
   });
+
+  // ========================
+  // 分层渲染
+  // ========================
+  describe('分层渲染', () => {
+    it('默认 layer 为 nodes', () => {
+      const el = graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      expect(el.layer).toBe('nodes');
+    });
+
+    it('layer: edges 挂载到 graph:edges 层', () => {
+      const Stub = createElement(() => {});
+      graph.register('edge', Stub);
+
+      const el = graph.add('edge', {id: 'e1', x: 0, y: 0}, {layer: 'edges'});
+      expect(el.layer).toBe('edges');
+
+      // group 应挂载到 graph:edges 层
+      const edgeLayer = app.getLayer('graph:edges');
+      expect(edgeLayer).toBeDefined();
+      expect(edgeLayer!.children).toContain(el.group);
+    });
+
+    it('nodes layer 和 edges layer 是独立的', () => {
+      const Stub = createElement(() => {});
+      graph.register('edge', Stub);
+
+      graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('edge', {id: 'e1', x: 0, y: 0}, {layer: 'edges'});
+
+      const nodesLayer = app.getLayer('graph:nodes');
+      const edgesLayer = app.getLayer('graph:edges');
+
+      expect(nodesLayer).toBeDefined();
+      expect(edgesLayer).toBeDefined();
+      expect(nodesLayer).not.toBe(edgesLayer);
+    });
+  });
+
+  // ========================
+  // 依赖追踪
+  // ========================
+  describe('依赖追踪', () => {
+    it('deps 存储在 element 上', () => {
+      const Stub = createElement(() => {});
+      graph.register('edge', Stub);
+
+      graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('card', {id: 'n2', x: 200, y: 0, width: 100, height: 60, title: 'B'});
+      const edge = graph.add('edge', {id: 'e1', x: 0, y: 0}, {layer: 'edges', deps: ['n1', 'n2']});
+
+      expect(edge.deps).toEqual(['n1', 'n2']);
+    });
+
+    it('默认 deps 为空数组', () => {
+      const el = graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      expect(el.deps).toEqual([]);
+    });
+
+    it('node 移动时 edge 自动重绘', () => {
+      const renderSpy = vi.fn();
+
+      interface EdgeData {
+        source: string;
+        target: string;
+      }
+
+      const Edge = createElement<EdgeData>((_ctx, data, graph) => {
+        renderSpy();
+        const src = graph.get(data.source);
+        const tgt = graph.get(data.target);
+        if (!src || !tgt) return;
+      });
+
+      graph.register('edge', Edge);
+
+      const n1 = graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('card', {id: 'n2', x: 300, y: 0, width: 100, height: 60, title: 'B'});
+      graph.add('edge', {id: 'e1', x: 0, y: 0, source: 'n1', target: 'n2'}, {layer: 'edges', deps: ['n1', 'n2']});
+
+      // 首次渲染 = 1 次
+      expect(renderSpy).toHaveBeenCalledTimes(1);
+
+      // 移动 n1 → edge 应自动重绘
+      n1.update({x: 100});
+      expect(renderSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('node 数据更新也触发 edge 重绘', () => {
+      const renderSpy = vi.fn();
+      const Stub = createElement(() => renderSpy());
+      graph.register('edge', Stub);
+
+      const n1 = graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('edge', {id: 'e1', x: 0, y: 0}, {layer: 'edges', deps: ['n1']});
+
+      expect(renderSpy).toHaveBeenCalledTimes(1);
+      n1.update({title: 'Updated'});
+      expect(renderSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('无 deps 的元素更新不触发其他元素', () => {
+      const renderSpy = vi.fn();
+      const Stub = createElement(() => renderSpy());
+      graph.register('follower', Stub);
+
+      const n1 = graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('follower', {id: 'f1', x: 0, y: 0});
+
+      expect(renderSpy).toHaveBeenCalledTimes(1);
+      n1.update({x: 100});
+      // follower 没有 deps:['n1']，不会重绘
+      expect(renderSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('remove 清理依赖追踪', () => {
+      const renderSpy = vi.fn();
+      const Stub = createElement(() => renderSpy());
+      graph.register('edge', Stub);
+
+      const n1 = graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('edge', {id: 'e1', x: 0, y: 0}, {layer: 'edges', deps: ['n1']});
+
+      expect(renderSpy).toHaveBeenCalledTimes(1);
+
+      // 移除 edge 后，n1 更新不该再触发 edge 重绘
+      graph.remove('e1');
+      n1.update({x: 100});
+      expect(renderSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('多个 edge 依赖同一个 node', () => {
+      const spy1 = vi.fn();
+      const spy2 = vi.fn();
+
+      const Edge1 = createElement(() => spy1());
+      const Edge2 = createElement(() => spy2());
+      graph.register('edge1', Edge1);
+      graph.register('edge2', Edge2);
+
+      const n1 = graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('edge1', {id: 'e1', x: 0, y: 0}, {deps: ['n1']});
+      graph.add('edge2', {id: 'e2', x: 0, y: 0}, {deps: ['n1']});
+
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy2).toHaveBeenCalledTimes(1);
+
+      n1.update({x: 100});
+
+      expect(spy1).toHaveBeenCalledTimes(2);
+      expect(spy2).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // ========================
+  // 批量操作
+  // ========================
+  describe('批量操作', () => {
+    it('batch 内不会多次触发 bus', () => {
+      const handler = vi.fn();
+      app.bus.on('graph:added', handler);
+
+      graph.batch(() => {
+        graph.add('card', {id: 'a', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+        graph.add('card', {id: 'b', x: 100, y: 0, width: 100, height: 60, title: 'B'});
+        graph.add('card', {id: 'c', x: 200, y: 0, width: 100, height: 60, title: 'C'});
+      });
+
+      // batch 完成后只触发一次
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(graph.count).toBe(3);
+    });
+
+    it('batch 内 state 只同步一次', () => {
+      graph.batch(() => {
+        graph.add('card', {id: 'a', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+        graph.add('card', {id: 'b', x: 100, y: 0, width: 100, height: 60, title: 'B'});
+      });
+
+      const ids = app.getState<string[]>('graph:elements');
+      expect(ids).toEqual(['a', 'b']);
+    });
+
+    it('batch 中的异常不影响 batching 标志重置', () => {
+      expect(() => {
+        graph.batch(() => {
+          graph.add('card', {id: 'a', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+          throw new Error('oops');
+        });
+      }).toThrow('oops');
+
+      // batch 标志已重置，后续 add 正常触发
+      const handler = vi.fn();
+      app.bus.on('graph:added', handler);
+      graph.add('card', {id: 'b', x: 0, y: 0, width: 100, height: 60, title: 'B'});
+      expect(handler).toHaveBeenCalledOnce();
+    });
+  });
 });
