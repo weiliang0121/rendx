@@ -40,5 +40,8 @@
   "sideEffects": false,
   "files": [
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
