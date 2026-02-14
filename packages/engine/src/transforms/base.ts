@@ -53,11 +53,12 @@ export abstract class BaseTransform {
       if (this._repeat) {
         this.status = 'start';
         this._time = -1;
+        // fall through — immediately start next cycle so the rAF loop stays alive
       } else {
         this.status = 'end';
         this.onEnd();
+        return;
       }
-      return;
     }
 
     if (this._time === -1) this._time = time;

@@ -53,6 +53,7 @@ export class Attributes {
   gradient(gradientOptions: GradientOptions) {
     this.gradientOptions = gradientOptions;
     if (isNil(this.gradientOptions.id)) this.gradientOptions.id = this.uid;
+    this.values.fill = `url(#${this.gradientOptions.id})`;
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
@@ -61,6 +62,7 @@ export class Attributes {
   clip(clipPath: ClipPath) {
     this.clipPath = clipPath;
     if (isNil(this.clipPath.id)) this.clipPath.id = this.uid;
+    this.values.clipPath = `url(#${this.clipPath.id})`;
     if (this.autoNeedUpdate) this.needUpdate = true;
     return this;
   }
@@ -72,6 +74,8 @@ export class Attributes {
 
   /** 启用属性动画（可对 opacity/fill/stroke 等做插值动画） */
   useTransform() {
+    if (this.transform) return this;
+    this.transform = new AttributeTransform(this.values);
     return this;
   }
 

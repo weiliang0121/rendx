@@ -2,6 +2,7 @@ import {Scene} from './scene';
 import {Layer} from './scene/layer';
 import {EventObserver} from './events';
 import {serialize, deserialize} from './serialization';
+import {imageLoader} from './core/image-loader';
 
 import type {Mat2d} from '@dye/core';
 import type {RendererConfig} from './renderers/renderer';
@@ -73,6 +74,9 @@ export class App {
 
     // EventObserver 绑定事件层的 Renderer
     this.observer = new EventObserver(this.scene, this.#eventLayer.renderer);
+
+    // 图片加载完成时自动重启渲染循环
+    imageLoader.onChange = () => this.requestRender();
   }
 
   /**

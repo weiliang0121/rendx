@@ -2,6 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {GraphicsTransform} from '../src/transforms/graphics';
 import {AttributeTransform} from '../src/transforms/attributes';
 import {BaseTransform} from '../src/transforms/base';
+import {Attributes} from '../src/core/attributes';
 
 // 辅助：简单具体 Transform 用于测试基类逻辑
 class TestTransform extends BaseTransform {
@@ -88,9 +89,9 @@ describe('BaseTransform - 动画状态机', () => {
     t.interpolate(101);
     expect(t.status).toBe('last');
 
-    // 再次 interpolate → 重置为 start 而非 end
+    // 再次 interpolate → 重置后立即进入下一轮 running
     t.interpolate(102);
-    expect(t.status).toBe('start');
+    expect(t.status).toBe('running');
     expect(t.active).toBe(true);
   });
 
@@ -208,5 +209,51 @@ describe('AttributeTransform - 属性动画', () => {
     at.interpolate(50);
     // 从 0.5 到 0.5，中间也是 0.5
     expect(values.opacity).toBeCloseTo(0.5);
+  });
+});
+
+describe('Attributes.useTransform - 集成测试', () => {
+  it('useTransform 创建 AttributeTransform 并通过 tick 驱动', () => {
+    const attrs = new Attributes();
+    attrs.set('opacity', 1);
+    attrs.set('fill', '#ff0000');
+
+    attrs.useTransform();
+    expect(attrs.transform).toBeInstanceOf(AttributeTransform);
+
+    // 配置动画
+    attrs.transform!.attr('opacity', 0).duration(100);
+
+    // 模拟 tick
+    attrs.tick(0);
+    attrs.tick(50);
+    expect(attrs.values.opacity).toBeCloseTo(0.5);
+    expect(attrs.needUpdate).toBe(true);
+
+    attrs.tick(100);
+    expect(attrs.values.opacity).toBeCloseTo(0);
+  });
+
+  it('重复调用 useTransform 不重复创建', () => {
+    const attrs = new Attributes();
+    attrs.set('opacity', 1);
+    attrs.useTransform();
+    const t1 = attrs.transform;
+    attrs.useTransform();
+    expect(attrs.transform).toBe(t1);
+  });
+
+  it('颜色属性插值', () => {
+    const attrs = new Attributes();
+    attrs.set('fill', '#ff0000');
+    attrs.useTransform();
+    attrs.transform!.attr('fill', '#0000ff').duration(100);
+
+    attrs.tick(0);
+    attrs.tick(50);
+    // 中间值应该是某种紫色混合
+    expect(typeof attrs.values.fill).toBe('string');
+    expect(attrs.values.fill).not.toBe('#ff0000');
+    expect(attrs.values.fill).not.toBe('#0000ff');
   });
 });

@@ -14,9 +14,9 @@ export class RoundShape extends Shape {
   rx: number | number[] | undefined = undefined;
   ry: number | number[] | undefined = undefined;
 
-  options(rx: number | number[] | undefined, ry: number | number[] | undefined) {
+  options(rx: number | number[] | undefined, ry?: number | number[] | undefined) {
     this.rx = rx;
-    this.ry = ry;
+    this.ry = ry ?? rx;
     if (this.autoNeedUpdate) this.needUpdate = true;
   }
 

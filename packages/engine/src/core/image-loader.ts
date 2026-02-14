@@ -9,6 +9,9 @@ interface LoadEntry {
 class ImageLoader {
   #cache = new Map<string, LoadEntry>();
 
+  /** 全局回调：任何图片加载完成时触发（用于重启渲染循环） */
+  onChange: (() => void) | null = null;
+
   load(src: string, onReady?: () => void): ImageSource | null {
     let entry = this.#cache.get(src);
     if (!entry) {
@@ -29,6 +32,7 @@ class ImageLoader {
       entry.ready = true;
       listeners.forEach(fn => fn());
       listeners.clear();
+      this.onChange?.();
     };
     img.src = src;
     return entry;
