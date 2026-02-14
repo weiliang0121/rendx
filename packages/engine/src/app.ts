@@ -1,6 +1,9 @@
+import EventEmitter from 'eventemitter3';
+
 import {Scene} from './scene';
 import {Layer} from './scene/layer';
 import {EventObserver} from './events';
+import {Scheduler} from './scheduler';
 import {serialize, deserialize} from './serialization';
 import {imageLoader} from './core/image-loader';
 
@@ -13,6 +16,12 @@ export interface AppConfig extends RendererConfig {
   layers?: string[];
   /** 是否监听容器尺寸变化自动 resize（默认 false） */
   autoResize?: boolean;
+}
+
+/** state 元信息（调试/快照用） */
+interface StateMeta {
+  owner: string;
+  description: string;
 }
 
 /**
@@ -33,12 +42,28 @@ export class App {
   cfg: AppConfig;
   scene: Scene;
   observer: EventObserver;
+
+  /**
+   * 中心化事件总线 — 纯信号（不传数据）。
+   * 插件通过 `app.bus.emit('eventName')` 发布信号，
+   * 消费方通过 `app.bus.on('eventName', handler)` 订阅。
+   */
+  bus = new EventEmitter();
+
   #rafId: number | null = null;
+  #renderDirty = false;
   #mounted = false;
   #container: HTMLDivElement | null = null;
   #eventLayer: Layer;
   #resizeObserver: ResizeObserver | null = null;
   #plugins: Plugin[] = [];
+
+  // ========================
+  // State Management
+  // ========================
+  #state = new Map<string, unknown>();
+  #stateMeta = new Map<string, StateMeta>();
+  #scheduler: Scheduler;
 
   /** 挂载容器（供插件访问） */
   get container(): HTMLDivElement | null {
@@ -56,6 +81,13 @@ export class App {
   constructor(cfg: Partial<AppConfig> = {}) {
     this.cfg = cfg as AppConfig;
     this.scene = new Scene();
+
+    // 调度器：batch state 通知到微任务
+    this.#scheduler = new Scheduler(keys => {
+      for (const key of keys) {
+        this.bus.emit(`state:${key}`);
+      }
+    });
 
     // 创建内置事件层（透明 Canvas，不渲染，仅接收事件）
     this.#eventLayer = new Layer('__event__', 99999, this.cfg, true);
@@ -145,7 +177,24 @@ export class App {
   }
 
   /**
-   * 注册插件（同名插件不会重复注册）
+   * 获取或创建图层（get-or-create 语义）。
+   * 多个插件声明同名图层时，只会创建一次。
+   * @param name - 层名称
+   * @param zIndex - 层级（仅在首次创建时生效）
+   */
+  acquireLayer(name: string, zIndex: number): Layer {
+    const existing = this.scene.getLayer(name);
+    if (existing) return existing;
+    return this.addLayer(name, zIndex);
+  }
+
+  /**
+   * 注册插件。流程：
+   * 1. 去重检查（同名跳过）
+   * 2. 注册 state 声明（key 冲突则抛错）
+   * 3. 自动 acquireLayer（声明的图层）
+   * 4. 调用 plugin.install(app)
+   *
    * @param plugin - 实现 Plugin 接口的插件实例
    */
   use(plugin: Plugin) {
@@ -153,6 +202,26 @@ export class App {
       console.warn(`Plugin "${plugin.name}" is already registered.`);
       return this;
     }
+
+    // 注册 state 声明
+    if (plugin.state) {
+      for (const decl of plugin.state) {
+        if (this.#stateMeta.has(decl.key)) {
+          const owner = this.#stateMeta.get(decl.key)!.owner;
+          throw new Error(`State key "${decl.key}" already declared by plugin "${owner}". ` + `Plugin "${plugin.name}" cannot redeclare it.`);
+        }
+        this.#stateMeta.set(decl.key, {owner: plugin.name, description: decl.description});
+        this.#state.set(decl.key, decl.initial);
+      }
+    }
+
+    // 自动创建/复用图层
+    if (plugin.layers) {
+      for (const decl of plugin.layers) {
+        this.acquireLayer(decl.name, decl.zIndex);
+      }
+    }
+
     this.#plugins.push(plugin);
     plugin.install(this);
     return this;
@@ -161,6 +230,44 @@ export class App {
   /** 获取已注册的插件 */
   getPlugin(name: string): Plugin | undefined {
     return this.#plugins.find(p => p.name === name);
+  }
+
+  // ========================
+  // Centralized State
+  // ========================
+
+  /**
+   * 写入 state（同步写入 + 异步批量通知）。
+   * key 必须先由某个插件在 `state[]` 中声明，否则抛错。
+   * 写入后立即可通过 `getState()` 读到最新值，通知在微任务中批量发出。
+   */
+  setState(key: string, value: unknown) {
+    if (!this.#stateMeta.has(key)) {
+      throw new Error(`State key "${key}" is not declared by any plugin. ` + `Plugins must declare state keys in their "state" array.`);
+    }
+    this.#state.set(key, value);
+    this.#scheduler.markState(key);
+  }
+
+  /**
+   * 读取 state（同步读取，始终返回最新值）。
+   * @returns 对应 key 的当前值，不存在则返回 undefined
+   */
+  getState<T>(key: string): T | undefined {
+    return this.#state.get(key) as T | undefined;
+  }
+
+  /**
+   * 导出完整 state 快照（调试/devtools 用）。
+   * 返回每个 key 的当前值、所属插件和描述信息。
+   */
+  dumpState(): Record<string, {value: unknown; owner: string; description: string}> {
+    const result: Record<string, {value: unknown; owner: string; description: string}> = {};
+    for (const [key, value] of this.#state) {
+      const meta = this.#stateMeta.get(key)!;
+      result[key] = {value, owner: meta.owner, description: meta.description};
+    }
+    return result;
   }
 
   /** 同步渲染一帧。适用于静态内容，仅重绘脏层 */
@@ -172,14 +279,18 @@ export class App {
     }
   }
 
-  /** 请求异步渲染循环（rAF），有动画时自动继续，无变化时停止 */
+  /** 请求异步渲染帧（幂等，一帧只执行一次）。无变化时自动停止 rAF 链 */
   requestRender() {
-    if (this.#rafId !== null) return;
-    this.#rafId = requestAnimationFrame(t => this.#tick(t));
+    this.#renderDirty = true;
+    if (this.#rafId === null) {
+      this.#rafId = requestAnimationFrame(t => this.#frame(t));
+    }
   }
 
-  #tick(time: number) {
-    this.#rafId = null;
+  #frame(time: number) {
+    // 先清标记，frame 执行期间如果又有新请求会重新标脏
+    this.#renderDirty = false;
+
     this.scene.tick(time);
 
     let anyDirty = false;
@@ -190,8 +301,14 @@ export class App {
       }
     }
 
-    if (anyDirty) {
-      this.requestRender();
+    // 决定是否继续下一帧：
+    // 1. 有脏层（动画还在跑）→ 继续
+    // 2. frame 执行期间又有新的 requestRender 调用 → 继续
+    // 3. 否则彻底停止，等下次 requestRender 唤醒
+    if (anyDirty || this.#renderDirty) {
+      this.#rafId = requestAnimationFrame(t => this.#frame(t));
+    } else {
+      this.#rafId = null;
     }
   }
 
@@ -246,6 +363,12 @@ export class App {
       plugin.dispose?.();
     }
     this.#plugins = [];
+
+    // 清理事件总线和状态
+    this.bus.removeAllListeners();
+    this.#state.clear();
+    this.#stateMeta.clear();
+    this.#scheduler.clear();
 
     if (this.#resizeObserver) {
       this.#resizeObserver.disconnect();

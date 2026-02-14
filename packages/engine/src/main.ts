@@ -7,3 +7,4 @@ export * from './app';
 export * from './transforms';
 export * from './serialization';
 export * from './plugin';
+export * from './scheduler';
