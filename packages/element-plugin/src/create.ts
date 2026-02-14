@@ -11,13 +11,14 @@
  *   const bg = Node.create('rect', { fill: '#fff' });
  *   bg.shape.from(0, 0, ctx.width, ctx.height);
  *   ctx.group.add(bg);
+ * });
  *
- *   const label = Node.create('text', { fill: '#333' });
- *   label.shape.from(data.title, ctx.width / 2, ctx.height / 2);
- *   ctx.group.add(label);
- *
- *   ctx.port('in', 'left');
- *   ctx.port('out', 'right');
+ * // Edge 可通过 graph 查询两端 node
+ * const Edge = createElement<{ source: string; target: string }>((ctx, data, graph) => {
+ *   const src = graph.get(data.source);
+ *   const tgt = graph.get(data.target);
+ *   if (!src || !tgt) return;
+ *   // 根据 src/tgt 的 data 计算位置并画线
  * });
  * ```
  */

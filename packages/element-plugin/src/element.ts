@@ -11,13 +11,14 @@
 
 import {Group} from 'rendx-engine';
 
-import type {Element, ElementBase, ElementContext, ElementData, ElementDef} from './types';
+import type {Element, ElementBase, ElementContext, ElementData, ElementDef, GraphQuery} from './types';
 
 export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
   readonly group: Group;
 
   #def: ElementDef<T>;
   #data: ElementData<T>;
+  #graph: GraphQuery;
   #cleanups: (() => void)[] = [];
   #mounted = false;
 
@@ -33,9 +34,10 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
     return this.#mounted;
   }
 
-  constructor(def: ElementDef<T>, data: ElementData<T>) {
+  constructor(def: ElementDef<T>, data: ElementData<T>, graph: GraphQuery) {
     this.#def = def;
     this.#data = {...data};
+    this.#graph = graph;
 
     // 创建 Group 容器，设置名称和初始位移
     this.group = new Group();
@@ -104,7 +106,7 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
       },
     };
 
-    this.#def.render(ctx, this.#data);
+    this.#def.render(ctx, this.#data, this.#graph);
   }
 
   /** 调用 cleanup 回调 + 清空 children */

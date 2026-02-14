@@ -25,9 +25,9 @@
 import {ElementImpl} from './element';
 
 import type {App, Plugin} from 'rendx-engine';
-import type {Element, ElementData, ElementDef} from './types';
+import type {Element, ElementData, ElementDef, GraphQuery} from './types';
 
-export class GraphPlugin implements Plugin {
+export class GraphPlugin implements Plugin, GraphQuery {
   name = 'graph';
 
   state = [
@@ -90,7 +90,7 @@ export class GraphPlugin implements Plugin {
     }
 
     // 实例化
-    const el = new ElementImpl<T>(def as ElementDef<T>, data);
+    const el = new ElementImpl<T>(def as ElementDef<T>, data, this);
 
     // 挂载到 scene
     this.#app.scene.add(el.group);

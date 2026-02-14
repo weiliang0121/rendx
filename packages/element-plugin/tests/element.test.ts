@@ -427,5 +427,93 @@ describe('Element 实例', () => {
       expect(el.group.find('__row-in2__')).toBeDefined();
       expect(el.group.find('__row-in3__')).toBeDefined();
     });
+
+    it('render fn 第三参数 graph 可查询其他元素', () => {
+      const spy = vi.fn();
+      const Probe = createElement<{target: string}>((ctx, data, graph) => {
+        const other = graph.get(data.target);
+        spy(other?.id, graph.count);
+      });
+      graph.register('probe', Probe);
+
+      graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('probe', {id: 'p1', x: 0, y: 0, target: 'c1'});
+
+      // render 时 probe 自身尚未加入 graph，所以 count = 1
+      expect(spy).toHaveBeenCalledWith('c1', 1);
+    });
+
+    it('Edge element — render fn 通过 graph 获取两端 node', () => {
+      interface EdgeData {
+        source: string;
+        target: string;
+      }
+
+      const Edge = createElement<EdgeData>((_ctx, data, graph) => {
+        const src = graph.get(data.source);
+        const tgt = graph.get(data.target);
+        if (!src || !tgt) return;
+
+        // 从 source 右边中点 → target 左边中点画线
+        const sx = src.data.x + (src.data.width ?? 0);
+        const sy = src.data.y + (src.data.height ?? 0) / 2;
+        const tx = tgt.data.x;
+        const ty = tgt.data.y + (tgt.data.height ?? 0) / 2;
+
+        const line = Node.create('line', {stroke: '#999'});
+        line.shape.from(sx - data.x, sy - data.y, tx - data.x, ty - data.y);
+        line.name = '__edge__';
+        _ctx.group.add(line);
+      });
+
+      graph.register('edge', Edge);
+
+      graph.add('card', {id: 'n1', x: 0, y: 0, width: 100, height: 60, title: 'Node1'});
+      graph.add('card', {id: 'n2', x: 300, y: 100, width: 100, height: 60, title: 'Node2'});
+      const edge = graph.add('edge', {id: 'e1', x: 0, y: 0, source: 'n1', target: 'n2'});
+
+      expect(edge.group.find('__edge__')).toBeDefined();
+      expect(edge.group.children).toHaveLength(1);
+    });
+
+    it('Edge element — source 不存在时优雅跳过', () => {
+      interface EdgeData {
+        source: string;
+        target: string;
+      }
+
+      const Edge = createElement<EdgeData>((_ctx, data, graph) => {
+        const src = graph.get(data.source);
+        const tgt = graph.get(data.target);
+        if (!src || !tgt) return;
+        const line = Node.create('line', {stroke: '#999'});
+        line.shape.from(0, 0, 100, 100);
+        _ctx.group.add(line);
+      });
+
+      graph.register('edge', Edge);
+
+      // source 不存在，render 中 return 了
+      const edge = graph.add('edge', {id: 'e1', x: 0, y: 0, source: 'missing', target: 'also-missing'});
+      expect(edge.group.children).toHaveLength(0);
+    });
+
+    it('graph.getAll / getIds / has / count 在 render fn 中可用', () => {
+      const results: {ids: string[]; count: number; hasC1: boolean} = {ids: [], count: 0, hasC1: false};
+      const Inspector = createElement((_ctx, _data, graph) => {
+        results.ids = graph.getIds();
+        results.count = graph.count;
+        results.hasC1 = graph.has('c1');
+      });
+      graph.register('inspector', Inspector);
+
+      graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
+      graph.add('inspector', {id: 'insp', x: 0, y: 0});
+
+      // render 时 inspector 自身尚未加入 graph
+      expect(results.hasC1).toBe(true);
+      expect(results.count).toBe(1);
+      expect(results.ids).toContain('c1');
+    });
   });
 });

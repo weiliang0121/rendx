@@ -36,7 +36,7 @@ export type ElementData<T = Record<string, unknown>> = ElementBase & T;
 // ========================
 
 /**
- * render 函数的上下文 — 在 fn(ctx, data) 中使用。
+ * render 函数的上下文 — 在 fn(ctx, data, graph) 中使用。
  *
  * ctx 提供：
  * - group: 已创建好的 Group 容器（translate 已设置）
@@ -57,8 +57,9 @@ export interface ElementContext {
 /**
  * 用户编写的 render 函数签名。
  * 在 Group 内用 Node.create / group.add 等 engine 原生 API 构建子树。
+ * graph 提供只读查询，让 edge 类型的 render 能获取其他 element 的数据。
  */
-export type ElementRenderFn<T = Record<string, unknown>> = (ctx: ElementContext, data: ElementData<T>) => void;
+export type ElementRenderFn<T = Record<string, unknown>> = (ctx: ElementContext, data: ElementData<T>, graph: GraphQuery) => void;
 
 // ========================
 // Element Definition
@@ -102,4 +103,27 @@ export interface Element<T = Record<string, unknown>> {
 
   /** 销毁元素（清理回调 + 移除 group children + 从 scene 移除） */
   dispose(): void;
+}
+
+// ========================
+// Graph Query（只读查询接口）
+// ========================
+
+/**
+ * Graph 的只读查询接口 — 传入 render fn 第三个参数。
+ *
+ * 让 element 的 render 函数能感知其他 element 的存在和数据，
+ * 但不能修改 graph 结构（add/remove/register）。
+ */
+export interface GraphQuery {
+  /** 获取 Element 实例 */
+  get<T>(id: string): Element<T> | undefined;
+  /** 是否存在指定 id 的元素 */
+  has(id: string): boolean;
+  /** 所有 element id */
+  getIds(): string[];
+  /** 所有 Element 实例 */
+  getAll(): Element<Record<string, unknown>>[];
+  /** 元素总数 */
+  readonly count: number;
 }

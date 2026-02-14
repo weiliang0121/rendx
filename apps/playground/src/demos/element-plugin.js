@@ -113,6 +113,55 @@ const ListNode = createElement((ctx, data) => {
   });
 });
 
+// BezierEdge: 通过 graph 查询两端 node 来画贝塞尔连接线
+const BezierEdge = createElement((_ctx, data, graph) => {
+  const src = graph.get(data.source);
+  const tgt = graph.get(data.target);
+  if (!src || !tgt) return;
+
+  // 用户自定义端口坐标计算（复用约定的布局参数）
+  const from = resolvePort(src.data, data.sourcePort, 'right');
+  const to = resolvePort(tgt.data, data.targetPort, 'left');
+  if (!from || !to) return;
+
+  // 贝塞尔曲线（全局坐标 → 减去当前 group 的 translate）
+  const ox = data.x;
+  const oy = data.y;
+  const dx = Math.abs(to[0] - from[0]) * 0.5;
+  const d = `M ${from[0] - ox} ${from[1] - oy} C ${from[0] - ox + dx} ${from[1] - oy}, ${to[0] - ox - dx} ${to[1] - oy}, ${to[0] - ox} ${to[1] - oy}`;
+
+  const path = Node.create('path', {
+    stroke: data.color ?? '#999',
+    strokeWidth: 2,
+    fill: 'none',
+    opacity: 0.7,
+  });
+  path.shape.from(d);
+  _ctx.group.add(path);
+});
+
+// 端口坐标解析 — 用户根据自己的布局约定编写
+function resolvePort(nodeData, portSpec, defaultSide) {
+  const side = portSpec?.side ?? defaultSide;
+  const rowId = portSpec?.row;
+
+  // ListNode: 带 rows 的复合节点
+  if (nodeData.rows && rowId) {
+    const rowHeight = 30;
+    const headerHeight = 32;
+    const idx = nodeData.rows.findIndex(r => r.id === rowId);
+    if (idx < 0) return null;
+    const centerY = headerHeight + idx * rowHeight + rowHeight / 2;
+    const x = side === 'left' ? nodeData.x : nodeData.x + nodeData.width;
+    return [x, nodeData.y + centerY];
+  }
+
+  // Card: 简单节点，中点
+  const x = side === 'left' ? nodeData.x : nodeData.x + (nodeData.width ?? 0);
+  const y = nodeData.y + (nodeData.height ?? 0) / 2;
+  return [x, y];
+}
+
 // ── 2. Graph 管理器 ──
 
 const graph = graphPlugin();
@@ -120,8 +169,9 @@ app.use(graph);
 
 graph.register('card', Card);
 graph.register('list-node', ListNode);
+graph.register('edge', BezierEdge);
 
-// ── 3. 添加实例 ──
+// ── 3. 添加节点实例 ──
 
 const qc = graph.add('list-node', {
   id: 'queue-ctrl',
@@ -163,41 +213,55 @@ const agg = graph.add('card', {
   borderColor: '#51cf66',
 });
 
-// ── 4. 连接线 ──
+// ── 4. 添加边实例（Edge 也是 Element，通过 graph 查询两端 node） ──
 
-// 用户自行计算端口坐标（port 不再是框架内置概念）
-function getListNodePort(el, rowId, side) {
-  const d = el.data;
-  const rowHeight = 30;
-  const headerHeight = 32;
-  const rows = d.rows ?? [];
-  const idx = rows.findIndex(r => r.id === rowId);
-  if (idx < 0) return null;
-  const centerY = headerHeight + idx * rowHeight + rowHeight / 2;
-  const x = side === 'left' ? d.x : d.x + d.width;
-  return [x, d.y + centerY];
-}
+graph.add('edge', {
+  id: 'e1',
+  x: 0,
+  y: 0,
+  source: 'queue-ctrl',
+  target: 'processor',
+  sourcePort: {row: 'in1', side: 'right'},
+  targetPort: {row: 'src', side: 'left'},
+  color: '#6e8efb',
+});
 
-function getCardPort(el, side) {
-  const d = el.data;
-  const x = side === 'left' ? d.x : d.x + d.width;
-  return [x, d.y + d.height / 2];
-}
+graph.add('edge', {
+  id: 'e2',
+  x: 0,
+  y: 0,
+  source: 'queue-ctrl',
+  target: 'processor',
+  sourcePort: {row: 'in2', side: 'right'},
+  targetPort: {row: 'filter', side: 'left'},
+  color: '#6e8efb',
+});
 
-function drawConnection(from, to, color) {
-  if (!from || !to) return;
-  const dx = Math.abs(to[0] - from[0]) * 0.5;
-  const path = Node.create('path', {stroke: color, strokeWidth: 2, fill: 'none', opacity: 0.7});
-  path.shape.from(`M ${from[0]} ${from[1]} C ${from[0] + dx} ${from[1]}, ${to[0] - dx} ${to[1]}, ${to[0]} ${to[1]}`);
-  app.scene.add(path);
-}
+graph.add('edge', {
+  id: 'e3',
+  x: 0,
+  y: 0,
+  source: 'queue-ctrl',
+  target: 'aggregator',
+  sourcePort: {row: 'in3', side: 'right'},
+  targetPort: {side: 'left'},
+  color: '#51cf66',
+});
 
-drawConnection(getListNodePort(qc, 'in1', 'right'), getListNodePort(proc, 'src', 'left'), '#6e8efb');
-drawConnection(getListNodePort(qc, 'in2', 'right'), getListNodePort(proc, 'filter', 'left'), '#6e8efb');
-drawConnection(getListNodePort(qc, 'in3', 'right'), getCardPort(agg, 'left'), '#51cf66');
-drawConnection(getListNodePort(proc, 'output', 'right'), getCardPort(agg, 'left'), '#f59f00');
+graph.add('edge', {
+  id: 'e4',
+  x: 0,
+  y: 0,
+  source: 'processor',
+  target: 'aggregator',
+  sourcePort: {row: 'output', side: 'right'},
+  targetPort: {side: 'left'},
+  color: '#f59f00',
+});
 
 app.render();
 
 console.log('Graph Plugin — createElement + graphPlugin demo');
 console.log('Elements:', graph.getIds());
+console.log('Nodes:', graph.getAll().filter(e => !e.data.source).length);
+console.log('Edges:', graph.getAll().filter(e => e.data.source).length);
