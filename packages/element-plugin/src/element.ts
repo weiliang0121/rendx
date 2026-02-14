@@ -11,14 +11,13 @@
 
 import {Group} from 'rendx-engine';
 
-import type {Element, ElementBase, ElementContext, ElementData, ElementDef, PortInfo, PortPosition} from './types';
+import type {Element, ElementBase, ElementContext, ElementData, ElementDef} from './types';
 
 export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
   readonly group: Group;
 
   #def: ElementDef<T>;
   #data: ElementData<T>;
-  #ports: PortInfo[] = [];
   #cleanups: (() => void)[] = [];
   #mounted = false;
 
@@ -32,10 +31,6 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
 
   get mounted(): boolean {
     return this.#mounted;
-  }
-
-  get ports(): ReadonlyArray<PortInfo> {
-    return this.#ports;
   }
 
   constructor(def: ElementDef<T>, data: ElementData<T>) {
@@ -79,37 +74,6 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
     this.#render();
   }
 
-  getPortPosition(portId: string): [number, number] | null {
-    const port = this.#ports.find(p => p.id === portId);
-    if (!port) return null;
-
-    const w = this.#data.width ?? 0;
-    const h = this.#data.height ?? 0;
-    const offset = port.offset ?? 0.5;
-    const x = this.#data.x;
-    const y = this.#data.y;
-
-    switch (port.position) {
-      case 'top':
-        return [x + w * offset, y];
-      case 'bottom':
-        return [x + w * offset, y + h];
-      case 'left':
-        return [x, y + h * offset];
-      case 'right':
-        return [x + w, y + h * offset];
-    }
-  }
-
-  getPortPositions(): Record<string, [number, number]> {
-    const result: Record<string, [number, number]> = {};
-    for (const port of this.#ports) {
-      const pos = this.getPortPosition(port.id);
-      if (pos) result[port.id] = pos;
-    }
-    return result;
-  }
-
   dispose(): void {
     this.#teardown();
     this.group.removeChildren();
@@ -129,16 +93,12 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
 
   /** 执行 render fn 填充 group */
   #render(): void {
-    this.#ports = [];
     this.#cleanups = [];
 
     const ctx: ElementContext = {
       group: this.group,
       width: this.#data.width ?? 0,
       height: this.#data.height ?? 0,
-      port: (id: string, position: PortPosition, offset?: number) => {
-        this.#ports.push({id, position, offset});
-      },
       onCleanup: (fn: () => void) => {
         this.#cleanups.push(fn);
       },
@@ -153,7 +113,6 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
       fn();
     }
     this.#cleanups = [];
-    this.#ports = [];
     this.group.removeChildren();
   }
 

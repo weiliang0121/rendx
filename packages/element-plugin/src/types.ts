@@ -8,23 +8,6 @@
 import type {Group} from 'rendx-engine';
 
 // ========================
-// Port（连接锚点）
-// ========================
-
-/** 端口位置 — 四边 */
-export type PortPosition = 'top' | 'right' | 'bottom' | 'left';
-
-/** 端口定义 */
-export interface PortInfo {
-  /** 端口唯一标识 */
-  id: string;
-  /** 所在边 */
-  position: PortPosition;
-  /** 在边上的偏移量 (0–1)，默认 0.5（居中） */
-  offset?: number;
-}
-
-// ========================
 // Element Base Data
 // ========================
 
@@ -58,7 +41,6 @@ export type ElementData<T = Record<string, unknown>> = ElementBase & T;
  * ctx 提供：
  * - group: 已创建好的 Group 容器（translate 已设置）
  * - width / height: 元素尺寸
- * - port(): 声明端口
  * - onCleanup(): 注册清理回调
  */
 export interface ElementContext {
@@ -68,8 +50,6 @@ export interface ElementContext {
   readonly width: number;
   /** 元素高度 */
   readonly height: number;
-  /** 声明一个端口 */
-  port(id: string, position: PortPosition, offset?: number): void;
   /** 注册清理回调（update/dispose 时调用） */
   onCleanup(fn: () => void): void;
 }
@@ -113,26 +93,12 @@ export interface Element<T = Record<string, unknown>> {
   readonly group: Group;
   /** 是否已挂载到 scene */
   readonly mounted: boolean;
-  /** 当前端口列表 */
-  readonly ports: ReadonlyArray<PortInfo>;
 
   /**
    * 更新数据 — 合并 partial → 清空 children → 重跑 render fn。
    * 位置变化只更新 translate，不重建子树。
    */
   update(partial: Partial<ElementData<T>>): void;
-
-  /**
-   * 获取端口的世界坐标。
-   * @returns [x, y] 或 null（端口不存在时）
-   */
-  getPortPosition(portId: string): [number, number] | null;
-
-  /**
-   * 获取所有端口的世界坐标。
-   * @returns Record<portId, [x, y]>
-   */
-  getPortPositions(): Record<string, [number, number]>;
 
   /** 销毁元素（清理回调 + 移除 group children + 从 scene 移除） */
   dispose(): void;

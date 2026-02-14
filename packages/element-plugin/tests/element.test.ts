@@ -41,9 +41,6 @@ const Card = createElement<CardData>((ctx, data) => {
   label.shape.from(data.title, ctx.width / 2, ctx.height / 2);
   label.name = '__title__';
   ctx.group.add(label);
-
-  ctx.port('in', 'left');
-  ctx.port('out', 'right');
 });
 
 interface ListData {
@@ -72,9 +69,6 @@ const ListNode = createElement<ListData>((ctx, data) => {
     t.shape.from(row.label, 20, y);
     t.name = `__row-${row.id}__`;
     ctx.group.add(t);
-
-    ctx.port(`${row.id}:in`, 'left', y / totalHeight);
-    ctx.port(`${row.id}:out`, 'right', y / totalHeight);
   });
 });
 
@@ -139,13 +133,6 @@ describe('Element 实例', () => {
       expect(el.group.children).toHaveLength(2);
       expect(el.group.find('__bg__')).toBeDefined();
       expect(el.group.find('__title__')).toBeDefined();
-    });
-
-    it('render fn 可声明端口', () => {
-      const el = graph.add('card', {id: 'c1', x: 0, y: 0, width: 200, height: 80, title: 'Ports'});
-      expect(el.ports).toHaveLength(2);
-      expect(el.ports[0].id).toBe('in');
-      expect(el.ports[1].id).toBe('out');
     });
 
     it('group 挂载到 scene', () => {
@@ -219,85 +206,6 @@ describe('Element 实例', () => {
       expect(cleanup).not.toHaveBeenCalled();
       el.update({val: 2});
       expect(cleanup).toHaveBeenCalledOnce();
-    });
-
-    it('update 后端口重新收集', () => {
-      const el = graph.add('list', {
-        id: 'l1',
-        x: 0,
-        y: 0,
-        width: 200,
-        header: 'Test',
-        rows: [{id: 'a', label: 'A'}],
-      });
-      expect(el.ports).toHaveLength(2);
-
-      el.update({
-        rows: [
-          {id: 'a', label: 'A'},
-          {id: 'b', label: 'B'},
-        ],
-      });
-      expect(el.ports).toHaveLength(4);
-    });
-  });
-
-  // ========================
-  // 端口
-  // ========================
-  describe('端口', () => {
-    it('left 端口坐标', () => {
-      const el = graph.add('card', {id: 'c1', x: 100, y: 100, width: 200, height: 80, title: 'Port'});
-      const pos = el.getPortPosition('in');
-      expect(pos).toEqual([100, 140]); // x, y + h * 0.5
-    });
-
-    it('right 端口坐标', () => {
-      const el = graph.add('card', {id: 'c1', x: 100, y: 100, width: 200, height: 80, title: 'Port'});
-      const pos = el.getPortPosition('out');
-      expect(pos).toEqual([300, 140]); // x + w, y + h * 0.5
-    });
-
-    it('自定义 offset 端口', () => {
-      const el = graph.add('list', {
-        id: 'l1',
-        x: 100,
-        y: 100,
-        width: 200,
-        header: 'H',
-        rows: [
-          {id: 'a', label: 'A'},
-          {id: 'b', label: 'B'},
-        ],
-      });
-      // row a: y = 30 (header) + 15 (row center) = 45 out of totalHeight=90
-      const aIn = el.getPortPosition('a:in');
-      expect(aIn).not.toBeNull();
-      expect(aIn![0]).toBe(100); // left edge
-
-      const bOut = el.getPortPosition('b:out');
-      expect(bOut).not.toBeNull();
-      expect(bOut![0]).toBe(300); // right edge
-    });
-
-    it('不存在端口返回 null', () => {
-      const el = graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
-      expect(el.getPortPosition('bogus')).toBeNull();
-    });
-
-    it('getPortPositions 返回全部端口', () => {
-      const el = graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
-      const all = el.getPortPositions();
-      expect(Object.keys(all)).toHaveLength(2);
-      expect(all['in']).toBeDefined();
-      expect(all['out']).toBeDefined();
-    });
-
-    it('update 位置后端口坐标跟随', () => {
-      const el = graph.add('card', {id: 'c1', x: 0, y: 0, width: 100, height: 60, title: 'A'});
-      expect(el.getPortPosition('out')).toEqual([100, 30]);
-      el.update({x: 200, y: 100});
-      expect(el.getPortPosition('out')).toEqual([300, 130]);
     });
   });
 
@@ -441,7 +349,6 @@ describe('Element 实例', () => {
 
       const list = graph.get<ListData>('l1')!;
       expect(list.data.header).toBe('List');
-      expect(list.ports).toHaveLength(4);
     });
 
     it('update 不影响其他元素', () => {
@@ -468,12 +375,10 @@ describe('Element 实例', () => {
 
       // Read
       expect(el.data.title).toBe('Start');
-      expect(el.getPortPosition('in')).toEqual([0, 40]);
 
       // Update
       el.update({x: 100, title: 'Updated'});
       expect(el.data.title).toBe('Updated');
-      expect(el.getPortPosition('in')).toEqual([100, 40]);
 
       // Delete
       graph.remove('c1');
@@ -521,12 +426,6 @@ describe('Element 实例', () => {
       expect(el.group.find('__row-in1__')).toBeDefined();
       expect(el.group.find('__row-in2__')).toBeDefined();
       expect(el.group.find('__row-in3__')).toBeDefined();
-
-      // 端口正确
-      expect(el.ports).toHaveLength(6);
-      const in1Left = el.getPortPosition('in1:in');
-      expect(in1Left).not.toBeNull();
-      expect(in1Left![0]).toBe(50); // left edge = x
     });
   });
 });

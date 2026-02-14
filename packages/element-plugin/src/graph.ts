@@ -58,7 +58,7 @@ export class GraphPlugin implements Plugin {
    * @param def - createElement() 返回的定义
    */
   register<T>(name: string, def: ElementDef<T>): this {
-    this.#defs.set(name, def);
+    this.#defs.set(name, def as ElementDef<Record<string, unknown>>);
     return this;
   }
 
@@ -97,7 +97,7 @@ export class GraphPlugin implements Plugin {
     el._setMounted(true);
 
     // 跟踪
-    this.#elements.set(data.id, el);
+    this.#elements.set(data.id, el as ElementImpl<Record<string, unknown>>);
     this.#syncState();
     this.#app.bus.emit('graph:added');
 

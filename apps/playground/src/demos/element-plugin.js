@@ -29,8 +29,16 @@ const Card = createElement((ctx, data) => {
     ctx.group.add(label);
   }
 
-  ctx.port('in', 'left');
-  ctx.port('out', 'right');
+  // 左侧端口小方块
+  const portSize = 8;
+  const leftPort = Node.create('rect', {fill: data.borderColor ?? '#333333'});
+  leftPort.shape.from(-portSize / 2, ctx.height / 2 - portSize / 2, portSize, portSize);
+  ctx.group.add(leftPort);
+
+  // 右侧端口小方块
+  const rightPort = Node.create('rect', {fill: data.borderColor ?? '#333333'});
+  rightPort.shape.from(ctx.width - portSize / 2, ctx.height / 2 - portSize / 2, portSize, portSize);
+  ctx.group.add(rightPort);
 });
 
 // ListNode: 带标题和多行的复合节点
@@ -102,10 +110,6 @@ const ListNode = createElement((ctx, data) => {
     const rightPort = Node.create('rect', {fill: themeColor});
     rightPort.shape.from(w - portSize / 2, centerY - portSize / 2, portSize, portSize);
     ctx.group.add(rightPort);
-
-    // 声明端口
-    ctx.port(`${row.id}:in`, 'left', centerY / totalHeight);
-    ctx.port(`${row.id}:out`, 'right', centerY / totalHeight);
   });
 });
 
@@ -161,26 +165,39 @@ const agg = graph.add('card', {
 
 // ── 4. 连接线 ──
 
-function drawConnection(fromEl, fromPortId, toEl, toPortId, color) {
-  const from = fromEl.getPortPosition(fromPortId);
-  const to = toEl.getPortPosition(toPortId);
-  if (!from || !to) return;
+// 用户自行计算端口坐标（port 不再是框架内置概念）
+function getListNodePort(el, rowId, side) {
+  const d = el.data;
+  const rowHeight = 30;
+  const headerHeight = 32;
+  const rows = d.rows ?? [];
+  const idx = rows.findIndex(r => r.id === rowId);
+  if (idx < 0) return null;
+  const centerY = headerHeight + idx * rowHeight + rowHeight / 2;
+  const x = side === 'left' ? d.x : d.x + d.width;
+  return [x, d.y + centerY];
+}
 
+function getCardPort(el, side) {
+  const d = el.data;
+  const x = side === 'left' ? d.x : d.x + d.width;
+  return [x, d.y + d.height / 2];
+}
+
+function drawConnection(from, to, color) {
+  if (!from || !to) return;
   const dx = Math.abs(to[0] - from[0]) * 0.5;
   const path = Node.create('path', {stroke: color, strokeWidth: 2, fill: 'none', opacity: 0.7});
   path.shape.from(`M ${from[0]} ${from[1]} C ${from[0] + dx} ${from[1]}, ${to[0] - dx} ${to[1]}, ${to[0]} ${to[1]}`);
   app.scene.add(path);
 }
 
-drawConnection(qc, 'in1:out', proc, 'src:in', '#6e8efb');
-drawConnection(qc, 'in2:out', proc, 'filter:in', '#6e8efb');
-drawConnection(qc, 'in3:out', agg, 'in', '#51cf66');
-drawConnection(proc, 'output:out', agg, 'in', '#f59f00');
+drawConnection(getListNodePort(qc, 'in1', 'right'), getListNodePort(proc, 'src', 'left'), '#6e8efb');
+drawConnection(getListNodePort(qc, 'in2', 'right'), getListNodePort(proc, 'filter', 'left'), '#6e8efb');
+drawConnection(getListNodePort(qc, 'in3', 'right'), getCardPort(agg, 'left'), '#51cf66');
+drawConnection(getListNodePort(proc, 'output', 'right'), getCardPort(agg, 'left'), '#f59f00');
 
 app.render();
 
 console.log('Graph Plugin — createElement + graphPlugin demo');
 console.log('Elements:', graph.getIds());
-console.log('QueueControl ports:', qc.ports.length);
-console.log('DataProcessor ports:', proc.ports.length);
-console.log('Aggregator ports:', agg.ports.length);
