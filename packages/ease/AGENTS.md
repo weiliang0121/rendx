@@ -1,4 +1,4 @@
-# dye-ease
+# rendx-ease
 
 ## 概述
 缓动（easing）函数集合，为动画系统提供非线性时间映射。

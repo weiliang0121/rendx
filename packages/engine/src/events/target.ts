@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
 
-import {isStr} from 'dye-core';
+import {isStr} from 'rendx-core';
 
 import type {SimulatedEvent} from './event';
 import type {EventDispatcher} from './dispatcher';

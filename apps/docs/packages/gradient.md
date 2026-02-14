@@ -1,4 +1,4 @@
-# dye-gradient
+# rendx-gradient
 
 渐变效果的解析与创建，支持 Canvas 和 SVG 两种输出。
 

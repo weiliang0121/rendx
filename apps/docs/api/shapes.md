@@ -1,6 +1,6 @@
 # Shapes
 
-Dye 内置 14 种形状，全部通过 `Node.create(type, attrs)` 创建。
+Rendx 内置 14 种形状，全部通过 `Node.create(type, attrs)` 创建。
 
 ## 形状一览
 
@@ -38,7 +38,7 @@ const text = Node.create('text', {
   fontSize: 24,
   fontFamily: 'sans-serif'
 });
-text.shape.from(100, 50, 'Hello Dye!');
+text.shape.from(100, 50, 'Hello Rendx!');
 
 // 线段
 const line = Node.create('line', { stroke: '#999', strokeWidth: 2 });

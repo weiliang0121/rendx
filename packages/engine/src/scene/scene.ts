@@ -2,7 +2,7 @@ import {mat2d, vec2} from 'gl-matrix';
 
 import {Graphics} from '../core/graphics';
 
-import type {Mat2d, Point} from 'dye-core';
+import type {Mat2d, Point} from 'rendx-core';
 
 import type {Node} from './node';
 import type {Layer} from './layer';

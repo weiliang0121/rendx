@@ -1,12 +1,12 @@
 {
-  "name": "dye-dom",
+  "name": "rendx-dom",
   "version": "0.0.1",
   "description": "DOM and SVG element manipulation utilities",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",
@@ -34,8 +34,8 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "dye-bounding": "workspace:^",
-    "dye-core": "workspace:^"
+    "rendx-bounding": "workspace:^",
+    "rendx-core": "workspace:^"
   },
   "sideEffects": false,
   "files": [

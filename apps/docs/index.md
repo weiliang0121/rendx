@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: Dye
+  name: Rendx
   text: 轻量级 2D 可视化渲染引擎
   tagline: 基于 TypeScript 的高性能场景图引擎，支持 Canvas2D 和 SVG 双渲染后端
   actions:

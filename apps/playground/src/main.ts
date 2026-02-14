@@ -126,11 +126,11 @@ async function runCode() {
 
   try {
     // Dynamic import the engine so user code can reference it
-    const engine = await import('dye-engine');
+    const engine = await import('rendx-engine');
 
     // Create a module blob with the user's code
     // Replace import statements to inject the engine module
-    const wrappedCode = code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]@dye\/engine['"]\s*;?/g, 'const {$1} = __dye_engine__;').replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]@dye\/engine['"]\s*;?/g, 'const $1 = __dye_engine__;');
+    const wrappedCode = code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-engine['"]\s*;?/g, 'const {$1} = __rendx_engine__;').replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-engine['"]\s*;?/g, 'const $1 = __rendx_engine__;');
 
     // Provide container element
     const containerEl = document.createElement('div');
@@ -139,7 +139,7 @@ async function runCode() {
 
     // Execute using Function constructor (safer than eval, same origin)
     const fn = new Function(
-      '__dye_engine__',
+      '__rendx_engine__',
       'container',
       `"use strict";
       ${wrappedCode}

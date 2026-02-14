@@ -1,5 +1,5 @@
-import type {Path} from 'dye-path';
-import {curveMap} from 'dye-curve';
+import type {Path} from 'rendx-path';
+import {curveMap} from 'rendx-curve';
 
 /** 面积图配置 */
 export interface AreaOptions {

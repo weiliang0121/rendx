@@ -2,35 +2,35 @@
 
 ## 包层级
 
-Dye 采用严格分层的 monorepo 架构，每一层只能依赖下层包：
+Rendx 采用严格分层的 monorepo 架构，每一层只能依赖下层包：
 
 ```
 Layer 0 (零依赖)
-├── dye-core         基础类型定义 + 工具函数集合
-├── dye-bounding     包围盒计算
-├── dye-path         SVG 路径构建器
-└── dye-ease         缓动函数
+├── rendx-core         基础类型定义 + 工具函数集合
+├── rendx-bounding     包围盒计算
+├── rendx-path         SVG 路径构建器
+└── rendx-ease         缓动函数
 
 Layer 1 (仅依赖 Layer 0)
-├── dye-dom          DOM/SVG 元素操作
-├── dye-curve        曲线插值算法
+├── rendx-dom          DOM/SVG 元素操作
+├── rendx-curve        曲线插值算法
 
 Layer 2 (依赖 Layer 0-1)
-├── dye-interpolate  插值器（数值、颜色、向量、矩阵）
-├── dye-shape        形状生成器
-└── dye-gradient     渐变解析与生成
+├── rendx-interpolate  插值器（数值、颜色、向量、矩阵）
+├── rendx-shape        形状生成器
+└── rendx-gradient     渐变解析与生成
 
 Layer 3 (依赖 Layer 0-2)
-├── dye-canvas       Canvas2D 渲染器实现
-└── dye-svg          SVG 渲染器实现
+├── rendx-canvas       Canvas2D 渲染器实现
+└── rendx-svg          SVG 渲染器实现
 
 Layer 4 (顶层)
-└── dye-engine       场景图引擎（整合所有包）
+└── rendx-engine       场景图引擎（整合所有包）
 
 插件
-├── dye-grid-plugin     网格插件
-├── dye-history-plugin  历史记录插件
-└── dye-minimap-plugin  小地图插件
+├── rendx-grid-plugin     网格插件
+├── rendx-history-plugin  历史记录插件
+└── rendx-minimap-plugin  小地图插件
 ```
 
 ## 渲染管线

@@ -1,11 +1,11 @@
-# dye-bounding
+# rendx-bounding
 
 轴对齐包围盒（AABB）的计算与操作，是形状碰撞检测、布局计算的基础。
 
 ## BoundingBox
 
 ```typescript
-import { BoundingBox } from 'dye-bounding';
+import { BoundingBox } from 'rendx-bounding';
 
 // 创建
 const box = BoundingBox.fromRect(10, 20, 100, 80);

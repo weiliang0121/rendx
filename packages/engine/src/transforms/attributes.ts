@@ -1,8 +1,8 @@
-import {interpolateColor} from 'dye-interpolate';
+import {interpolateColor} from 'rendx-interpolate';
 
 import {BaseTransform} from './base';
 
-import type {AO} from 'dye-core';
+import type {AO} from 'rendx-core';
 
 interface TransformAttrs {
   opacity?: [number, number];

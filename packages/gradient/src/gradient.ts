@@ -1,6 +1,6 @@
-import {setSVGAttrs, createSvgEl} from 'dye-dom';
+import {setSVGAttrs, createSvgEl} from 'rendx-dom';
 
-import type {AO, GradientType, GradientStops, GradientOptions} from 'dye-core';
+import type {AO, GradientType, GradientStops, GradientOptions} from 'rendx-core';
 
 // ── DSL 解析 ─────────────────────────────────────────
 

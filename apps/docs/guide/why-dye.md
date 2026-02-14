@@ -1,4 +1,4 @@
-# 为什么选择 Dye
+# 为什么选择 Rendx
 
 ## 背景
 
@@ -11,20 +11,20 @@
 - **AntV/G** — 功能全面，但追求 DOM/CSS 兼容导致架构过重，每个节点的创建和更新成本高
 - **ZRender** — ECharts 的底层，但与 ECharts 耦合深，独立使用文档匮乏
 
-Dye 的出发点很简单：**用最小的代码体积，覆盖 Canvas 2D 可视化场景的核心能力。**
+Rendx 的出发点很简单：**用最小的代码体积，覆盖 Canvas 2D 可视化场景的核心能力。**
 
 ## 设计哲学
 
 ### 1. 够用就好，不做错误抽象
 
-Dye 不会把 Canvas 包装成 DOM。不提供 `querySelector`、不模拟 CSS 继承、不引入依赖注入容器。
+Rendx 不会把 Canvas 包装成 DOM。不提供 `querySelector`、不模拟 CSS 继承、不引入依赖注入容器。
 
 这些"看起来方便"的抽象，在实际可视化场景中往往带来更多问题：
 - CSS 属性计算让每个节点变重 3-5 倍
 - DOM 模拟 API 给人"可以插入 React 组件"的错觉，但实际做不好
 - DI 容器让调试链路变得不透明
 
-Dye 直接暴露图形编程原语：`Node.create('circle', { fill: '#f00' })` — 没有中间层。
+Rendx 直接暴露图形编程原语：`Node.create('circle', { fill: '#f00' })` — 没有中间层。
 
 ### 2. 分层不分家
 
@@ -36,7 +36,7 @@ Layer 3: canvas / svg                       (渲染器实现)
 Layer 4: engine                             (场景图引擎)
 ```
 
-12 个包，每个包职责单一，严格按层级依赖。你可以只用 `dye-path` 生成 SVG 路径字符串，不引入任何渲染逻辑；也可以只用 `dye-shape` + `dye-canvas` 做轻量绑定，跳过场景图。
+12 个包，每个包职责单一，严格按层级依赖。你可以只用 `rendx-path` 生成 SVG 路径字符串，不引入任何渲染逻辑；也可以只用 `rendx-shape` + `rendx-canvas` 做轻量绑定，跳过场景图。
 
 ### 3. 性能来自正确的架构，而非过度优化
 
@@ -51,9 +51,9 @@ Layer 4: engine                             (场景图引擎)
 
 Canvas 2D 适合 2000-5000 个节点的场景。超过这个量级，正确做法是换 WebGL 引擎（如 PixiJS），而不是在 Canvas 2D 上硬优化。
 
-Dye 不提供 WebGL 后端，这是有意的取舍。与其做一个"什么都能，什么都不精"的引擎，不如在 Canvas 2D 这个精确区间做到极致的效率比。
+Rendx 不提供 WebGL 后端，这是有意的取舍。与其做一个"什么都能，什么都不精"的引擎，不如在 Canvas 2D 这个精确区间做到极致的效率比。
 
-同理，Dye 不做滤镜、不做阴影混合、不做富文本编辑 — 这些在图表/图编辑场景中使用率极低，但实现成本极高。
+同理，Rendx 不做滤镜、不做阴影混合、不做富文本编辑 — 这些在图表/图编辑场景中使用率极低，但实现成本极高。
 
 ## 横向对比
 
@@ -61,18 +61,18 @@ Dye 不提供 WebGL 后端，这是有意的取舍。与其做一个"什么都�
 
 | 引擎 | 源码行数 | 核心能力覆盖 |
 |------|---------|-------------|
-| Dye | ~7,800 行 | 场景图 + 双渲染后端 + 动画 + 事件 + 序列化 + 插件 |
+| Rendx | ~7,800 行 | 场景图 + 双渲染后端 + 动画 + 事件 + 序列化 + 插件 |
 | Konva | ~30,000 行 | 场景图 + Canvas + 动画 + 事件 |
 | ZRender | ~40,000 行 | 场景图 + Canvas/SVG + 动画 + 事件 |
 | AntV/G | ~50,000+ 行 | 场景图 + Canvas/SVG/WebGL + CSS 兼容 + 动画 |
 | Fabric.js | ~60,000 行 | Canvas + 对象编辑 + 序列化 + SVG 导出 |
 | PixiJS | ~100,000+ 行 | WebGL/WebGPU + Canvas 回退 + 动画 + 滤镜 |
 
-Dye 用 **不到 1/5 的代码量** 实现了同类引擎 **60-70% 的核心渲染能力**。
+Rendx 用 **不到 1/5 的代码量** 实现了同类引擎 **60-70% 的核心渲染能力**。
 
 ### 功能对比
 
-| 能力 | Dye | Konva | AntV/G | PixiJS |
+| 能力 | Rendx | Konva | AntV/G | PixiJS |
 |------|-----|-------|--------|--------|
 | Canvas 2D | ✅ | ✅ | ✅ | ✅ 回退 |
 | SVG | ✅ | ❌ | ✅ | ❌ |
@@ -89,7 +89,7 @@ Dye 用 **不到 1/5 的代码量** 实现了同类引擎 **60-70% 的核心渲�
 
 ### 事件系统
 
-Dye 实现了完整的 **W3C 三阶段事件模型**（capture → target → bubble）。这在轻量级 Canvas 引擎中极为少见 — Konva 只有 bubble，Fabric.js 只有 target。
+Rendx 实现了完整的 **W3C 三阶段事件模型**（capture → target → bubble）。这在轻量级 Canvas 引擎中极为少见 — Konva 只有 bubble，Fabric.js 只有 target。
 
 ```js
 // 捕获阶段
@@ -104,13 +104,13 @@ e.composedPath(); // [target, inner, outer, scene]
 
 ### 动画系统
 
-Dye 内置 5 种 Transform 子类，覆盖从几何变换到数据可视化的动画需求：
+Rendx 内置 5 种 Transform 子类，覆盖从几何变换到数据可视化的动画需求：
 
 | Transform | 用途 | 其他引擎 |
 |-----------|------|---------|
 | `GraphicsTransform` | translate / rotate / scale | 各引擎均有 |
 | `AttributeTransform` | opacity / fill / stroke 插值 | Konva Tween / G animate |
-| `ClipBoxTransform` | 裁剪框揭露动效 (lr/rl/tb/bt) | **Dye 独有** |
+| `ClipBoxTransform` | 裁剪框揭露动效 (lr/rl/tb/bt) | **Rendx 独有** |
 | `ArcTransform` | 弧线角度动画 | 需手动实现 |
 | `SectorTransform` | 扇形角度 + 半径动画 | 需手动实现 |
 
@@ -118,7 +118,7 @@ Dye 内置 5 种 Transform 子类，覆盖从几何变换到数据可视化的�
 
 ## 适用场景
 
-Dye 最适合以下场景：
+Rendx 最适合以下场景：
 
 | 场景 | 说明 |
 |------|------|
@@ -139,8 +139,8 @@ Dye 最适合以下场景：
 
 ## 总结
 
-Dye 不追求"大而全"。它的核心价值是：
+Rendx 不追求"大而全"。它的核心价值是：
 
 > **在 Canvas 2D 可视化这个精确区间，以最小的体积和最清晰的架构，提供生产可用的渲染能力。**
 
-如果你的项目是图表、图编辑、数据表格等典型 2D 可视化场景，节点数在 5000 以内，Dye 会是一个轻量、高效、易于理解的选择。
+如果你的项目是图表、图编辑、数据表格等典型 2D 可视化场景，节点数在 5000 以内，Rendx 会是一个轻量、高效、易于理解的选择。

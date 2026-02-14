@@ -1,4 +1,4 @@
-# dye-path
+# rendx-path
 
 ## 概述
 SVG 路径字符串构建器。所有几何形状最终通过 `Path` 类生成路径数据（SVG `d` 属性），是形状系统的底层基础设施。
@@ -53,12 +53,12 @@ src/
 ## 设计要点
 - **链式调用**：所有路径命令方法返回 `this`（`clear()` 除外）
 - **输出格式**：命令字母紧接首个数字，参数间空格分隔，末尾有尾随空格，如 `M0 0 L100 0 L100 100 Z `
-- **零依赖**：Layer 0 包，不依赖任何其他 `dye-*` 包
-- **Path 注入**：作为 `dye-shape` 和 `dye-curve` 的输出载体，形状生成器接收外部 Path 实例写入命令
+- **零依赖**：Layer 0 包，不依赖任何其他 `rendx-*` 包
+- **Path 注入**：作为 `rendx-shape` 和 `rendx-curve` 的输出载体，形状生成器接收外部 Path 实例写入命令
 
 ## 典型用法
 ```typescript
-import { Path } from 'dye-path';
+import { Path } from 'rendx-path';
 
 const path = new Path();
 path.M(0, 0).L(100, 0).L(100, 100).Z();

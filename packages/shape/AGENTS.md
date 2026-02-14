@@ -1,10 +1,10 @@
-# dye-shape
+# rendx-shape
 
 ## 概述
-2D 几何形状生成器集合。每个形状函数接收 `Path` 实例和配置选项对象，将 SVG 路径命令写入 Path。是 `dye-engine` 中所有图形节点的几何数据来源。
+2D 几何形状生成器集合。每个形状函数接收 `Path` 实例和配置选项对象，将 SVG 路径命令写入 Path。是 `rendx-engine` 中所有图形节点的几何数据来源。
 
 ## 依赖层级
-Layer 2（依赖 `dye-path`、`dye-curve`、`dye-core`）
+Layer 2（依赖 `rendx-path`、`rendx-curve`、`rendx-core`）
 
 ## 文件结构
 ```
@@ -144,7 +144,7 @@ interface LineOptions {
 }
 createLine(path: Path, options: LineOptions): void
 ```
-通过 `dye-curve` 的 `curveMap[curve]` 进行插值。
+通过 `rendx-curve` 的 `curveMap[curve]` 进行插值。
 
 ### SegmentLineOptions → `createSegmentLine`
 ```typescript
@@ -264,5 +264,5 @@ createIndicatorBox(path: Path, options: IndicatorBoxOptions): void
 - **Path 注入模式**：所有形状函数接收外部 `Path` 实例，不内部创建（box 除外，会先 `clear()`）
 - **选项对象模式**：所有函数第二参数为 Options 接口，类型安全
 - **自动降级**：满圆弧线/扇形自动降级为 circle/ring
-- **曲线插值**：折线/面积通过 `dye-curve` 的 `curveMap` 支持多种平滑模式
+- **曲线插值**：折线/面积通过 `rendx-curve` 的 `curveMap` 支持多种平滑模式
 - **圆角截断**：rx/ry 和 rc 都有最大值限制，不会超出形状边界

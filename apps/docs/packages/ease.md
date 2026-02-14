@@ -1,4 +1,4 @@
-# dye-ease
+# rendx-ease
 
 缓动函数集合，为动画系统提供非线性时间映射。
 
@@ -28,7 +28,7 @@ type Ease = (t: number) => number;
 ## 注册表
 
 ```typescript
-import { ease, easeMap } from 'dye-ease';
+import { ease, easeMap } from 'rendx-ease';
 
 const fn = ease('cubicInOut'); // (t: number) => number
 ```

@@ -1,10 +1,10 @@
-# dye-interpolate
+# rendx-interpolate
 
 ## 概述
 插值器集合，支持数值、颜色、向量、矩阵等多种数据类型的平滑过渡。是动画系统和数据映射的核心。
 
 ## 依赖层级
-Layer 2（依赖 `gl-matrix`、`dye-core`）
+Layer 2（依赖 `gl-matrix`、`rendx-core`）
 
 ## 文件结构
 按数据类型分类：
@@ -53,7 +53,7 @@ Layer 2（依赖 `gl-matrix`、`dye-core`）
 
 ## 典型用法
 ```typescript
-import { lerp, interpolateColor } from 'dye-interpolate';
+import { lerp, interpolateColor } from 'rendx-interpolate';
 
 const fn = lerp(0, 100);
 fn(0.5); // 50

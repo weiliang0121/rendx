@@ -1,4 +1,4 @@
-# dye-shape
+# rendx-shape
 
 2D 几何形状生成器集合。每个形状函数接收 `Path` 实例和配置选项，将 SVG 路径命令写入 Path。
 

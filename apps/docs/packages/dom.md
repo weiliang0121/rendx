@@ -1,4 +1,4 @@
-# dye-dom
+# rendx-dom
 
 DOM / SVG 元素操作工具集与文本测量功能。
 
@@ -16,7 +16,7 @@ DOM / SVG 元素操作工具集与文本测量功能。
 ## 文本测量
 
 ```typescript
-import { getTextBoundingBox } from 'dye-dom';
+import { getTextBoundingBox } from 'rendx-dom';
 
 const box = getTextBoundingBox(
   { fontSize: 14, fontFamily: 'sans-serif' },

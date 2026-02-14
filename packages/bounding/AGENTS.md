@@ -1,4 +1,4 @@
-# dye-bounding
+# rendx-bounding
 
 ## 概述
 提供轴对齐包围盒（AABB）的计算与操作。是形状碰撞检测、布局计算的基础。

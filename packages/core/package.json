@@ -1,12 +1,12 @@
 {
-  "name": "dye-core",
+  "name": "rendx-core",
   "version": "0.0.1",
-  "description": "Core types and utility functions for Dye rendering engine",
+  "description": "Core types and utility functions for Rendx rendering engine",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",

@@ -1,12 +1,12 @@
 {
-  "name": "dye-shape",
+  "name": "rendx-shape",
   "version": "0.0.1",
   "description": "Shape generators (circle, rect, arc, sector, area, polygon, symbol)",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",
@@ -34,9 +34,9 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "dye-curve": "workspace:^",
-    "dye-path": "workspace:^",
-    "dye-core": "workspace:^"
+    "rendx-curve": "workspace:^",
+    "rendx-path": "workspace:^",
+    "rendx-core": "workspace:^"
   },
   "sideEffects": false,
   "files": [

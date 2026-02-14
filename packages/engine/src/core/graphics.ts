@@ -1,11 +1,11 @@
 import {mat2d, vec2} from 'gl-matrix';
 
-import {uid8, uniqueArray, isNil} from 'dye-core';
+import {uid8, uniqueArray, isNil} from 'rendx-core';
 
 import {GraphicsTransform} from '../transforms';
 import {EventTarget} from '../events/target';
 
-import type {AO, GF, Mat2d} from 'dye-core';
+import type {AO, GF, Mat2d} from 'rendx-core';
 
 /**
  * 场景图所有节点的基类。提供树操作、变换、脏标记、动画驱动等核心能力。

@@ -1,11 +1,11 @@
-# dye-path
+# rendx-path
 
 SVG 路径字符串构建器。所有几何形状最终通过 `Path` 类生成路径数据。
 
 ## Path
 
 ```typescript
-import { Path } from 'dye-path';
+import { Path } from 'rendx-path';
 
 const p = new Path();
 p.M(10, 10).L(100, 10).L(100, 100).Z();

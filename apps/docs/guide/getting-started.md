@@ -3,15 +3,15 @@
 ## 安装
 
 ```bash
-pnpm add dye-engine
+pnpm add rendx-engine
 ```
 
-`dye-engine` 是 Dye 的顶层包，它会自动引入所有必要的底层依赖（`dye-canvas`、`dye-shape`、`dye-path` 等）。
+`rendx-engine` 是 Rendx 的顶层包，它会自动引入所有必要的底层依赖（`rendx-canvas`、`rendx-shape`、`rendx-path` 等）。
 
 ## 基本用法
 
 ```typescript
-import { App, Node } from 'dye-engine';
+import { App, Node } from 'rendx-engine';
 
 // 1. 创建引擎实例
 const app = new App({ width: 800, height: 600 });
@@ -37,7 +37,7 @@ app.render();
 ## 使用动画
 
 ```typescript
-import { App, Node } from 'dye-engine';
+import { App, Node } from 'rendx-engine';
 
 const app = new App({ width: 800, height: 600 });
 app.mount(document.getElementById('container')!);

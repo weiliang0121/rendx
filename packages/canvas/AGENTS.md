@@ -1,4 +1,4 @@
-# dye-canvas
+# rendx-canvas
 
 ## 概述
 
@@ -6,7 +6,7 @@ Canvas2D 渲染器实现，实现 `IGraphicsRenderer` 接口。
 
 ## 依赖
 
-Layer 3 — `dye-gradient`, `dye-dom`, `dye-core`
+Layer 3 — `rendx-gradient`, `rendx-dom`, `rendx-core`
 
 ## 导出
 
@@ -27,7 +27,7 @@ new CanvasRenderer(size?: Size) // 默认 300×150
 ```
 
 - 自动处理 `devicePixelRatio` 缩放（高分屏支持）
-- 创建 `<canvas>` 元素（通过 `dye-dom` 的 `createCanvasEl`）
+- 创建 `<canvas>` 元素（通过 `rendx-dom` 的 `createCanvasEl`）
 
 ### 生命周期方法
 
@@ -67,7 +67,7 @@ new CanvasRenderer(size?: Size) // 默认 300×150
 | `path(d)` | `new Path2D(d) → fill/stroke` |
 | `image(source,x,y,w,h)` | `ctx.drawImage`（仅 CanvasImageSource，字符串跳过） |
 | `clipPath(clipPath)` | `ctx.clip(new Path2D(path))` |
-| `gradient(options)` | 调用 `dye-gradient` 的 `createCanvasGradient` |
+| `gradient(options)` | 调用 `rendx-gradient` 的 `createCanvasGradient` |
 
 ## attributes.ts — 属性处理
 
@@ -91,7 +91,7 @@ new CanvasRenderer(size?: Size) // 默认 300×150
 | `strokeDasharray` | `setLineDash()` |
 | `strokeDashoffset` | `lineDashOffset` |
 | `globalCompositeOperation` | `globalCompositeOperation` |
-| `fontFamily/fontSize/fontStyle/fontWeight` | `ctx.font`（通过 `dye-dom` 的 `convertFontOptionsToCSS`） |
+| `fontFamily/fontSize/fontStyle/fontWeight` | `ctx.font`（通过 `rendx-dom` 的 `convertFontOptionsToCSS`） |
 | `textAnchor` | `textAlign`（start→left, middle→center, end→right） |
 | `dominantBaseline` | `textBaseline`（auto→alphabetic, middle→middle, hanging→hanging 等） |
 

@@ -1,12 +1,12 @@
 {
-  "name": "dye-interpolate",
+  "name": "rendx-interpolate",
   "version": "0.0.1",
   "description": "Interpolators for numbers, colors, vectors, and matrices",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "gl-matrix": "^3.4.4",
-    "dye-core": "workspace:^"
+    "rendx-core": "workspace:^"
   },
   "sideEffects": false,
   "files": [

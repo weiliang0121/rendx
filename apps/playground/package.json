@@ -1,5 +1,5 @@
 {
-  "name": "dye-playground",
+  "name": "rendx-playground",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "dye-engine": "workspace:^"
+    "rendx-engine": "workspace:^"
   },
   "devDependencies": {
     "monaco-editor": "^0.52.2",

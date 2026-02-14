@@ -54,7 +54,7 @@ node.shape.from(100, 200, 50); // cx, cy, r
 分组容器（type=2），使用方式：
 
 ```typescript
-import { Group, Node } from 'dye-engine';
+import { Group, Node } from 'rendx-engine';
 
 const group = new Group();
 group.translate(100, 100);

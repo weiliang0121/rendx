@@ -1,4 +1,4 @@
-# dye-svg
+# rendx-svg
 
 SVG 渲染器实现，实现 `IGraphicsRenderer` 接口，操作 SVG DOM 元素。
 

@@ -1,10 +1,10 @@
-# dye-dom
+# rendx-dom
 
 ## 概述
-DOM/SVG 元素操作工具集与文本测量功能。为 `dye-canvas`、`dye-svg`、`dye-gradient` 提供底层 DOM API 封装。
+DOM/SVG 元素操作工具集与文本测量功能。为 `rendx-canvas`、`rendx-svg`、`rendx-gradient` 提供底层 DOM API 封装。
 
 ## 依赖层级
-Layer 1（依赖 `dye-bounding`、`dye-core`）
+Layer 1（依赖 `rendx-bounding`、`rendx-core`）
 
 ## 文件结构
 ```
@@ -101,4 +101,4 @@ splitText(text: string, w: number, style: Partial<FontOptions>): string[]
 - **环境适配**：Canvas 测量依赖 `OffscreenCanvas`，Node.js/SSR 环境自动 fallback 到静态度量
 - **SVG 属性名转换**：通过白名单区分需保留驼峰的 SVG 属性（如 `gradientUnits`）和需转换的属性
 - **字体度量数据**：`fonts/` 目录下存储每个字符的宽度百分比数组 `[normal, bold, italic, boldItalic]`
-- **被依赖关系**：`dye-canvas`、`dye-svg`、`dye-gradient` 都依赖本包的元素操作和 SVG 工具函数
+- **被依赖关系**：`rendx-canvas`、`rendx-svg`、`rendx-gradient` 都依赖本包的元素操作和 SVG 工具函数

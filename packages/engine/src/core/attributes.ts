@@ -1,9 +1,9 @@
-import {uid8, isNil} from 'dye-core';
+import {uid8, isNil} from 'rendx-core';
 
 import {AttributeTransform, ClipBoxTransform} from '../transforms';
 
-import type {BoundingBox} from 'dye-bounding';
-import type {ClipPath, GradientOptions, AO} from 'dye-core';
+import type {BoundingBox} from 'rendx-bounding';
+import type {ClipPath, GradientOptions, AO} from 'rendx-core';
 
 /**
  * 视觉属性容器，管理 fill/stroke/opacity/fontSize 等渲染属性。

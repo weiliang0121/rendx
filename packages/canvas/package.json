@@ -1,12 +1,12 @@
 {
-  "name": "dye-canvas",
+  "name": "rendx-canvas",
   "version": "0.0.1",
-  "description": "Canvas2D renderer implementation for Dye",
+  "description": "Canvas2D renderer implementation for Rendx",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",
@@ -34,13 +34,13 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "dye-gradient": "workspace:^",
-    "dye-dom": "workspace:^",
-    "dye-core": "workspace:^"
+    "rendx-gradient": "workspace:^",
+    "rendx-dom": "workspace:^",
+    "rendx-core": "workspace:^"
   },
   "devDependencies": {
-    "dye-shape": "workspace:^",
-    "dye-path": "workspace:^"
+    "rendx-shape": "workspace:^",
+    "rendx-path": "workspace:^"
   },
   "sideEffects": false,
   "files": [

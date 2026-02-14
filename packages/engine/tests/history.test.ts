@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 
-// Mock dye-canvas 和 dye-svg 避免 OffscreenCanvas 依赖
-vi.mock('dye-canvas', () => ({
+// Mock rendx-canvas 和 rendx-svg 避免 OffscreenCanvas 依赖
+vi.mock('rendx-canvas', () => ({
   CanvasRenderer: class {
     el = document.createElement('canvas');
     resize() {}
@@ -21,7 +21,7 @@ vi.mock('dye-canvas', () => ({
     image() {}
   },
 }));
-vi.mock('dye-svg', () => ({
+vi.mock('rendx-svg', () => ({
   SvgRenderer: class {
     el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     resize() {}

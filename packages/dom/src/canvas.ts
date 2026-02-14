@@ -1,4 +1,4 @@
-import {BoundingBox} from 'dye-bounding';
+import {BoundingBox} from 'rendx-bounding';
 
 const canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : null;
 const ctx = canvas?.getContext('2d') ?? null;

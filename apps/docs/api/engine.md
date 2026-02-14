@@ -1,11 +1,11 @@
 # App
 
-`App` 是 Dye 引擎的顶层控制器，负责场景、渲染层、事件和插件的统一管理。
+`App` 是 Rendx 引擎的顶层控制器，负责场景、渲染层、事件和插件的统一管理。
 
 ## 构造
 
 ```typescript
-import { App } from 'dye-engine';
+import { App } from 'rendx-engine';
 
 const app = new App({
   width: 800,

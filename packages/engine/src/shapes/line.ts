@@ -1,4 +1,4 @@
-import {BoundingBox} from 'dye-bounding';
+import {BoundingBox} from 'rendx-bounding';
 
 import {Shape} from '../core';
 

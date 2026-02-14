@@ -1,12 +1,12 @@
 import {mat2d, vec2} from 'gl-matrix';
 
-import {BoundingBox} from 'dye-bounding';
+import {BoundingBox} from 'rendx-bounding';
 import {Graphics, Shape, Attributes} from '../core';
 import {createShape} from '../shapes';
 
 import {isHit} from '../core/canvas-hit';
 
-import type {AO, Point} from 'dye-core';
+import type {AO, Point} from 'rendx-core';
 
 /**
  * 叶子节点（type=3），场景图中的可渲染单元。

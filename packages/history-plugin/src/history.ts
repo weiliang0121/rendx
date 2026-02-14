@@ -1,4 +1,4 @@
-import type {App, Plugin, DyeJSON} from 'dye-engine';
+import type {App, Plugin, DyeJSON} from 'rendx-engine';
 
 export interface HistoryPluginOptions {
   /** 最大历史步数，默认 50 */
@@ -119,7 +119,7 @@ class HistoryPlugin implements Plugin {
  *
  * @example
  * ```ts
- * import {historyPlugin} from 'dye-history-plugin';
+ * import {historyPlugin} from 'rendx-history-plugin';
  *
  * const app = new App({width: 800, height: 600});
  * app.mount(container);

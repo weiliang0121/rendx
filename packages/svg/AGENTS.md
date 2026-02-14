@@ -1,4 +1,4 @@
-# dye-svg
+# rendx-svg
 
 ## 概述
 
@@ -6,7 +6,7 @@ SVG 渲染器实现，实现 `IGraphicsRenderer` 接口，通过操作 SVG DOM �
 
 ## 依赖
 
-Layer 3 — `dye-gradient`, `dye-dom`, `dye-core`
+Layer 3 — `rendx-gradient`, `rendx-dom`, `rendx-core`
 
 ## 导出
 
@@ -81,12 +81,12 @@ new SvgRenderer(size?: Size) // 默认 300×150
 | `path(d)` | `<path d ...attrs>` |
 | `image(source,x,y,w,h)` | `<image href x y width height preserveAspectRatio="none">` |
 | `clipPath(clipPath)` | `<defs>` 中创建 `<clipPath id><path d></clipPath>` |
-| `gradient(options)` | `<defs>` 中创建 `<linearGradient>`/`<radialGradient>`（通过 `dye-gradient`） |
+| `gradient(options)` | `<defs>` 中创建 `<linearGradient>`/`<radialGradient>`（通过 `rendx-gradient`） |
 
 ## 设计要点
 
 - 每次 `clear()` 完全重建 `<g>` 结构（全量渲染，非增量 diff）
 - 通过 `#stack: SVGGElement[]` 管理 `<g>` 元素嵌套层级
 - 属性使用 SVG 原生命名（fill、stroke、font-size 等）
-- 不依赖 `dye-dom` 的文本测量（SVG 有原生文字排版能力）
-- 角度转换使用 `dye-core` 的 `r2d` 常量
+- 不依赖 `rendx-dom` 的文本测量（SVG 有原生文字排版能力）
+- 角度转换使用 `rendx-core` 的 `r2d` 常量

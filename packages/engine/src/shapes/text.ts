@@ -1,8 +1,8 @@
-import {BoundingBox} from 'dye-bounding';
+import {BoundingBox} from 'rendx-bounding';
 
 import {Shape} from '../core';
 
-import type {AO, Point} from 'dye-core';
+import type {AO, Point} from 'rendx-core';
 
 /**
  * 文本测量函数签名。
@@ -26,7 +26,7 @@ export class TextShape extends Shape {
    *
    * @example
    * ```ts
-   * import {getTextBoundingBox} from 'dye-dom';
+   * import {getTextBoundingBox} from 'rendx-dom';
    * TextShape.defaultMeasure = (text, attrs) =>
    *   getTextBoundingBox({fontSize: attrs.fontSize, fontFamily: attrs.fontFamily}, text);
    * ```

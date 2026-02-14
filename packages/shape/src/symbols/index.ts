@@ -1,4 +1,4 @@
-import {Path} from 'dye-path';
+import {Path} from 'rendx-path';
 import type {SymbolOptions, SymbolCreator} from './types';
 import {createCircleSymbol} from './circle';
 import {createCrossSymbol} from './cross';

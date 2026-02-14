@@ -1,4 +1,4 @@
-import type {Path} from 'dye-path';
+import type {Path} from 'rendx-path';
 import type {SymbolCreator} from './types';
 
 const createTriangle = (path: Path, cx: number, cy: number, r: number, points: [number, number][]) => {

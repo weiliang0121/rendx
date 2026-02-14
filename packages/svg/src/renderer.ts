@@ -1,9 +1,9 @@
-import {createSvgEl, getSvgElByTag, setSVGAttrs, setStyles} from 'dye-dom';
-import {createSVGGradient} from 'dye-gradient';
+import {createSvgEl, getSvgElByTag, setSVGAttrs, setStyles} from 'rendx-dom';
+import {createSVGGradient} from 'rendx-gradient';
 
-import {r2d} from 'dye-core';
+import {r2d} from 'rendx-core';
 
-import type {IGraphicsRenderer, ClipPath, GradientOptions, AO, Size} from 'dye-core';
+import type {IGraphicsRenderer, ClipPath, GradientOptions, AO, Size} from 'rendx-core';
 
 const DEFAULT_SIZE: Size = {width: 300, height: 150};
 

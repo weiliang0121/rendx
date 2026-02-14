@@ -4,7 +4,7 @@ import {EventObserver} from './events';
 import {serialize, deserialize} from './serialization';
 import {imageLoader} from './core/image-loader';
 
-import type {Mat2d} from 'dye-core';
+import type {Mat2d} from 'rendx-core';
 import type {RendererConfig} from './renderers/renderer';
 import type {DyeJSON} from './serialization';
 import type {Plugin} from './plugin';
@@ -16,7 +16,7 @@ export interface AppConfig extends RendererConfig {
 }
 
 /**
- * Dye 引擎顶层控制器，负责场景、渲染层、事件和插件的统一管理。
+ * Rendx 引擎顶层控制器，负责场景、渲染层、事件和插件的统一管理。
  *
  * @example
  * ```ts

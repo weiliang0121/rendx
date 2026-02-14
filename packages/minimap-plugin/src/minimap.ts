@@ -1,4 +1,4 @@
-import type {App, Plugin, Node} from 'dye-engine';
+import type {App, Plugin, Node} from 'rendx-engine';
 
 export interface MinimapPluginOptions {
   /** 小地图宽度（px），默认 150 */
@@ -49,7 +49,7 @@ class MinimapPlugin implements Plugin {
     const container = app.container;
     if (!container) {
       throw new Error(
-        '[dye-minimap-plugin] App must be mounted before calling use(). ' +
+        '[rendx-minimap-plugin] App must be mounted before calling use(). ' +
         'Call app.mount(el) first, then app.use(minimapPlugin(...)).',
       );
     }
@@ -104,7 +104,7 @@ class MinimapPlugin implements Plugin {
     wrapper.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('[dye-minimap-plugin] Could not get 2d context');
+    if (!ctx) throw new Error('[rendx-minimap-plugin] Could not get 2d context');
     ctx.scale(this.#ratio, this.#ratio);
 
     container.appendChild(wrapper);
@@ -270,7 +270,7 @@ class MinimapPlugin implements Plugin {
  *
  * @example
  * ```ts
- * import {minimapPlugin} from 'dye-minimap-plugin';
+ * import {minimapPlugin} from 'rendx-minimap-plugin';
  *
  * const app = new App({width: 800, height: 600});
  * app.mount(container);

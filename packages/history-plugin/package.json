@@ -1,12 +1,12 @@
 {
-  "name": "dye-history-plugin",
+  "name": "rendx-history-plugin",
   "version": "0.0.1",
-  "description": "Undo/redo history plugin for Dye engine",
+  "description": "Undo/redo history plugin for Rendx engine",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",
@@ -34,7 +34,7 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "dye-engine": "workspace:^"
+    "rendx-engine": "workspace:^"
   },
   "sideEffects": false,
   "files": [

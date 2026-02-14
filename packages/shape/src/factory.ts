@@ -1,4 +1,4 @@
-import type {Path} from 'dye-path';
+import type {Path} from 'rendx-path';
 
 import {createCircle, type CircleOptions, createRect, type RectOptions} from './primitives';
 import {createArc, type ArcOptions, createSector, type SectorOptions} from './polar';

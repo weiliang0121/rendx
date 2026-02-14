@@ -2,7 +2,7 @@
 
 ## 概述
 
-Dye 的动画系统通过 Transform 类族实现。每个 Transform 是一个状态机，驱动基于时间的插值。
+Rendx 的动画系统通过 Transform 类族实现。每个 Transform 是一个状态机，驱动基于时间的插值。
 
 ## 状态机
 
@@ -83,6 +83,6 @@ node.attrs.useClipBoxTransform()
 
 ## 缓动函数
 
-33 种内置缓动函数，来自 `dye-ease`：
+33 种内置缓动函数，来自 `rendx-ease`：
 
 `linear`, `quadIn/Out/InOut`, `cubicIn/Out/InOut`, `quartIn/Out/InOut`, `quintIn/Out/InOut`, `sineIn/Out/InOut`, `expIn/Out/InOut`, `circIn/Out/InOut`, `backIn/Out/InOut`, `elasticIn/Out/InOut`, `bounceIn/Out/InOut`

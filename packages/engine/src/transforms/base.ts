@@ -1,4 +1,4 @@
-import {easeMap} from 'dye-ease';
+import {easeMap} from 'rendx-ease';
 
 export type TransformStatus = 'start' | 'init' | 'waiting' | 'running' | 'last' | 'clear' | 'end';
 

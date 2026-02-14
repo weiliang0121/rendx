@@ -1,12 +1,12 @@
 {
-  "name": "dye-curve",
+  "name": "rendx-curve",
   "version": "0.0.1",
   "description": "Curve interpolation algorithms (linear, natural, bump, monotone, step)",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
   "keywords": [
-    "dye",
+    "rendx",
     "2d",
     "canvas",
     "rendering",
@@ -34,7 +34,7 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "dye-path": "workspace:^"
+    "rendx-path": "workspace:^"
   },
   "sideEffects": false,
   "files": [

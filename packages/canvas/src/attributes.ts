@@ -1,9 +1,9 @@
-import {isNone, isNil, isStr, isNum} from 'dye-core';
-import {convertFontOptionsToCSS} from 'dye-dom';
-import {createCanvasGradient} from 'dye-gradient';
+import {isNone, isNil, isStr, isNum} from 'rendx-core';
+import {convertFontOptionsToCSS} from 'rendx-dom';
+import {createCanvasGradient} from 'rendx-gradient';
 
-import type {FontOptions} from 'dye-dom';
-import type {ClipPath, GradientOptions, AO} from 'dye-core';
+import type {FontOptions} from 'rendx-dom';
+import type {ClipPath, GradientOptions, AO} from 'rendx-core';
 
 export type Gradients = Map<string, GradientOptions>;
 export type ClipPaths = Map<string, ClipPath>;

@@ -1,4 +1,4 @@
-import type {Path} from 'dye-path';
+import type {Path} from 'rendx-path';
 
 /** 曲线函数签名 */
 export type Curve = (path: Path, points: [number, number][], start?: boolean) => void;

@@ -1,8 +1,8 @@
-# Dye - 2D 可视化渲染引擎
+# Rendx - 2D 可视化渲染引擎
 
 ## 项目概述
 
-Dye 是一个基于 TypeScript 的 2D 可视化渲染引擎，采用 pnpm monorepo 架构。它提供从底层数学运算、形状生成到完整场景图管理的全栈 2D 渲染能力，同时支持 Canvas2D 和 SVG 两种渲染后端。
+Rendx 是一个基于 TypeScript 的 2D 可视化渲染引擎，采用 pnpm monorepo 架构。它提供从底层数学运算、形状生成到完整场景图管理的全栈 2D 渲染能力，同时支持 Canvas2D 和 SVG 两种渲染后端。
 
 ## 技术栈
 
@@ -19,37 +19,37 @@ Dye 是一个基于 TypeScript 的 2D 可视化渲染引擎，采用 pnpm monore
 
 ```
 Layer 0 (零依赖)
-├── dye-core         基础类型定义 + 工具函数集合
-├── dye-bounding     包围盒计算
-├── dye-path         SVG 路径构建器
-└── dye-ease         缓动函数
+├── rendx-core         基础类型定义 + 工具函数集合
+├── rendx-bounding     包围盒计算
+├── rendx-path         SVG 路径构建器
+└── rendx-ease         缓动函数
 
 Layer 1 (仅依赖 Layer 0)
-├── dye-dom          DOM/SVG 元素操作
-├── dye-curve        曲线插值算法
+├── rendx-dom          DOM/SVG 元素操作
+├── rendx-curve        曲线插值算法
 
 Layer 2 (依赖 Layer 0-1)
-├── dye-interpolate  插值器（数值、颜色、向量、矩阵）
-├── dye-shape        形状生成器
-└── dye-gradient     渐变解析与生成
+├── rendx-interpolate  插值器（数值、颜色、向量、矩阵）
+├── rendx-shape        形状生成器
+└── rendx-gradient     渐变解析与生成
 
 Layer 3 (依赖 Layer 0-2)
-├── dye-canvas       Canvas2D 渲染器实现
-└── dye-svg          SVG 渲染器实现
+├── rendx-canvas       Canvas2D 渲染器实现
+└── rendx-svg          SVG 渲染器实现
 
 Layer 4 (顶层)
-└── dye-engine       场景图引擎（整合所有包）
+└── rendx-engine       场景图引擎（整合所有包）
 
 插件
-├── dye-grid-plugin     网格插件
-├── dye-history-plugin  历史记录插件
-└── dye-minimap-plugin  小地图插件
+├── rendx-grid-plugin     网格插件
+├── rendx-history-plugin  历史记录插件
+└── rendx-minimap-plugin  小地图插件
 ```
 
 ## 快速上手
 
 ```typescript
-import { App, Node } from 'dye-engine';
+import { App, Node } from 'rendx-engine';
 
 // 1. 创建引擎
 const app = new App({ width: 800, height: 600 });
@@ -94,23 +94,23 @@ app.render(); // 静态渲染一帧
 
 | 包 | 文档位置 |
 |----|---------|
-| dye-engine | `packages/engine/AGENTS.md` |
-| dye-core | `packages/core/AGENTS.md` |
-| dye-bounding | `packages/bounding/AGENTS.md` |
-| dye-path | `packages/path/AGENTS.md` |
-| dye-shape | `packages/shape/AGENTS.md` |
-| dye-ease | `packages/ease/AGENTS.md` |
-| dye-curve | `packages/curve/AGENTS.md` |
-| dye-interpolate | `packages/interpolate/AGENTS.md` |
-| dye-canvas | `packages/canvas/AGENTS.md` |
-| dye-svg | `packages/svg/AGENTS.md` |
-| dye-gradient | `packages/gradient/AGENTS.md` |
-| dye-dom | `packages/dom/AGENTS.md` |
+| rendx-engine | `packages/engine/AGENTS.md` |
+| rendx-core | `packages/core/AGENTS.md` |
+| rendx-bounding | `packages/bounding/AGENTS.md` |
+| rendx-path | `packages/path/AGENTS.md` |
+| rendx-shape | `packages/shape/AGENTS.md` |
+| rendx-ease | `packages/ease/AGENTS.md` |
+| rendx-curve | `packages/curve/AGENTS.md` |
+| rendx-interpolate | `packages/interpolate/AGENTS.md` |
+| rendx-canvas | `packages/canvas/AGENTS.md` |
+| rendx-svg | `packages/svg/AGENTS.md` |
+| rendx-gradient | `packages/gradient/AGENTS.md` |
+| rendx-dom | `packages/dom/AGENTS.md` |
 
 ## 编码规范
 
 ### 命名
-- 包名：`dye-<name>`，全小写，无连字符
+- 包名：`rendx-<name>`，全小写，无连字符
 - 类名：PascalCase（`BoundingBox`、`CircleShape`）
 - 函数名：camelCase（`createCircle`、`interpolateColor`）
 - 工厂函数：`create` 前缀（`createShape`、`createLine`）
@@ -119,7 +119,7 @@ app.render(); // 静态渲染一帧
 
 ### 模块组织
 - 每个包入口为 `src/main.ts`，通过 `export * from './xxx'` 聚合导出
-- 依赖使用 `dye-` scope 前缀引用同仓库包
+- 依赖使用 `rendx-` scope 前缀引用同仓库包
 - 外部类型导入使用 `import type` 语法
 - 不使用 default export
 
@@ -133,7 +133,7 @@ app.render(); // 静态渲染一帧
 ### 构建输出
 - 入口: `src/main.ts`
 - 输出: `dist/main.js`（ESM）、`dist/main.cjs`（CJS）、`dist/main.d.ts`（类型）
-- 外部依赖: 所有 `dye-*` 包在 tsup 中标记为 external
+- 外部依赖: 所有 `rendx-*` 包在 tsup 中标记为 external
 
 ## 常用命令
 
@@ -162,7 +162,7 @@ type RGBA = [number, number, number, number]; // 颜色
 ## 开发注意事项
 
 1. **依赖层级**：添加包间依赖时严格遵循层级关系，不可产生循环依赖
-2. **外部化**：tsup 配置中所有 `dye-*` 包均为 external，不会被 bundle 进输出
+2. **外部化**：tsup 配置中所有 `rendx-*` 包均为 external，不会被 bundle 进输出
 3. **gl-matrix**：矩阵/向量运算统一使用 gl-matrix，不要引入其他数学库
 4. **浏览器 API**：`OffscreenCanvas`、`Path2D`、`requestAnimationFrame` 等 API 不可在 Node.js 环境使用，需注意 SSR 兼容
 5. **渲染器无状态**：`IGraphicsRenderer` 实现应保持渲染调用的无副作用性（除 DOM 操作外）

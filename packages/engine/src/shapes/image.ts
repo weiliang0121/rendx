@@ -1,9 +1,9 @@
-import {BoundingBox} from 'dye-bounding';
+import {BoundingBox} from 'rendx-bounding';
 
 import {Shape} from '../core';
 import {imageLoader} from '../core/image-loader';
 
-import type {Point} from 'dye-core';
+import type {Point} from 'rendx-core';
 
 type ImageSource = HTMLImageElement | ImageBitmap;
 

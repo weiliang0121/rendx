@@ -14,7 +14,7 @@ interface Plugin {
 ## 使用方式
 
 ```typescript
-import { App } from 'dye-engine';
+import { App } from 'rendx-engine';
 
 const myPlugin: Plugin = {
   name: 'my-plugin',
@@ -40,9 +40,9 @@ const p = app.getPlugin('my-plugin');
 
 | 插件 | 包 | 说明 |
 |------|---|------|
-| Grid | `dye-grid-plugin` | 网格背景 |
-| History | `dye-history-plugin` | 撤销/重做 |
-| Minimap | `dye-minimap-plugin` | 缩略图导航 |
+| Grid | `rendx-grid-plugin` | 网格背景 |
+| History | `rendx-history-plugin` | 撤销/重做 |
+| Minimap | `rendx-minimap-plugin` | 缩略图导航 |
 
 ## 注意事项
 

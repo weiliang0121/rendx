@@ -1,14 +1,14 @@
 import {describe, it, expect, vi} from 'vitest';
 
-// Mock dye-canvas 和 dye-svg 避免 OffscreenCanvas 依赖
-vi.mock('dye-canvas', () => ({
+// Mock rendx-canvas 和 rendx-svg 避免 OffscreenCanvas 依赖
+vi.mock('rendx-canvas', () => ({
   CanvasRenderer: class {
     el = document.createElement('canvas');
     resize() {}
     dispose() {}
   },
 }));
-vi.mock('dye-svg', () => ({
+vi.mock('rendx-svg', () => ({
   SvgRenderer: class {
     el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     resize() {}
@@ -19,7 +19,7 @@ vi.mock('dye-svg', () => ({
 import {Renderer} from '../src/renderers/renderer';
 import {Node} from '../src/scene/node';
 
-import type {IGraphicsRenderer} from 'dye-core';
+import type {IGraphicsRenderer} from 'rendx-core';
 
 /** 模拟 IGraphicsRenderer */
 interface MockRenderer extends IGraphicsRenderer {

@@ -1,6 +1,6 @@
-import {BoundingBox} from 'dye-bounding';
-import {createShape} from 'dye-shape';
-import {Path} from 'dye-path';
+import {BoundingBox} from 'rendx-bounding';
+import {createShape} from 'rendx-shape';
+import {Path} from 'rendx-path';
 
 import {Shape} from '../core';
 

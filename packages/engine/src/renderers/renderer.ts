@@ -1,11 +1,11 @@
 import {mat2d} from 'gl-matrix';
 
-import {defaultsDeep} from 'dye-core';
-import {CanvasRenderer} from 'dye-canvas';
-import {SvgRenderer} from 'dye-svg';
+import {defaultsDeep} from 'rendx-core';
+import {CanvasRenderer} from 'rendx-canvas';
+import {SvgRenderer} from 'rendx-svg';
 
-import type {IGraphicsRenderer} from 'dye-core';
-import type {Mat2d, Point, Size} from 'dye-core';
+import type {IGraphicsRenderer} from 'rendx-core';
+import type {Mat2d, Point, Size} from 'rendx-core';
 
 import type {Node} from '../scene';
 import type {TextShape} from '../shapes/text';

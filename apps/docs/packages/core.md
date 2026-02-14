@@ -1,4 +1,4 @@
-# dye-core
+# rendx-core
 
 基础类型定义 + 工具函数集合（Layer 0，零依赖）。
 

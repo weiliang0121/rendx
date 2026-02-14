@@ -3,7 +3,7 @@ import {Node} from './scene/node';
 import {Group} from './scene/group';
 import {Layer} from './scene/layer';
 
-import type {AO, GradientOptions, ClipPath} from 'dye-core';
+import type {AO, GradientOptions, ClipPath} from 'rendx-core';
 import type {RendererConfig} from './renderers/renderer';
 
 // ========================

@@ -2,7 +2,7 @@
 
 ## 场景图（Scene Graph）
 
-Dye 使用树形场景图来组织 2D 图形。所有节点继承自 `Graphics` 基类：
+Rendx 使用树形场景图来组织 2D 图形。所有节点继承自 `Graphics` 基类：
 
 ```
 Scene (type=1, 场景根节点)
@@ -24,7 +24,7 @@ Scene (type=1, 场景根节点)
 所有几何形状（circle、rect、sector、area 等）最终都通过 `Path` 类生成 SVG 路径字符串，渲染器通过 `path(d: string)` 方法统一消费路径数据。
 
 ```typescript
-import { Path } from 'dye-path';
+import { Path } from 'rendx-path';
 
 const p = new Path();
 p.M(10, 10).L(100, 10).L(100, 100).Z();
@@ -56,7 +56,7 @@ console.log(p.toString()); // "M10,10L100,10L100,100Z"
 | `clipPath()` | 裁剪路径 |
 | `gradient()` | 渐变填充 |
 
-Canvas2D（`dye-canvas`）和 SVG（`dye-svg`）各自实现该接口，上层代码不需关心渲染后端。
+Canvas2D（`rendx-canvas`）和 SVG（`rendx-svg`）各自实现该接口，上层代码不需关心渲染后端。
 
 ## 动画系统
 
@@ -109,4 +109,4 @@ interface Plugin {
 app.use(myPlugin);
 ```
 
-内置插件：`dye-grid-plugin`、`dye-history-plugin`、`dye-minimap-plugin`
+内置插件：`rendx-grid-plugin`、`rendx-history-plugin`、`rendx-minimap-plugin`

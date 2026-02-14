@@ -2,7 +2,7 @@
 
 ## 概述
 
-Dye 模拟 DOM 事件流的三阶段模型：Capture → Target → Bubble。
+Rendx 模拟 DOM 事件流的三阶段模型：Capture → Target → Bubble。
 
 ## 事件类型
 

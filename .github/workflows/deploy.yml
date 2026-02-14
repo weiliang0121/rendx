@@ -34,10 +34,10 @@ jobs:
         run: pnpm build
 
       - name: Build docs (VitePress)
-        run: pnpm --filter dye-docs build
+        run: pnpm --filter rendx-docs build
 
       - name: Build playground (Vite)
-        run: pnpm --filter dye-playground build
+        run: pnpm --filter rendx-playground build
         env:
           GITHUB_PAGES: true
 

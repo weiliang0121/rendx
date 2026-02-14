@@ -1,4 +1,4 @@
-import type {RGB} from 'dye-core';
+import type {RGB} from 'rendx-core';
 
 const HEX_REGEX = /^#([A-Fa-f0-9]{6})$/;
 const RGB_REGEX = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/;

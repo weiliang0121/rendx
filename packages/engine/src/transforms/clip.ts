@@ -1,10 +1,10 @@
-import {easeMap} from 'dye-ease';
-import {Path} from 'dye-path';
+import {easeMap} from 'rendx-ease';
+import {Path} from 'rendx-path';
 
 import {BaseTransform} from './base';
 
-import type {BoundingBox} from 'dye-bounding';
-import type {ClipPath} from 'dye-core';
+import type {BoundingBox} from 'rendx-bounding';
+import type {ClipPath} from 'rendx-core';
 
 /**
  * 裁剪框动画，特有 init/clear 状态管理 clipPath 生命周期

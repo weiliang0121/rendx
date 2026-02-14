@@ -1,10 +1,10 @@
-# dye-gradient
+# rendx-gradient
 
 ## 概述
 渐变效果的解析与创建，支持 Canvas 和 SVG 两种输出。覆盖线性渐变与径向渐变。
 
 ## 依赖层级
-Layer 2（依赖 `dye-dom`、`dye-core`）
+Layer 2（依赖 `rendx-dom`、`rendx-core`）
 
 ## 文件结构
 ```
@@ -57,17 +57,17 @@ createSVGGradient(
 - 满时按 FIFO 淘汰（`Map.keys().next()` 删除最早条目）
 
 ## 类型引用
-- `GradientOptions`、`GradientType`、`GradientStops` 均来自 `dye-core`
+- `GradientOptions`、`GradientType`、`GradientStops` 均来自 `rendx-core`
 - `GradientOptions.region?: [x, y, w, h]` — 可选像素区域，用于 `resolveDirection`
 
 ## 设计要点
 - **双入口**：`createCanvasGradient` 和 `createSVGGradient` 都接受 `GradientOptions | string`，string 时自动调用 `parse()` 解析 DSL
 - **region 映射**：有 region 时将归一化坐标映射到像素区域；SVG 渐变有 region 时使用 `userSpaceOnUse`，无 region 时使用 `objectBoundingBox`
-- **SVG DOM**：通过 `dye-dom` 的 `createSvgEl` 和 `setSVGAttrs` 创建和配置 SVG 元素
+- **SVG DOM**：通过 `rendx-dom` 的 `createSvgEl` 和 `setSVGAttrs` 创建和配置 SVG 元素
 
 ## 典型用法
 ```typescript
-import { createCanvasGradient, createSVGGradient } from 'dye-gradient';
+import { createCanvasGradient, createSVGGradient } from 'rendx-gradient';
 
 // 方式 1：使用 GradientOptions 对象
 const gradient = createCanvasGradient(ctx, {

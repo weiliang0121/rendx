@@ -1,4 +1,4 @@
-import type {App, Plugin} from 'dye-engine';
+import type {App, Plugin} from 'rendx-engine';
 
 export interface GridPluginOptions {
   /** 点阵间距（px），默认 20 */
@@ -35,7 +35,7 @@ class GridPlugin implements Plugin {
     const container = app.container;
     if (!container) {
       throw new Error(
-        '[dye-grid-plugin] App must be mounted before calling use(). ' +
+        '[rendx-grid-plugin] App must be mounted before calling use(). ' +
         'Call app.mount(el) first, then app.use(gridPlugin(...)).',
       );
     }
@@ -64,7 +64,7 @@ class GridPlugin implements Plugin {
     container.insertBefore(canvas, container.firstChild);
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('[dye-grid-plugin] Could not get 2d context');
+    if (!ctx) throw new Error('[rendx-grid-plugin] Could not get 2d context');
     ctx.scale(ratio, ratio);
 
     this.#canvas = canvas;
@@ -133,7 +133,7 @@ class GridPlugin implements Plugin {
  *
  * @example
  * ```ts
- * import {gridPlugin} from 'dye-grid-plugin';
+ * import {gridPlugin} from 'rendx-grid-plugin';
  *
  * const app = new App({width: 800, height: 600});
  * app.mount(container);

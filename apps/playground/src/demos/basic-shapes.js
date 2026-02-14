@@ -20,7 +20,7 @@ app.scene.add(line);
 
 // Text
 const text = Node.create('text', {fill: '#333', fontSize: 20, fontFamily: 'sans-serif'});
-text.shape.from('Hello Dye!', 230, 50);
+text.shape.from('Hello Rendx!', 230, 50);
 app.scene.add(text);
 
 app.render();

@@ -1,4 +1,4 @@
-import type {Path} from 'dye-path';
+import type {Path} from 'rendx-path';
 
 import {createCircle} from '../primitives/circle';
 

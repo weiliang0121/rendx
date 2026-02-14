@@ -65,7 +65,7 @@ importers:
 
   apps/playground:
     dependencies:
-      dye-engine:
+      rendx-engine:
         specifier: workspace:^
         version: link:../../packages/engine
     devDependencies:
@@ -83,20 +83,20 @@ importers:
 
   packages/canvas:
     dependencies:
-      dye-core:
+      rendx-core:
         specifier: workspace:^
         version: link:../core
-      dye-dom:
+      rendx-dom:
         specifier: workspace:^
         version: link:../dom
-      dye-gradient:
+      rendx-gradient:
         specifier: workspace:^
         version: link:../gradient
     devDependencies:
-      dye-path:
+      rendx-path:
         specifier: workspace:^
         version: link:../path
-      dye-shape:
+      rendx-shape:
         specifier: workspace:^
         version: link:../shape
 
@@ -104,16 +104,16 @@ importers:
 
   packages/curve:
     dependencies:
-      dye-path:
+      rendx-path:
         specifier: workspace:^
         version: link:../path
 
   packages/dom:
     dependencies:
-      dye-bounding:
+      rendx-bounding:
         specifier: workspace:^
         version: link:../bounding
-      dye-core:
+      rendx-core:
         specifier: workspace:^
         version: link:../core
 
@@ -121,70 +121,70 @@ importers:
 
   packages/engine:
     dependencies:
-      dye-bounding:
-        specifier: workspace:^
-        version: link:../bounding
-      dye-canvas:
-        specifier: workspace:^
-        version: link:../canvas
-      dye-core:
-        specifier: workspace:^
-        version: link:../core
-      dye-ease:
-        specifier: workspace:^
-        version: link:../ease
-      dye-interpolate:
-        specifier: workspace:^
-        version: link:../interpolate
-      dye-path:
-        specifier: workspace:^
-        version: link:../path
-      dye-shape:
-        specifier: workspace:^
-        version: link:../shape
-      dye-svg:
-        specifier: workspace:^
-        version: link:../svg
       eventemitter3:
         specifier: ^5.0.4
         version: 5.0.4
       gl-matrix:
         specifier: ^3.4.4
         version: 3.4.4
+      rendx-bounding:
+        specifier: workspace:^
+        version: link:../bounding
+      rendx-canvas:
+        specifier: workspace:^
+        version: link:../canvas
+      rendx-core:
+        specifier: workspace:^
+        version: link:../core
+      rendx-ease:
+        specifier: workspace:^
+        version: link:../ease
+      rendx-interpolate:
+        specifier: workspace:^
+        version: link:../interpolate
+      rendx-path:
+        specifier: workspace:^
+        version: link:../path
+      rendx-shape:
+        specifier: workspace:^
+        version: link:../shape
+      rendx-svg:
+        specifier: workspace:^
+        version: link:../svg
 
   packages/gradient:
     dependencies:
-      dye-core:
+      rendx-core:
         specifier: workspace:^
         version: link:../core
-      dye-dom:
+      rendx-dom:
         specifier: workspace:^
         version: link:../dom
 
   packages/grid-plugin:
     dependencies:
-      dye-engine:
+      rendx-engine:
         specifier: workspace:^
         version: link:../engine
 
   packages/history-plugin:
     dependencies:
-      dye-engine:
+      rendx-engine:
         specifier: workspace:^
         version: link:../engine
 
   packages/interpolate:
     dependencies:
-      dye-core:
-        specifier: workspace:^
-        version: link:../core
       gl-matrix:
         specifier: ^3.4.4
         version: 3.4.4
+      rendx-core:
+        specifier: workspace:^
+        version: link:../core
 
   packages/minimap-plugin:
     dependencies:
-      dye-engine:
+      rendx-engine:
         specifier: workspace:^
         version: link:../engine
 
@@ -192,32 +192,32 @@ importers:
 
   packages/shape:
     dependencies:
-      dye-core:
+      rendx-core:
         specifier: workspace:^
         version: link:../core
-      dye-curve:
+      rendx-curve:
         specifier: workspace:^
         version: link:../curve
-      dye-path:
+      rendx-path:
         specifier: workspace:^
         version: link:../path
 
   packages/svg:
     dependencies:
-      dye-core:
+      rendx-core:
         specifier: workspace:^
         version: link:../core
-      dye-dom:
+      rendx-dom:
         specifier: workspace:^
         version: link:../dom
-      dye-gradient:
+      rendx-gradient:
         specifier: workspace:^
         version: link:../gradient
     devDependencies:
-      dye-path:
+      rendx-path:
         specifier: workspace:^
         version: link:../path
-      dye-shape:
+      rendx-shape:
         specifier: workspace:^
         version: link:../shape
 
