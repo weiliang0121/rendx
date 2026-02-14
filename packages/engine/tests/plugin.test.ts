@@ -474,6 +474,54 @@ describe('Plugin System - 插件系统', () => {
       expect(layer.layerName).toBe('default');
       app.dispose();
     });
+
+    it('不传 zIndex 自动分配唯一 layerIndex', () => {
+      const app = new App({width: 100, height: 100});
+      app.mount(container);
+
+      const l1 = app.acquireLayer('edges');
+      const l2 = app.acquireLayer('nodes');
+
+      // 自动分配的 index 必须 > 0（default 层为 0）且互不相同
+      expect(l1.layerIndex).toBeGreaterThan(0);
+      expect(l2.layerIndex).toBeGreaterThan(l1.layerIndex);
+      app.dispose();
+    });
+
+    it('自增计数器不与显式 zIndex 冲突', () => {
+      const app = new App({width: 100, height: 100});
+      app.mount(container);
+
+      // 显式分配 50
+      const explicitLayer = app.acquireLayer('explicit', 50);
+      expect(explicitLayer.layerIndex).toBe(50);
+
+      // 之后自增应跳过 50（从 51 开始）
+      const autoLayer = app.acquireLayer('auto');
+      expect(autoLayer.layerIndex).toBeGreaterThan(50);
+      app.dispose();
+    });
+
+    it('插件声明的多个层自动分配且保持相对顺序', () => {
+      const app = new App({width: 100, height: 100});
+      app.mount(container);
+
+      const plugin: Plugin = {
+        name: 'multi-layer',
+        layers: [
+          {name: 'layer-b', zIndex: 1},
+          {name: 'layer-a', zIndex: 0},
+        ],
+        install() {},
+      };
+      app.use(plugin);
+
+      const la = app.getLayer('layer-a')!;
+      const lb = app.getLayer('layer-b')!;
+      // zIndex hint 0 < 1 → layer-a 在 layer-b 下方
+      expect(la.layerIndex).toBeLessThan(lb.layerIndex);
+      app.dispose();
+    });
   });
 
   // ========================

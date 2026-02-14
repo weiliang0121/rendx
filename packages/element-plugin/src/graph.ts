@@ -34,7 +34,7 @@ import type {Element, ElementData, ElementDef, ElementOptions, GraphQuery} from 
 export class GraphPlugin implements Plugin, GraphQuery {
   name = 'graph';
 
-  /** 声明两个渲染层 — edges 在下方，nodes 在上方 */
+  /** 声明两个渲染层 — edges 在下方，nodes 在上方（zIndex 为排序 hint，实际由 App 分配） */
   layers = [
     {name: 'graph:edges', zIndex: 0},
     {name: 'graph:nodes', zIndex: 1},

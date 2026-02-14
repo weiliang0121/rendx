@@ -20,8 +20,13 @@ export interface PluginStateDeclaration {
 export interface PluginLayerDeclaration {
   /** 层名称 */
   name: string;
-  /** z-index 层级 */
-  zIndex: number;
+  /**
+   * 排序 hint（可选）。
+   * - 同一插件内多个层按此值排序，值小的在下方
+   * - 实际 CSS z-index 由 App 自增分配，不会与其他插件冲突
+   * - 省略时按声明顺序递增
+   */
+  zIndex?: number;
 }
 
 /**

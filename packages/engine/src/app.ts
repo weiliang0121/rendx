@@ -58,6 +58,13 @@ export class App {
   #resizeObserver: ResizeObserver | null = null;
   #plugins: Plugin[] = [];
 
+  /**
+   * 层级自增计数器。
+   * default=0, 插件层从 1 开始自增, __event__=99999。
+   * 确保每个层拿到唯一的 CSS z-index，不会互相冲突。
+   */
+  #nextLayerIndex = 1;
+
   // ========================
   // State Management
   // ========================
@@ -179,13 +186,19 @@ export class App {
   /**
    * 获取或创建图层（get-or-create 语义）。
    * 多个插件声明同名图层时，只会创建一次。
+   * 不传 zIndex 时由 App 内部自增分配唯一层级。
    * @param name - 层名称
-   * @param zIndex - 层级（仅在首次创建时生效）
+   * @param zIndex - 显式层级（可选，仅在首次创建时生效；省略则自增分配）
    */
-  acquireLayer(name: string, zIndex: number): Layer {
+  acquireLayer(name: string, zIndex?: number): Layer {
     const existing = this.scene.getLayer(name);
     if (existing) return existing;
-    return this.addLayer(name, zIndex);
+    const index = zIndex ?? this.#nextLayerIndex++;
+    // 确保计数器始终 > 已使用的最大值
+    if (index >= this.#nextLayerIndex) {
+      this.#nextLayerIndex = index + 1;
+    }
+    return this.addLayer(name, index);
   }
 
   /**
@@ -215,10 +228,11 @@ export class App {
       }
     }
 
-    // 自动创建/复用图层
+    // 自动创建/复用图层（按声明的 zIndex hint 排序后分配，保证相对顺序）
     if (plugin.layers) {
-      for (const decl of plugin.layers) {
-        this.acquireLayer(decl.name, decl.zIndex);
+      const sorted = [...plugin.layers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+      for (const decl of sorted) {
+        this.acquireLayer(decl.name);
       }
     }
 
