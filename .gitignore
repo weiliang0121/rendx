@@ -3,7 +3,7 @@ node_modules/
 
 # Build outputs
 dist/
-types/
+/types/
 
 # Turbo
 .turbo/

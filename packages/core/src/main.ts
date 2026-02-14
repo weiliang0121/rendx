@@ -1,3 +1,3 @@
-export * from './types/index';
-export * from './guards/index';
-export * from './helpers/index';
+export * from './types';
+export * from './guards';
+export * from './helpers';
