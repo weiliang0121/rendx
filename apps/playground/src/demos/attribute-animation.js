@@ -1,4 +1,4 @@
-const {App, Node} = __dye_engine__;
+const {App, Node} = __rendx_engine__;
 const app = new App({width: 800, height: 500});
 app.mount(container);
 

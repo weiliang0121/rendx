@@ -22,10 +22,10 @@ app.restoreFromJSON(saved);
 app.render();
 ```
 
-## DyeJSON 类型
+## RendxJSON 类型
 
 ```typescript
-interface DyeJSON {
+interface RendxJSON {
   width: number;
   height: number;
   layers: LayerJSON[];
@@ -46,8 +46,8 @@ interface ChildJSON {
 
 ## API
 
-| 函数 | 说明 |
-|------|------|
-| `serialize(layers, width, height)` | 序列化层数组 → DyeJSON |
-| `deserialize(json, cfg)` | 反序列化 → Layer[] |
-| `serializeLayer(layer)` | 序列化单个层 |
+| 函数                               | 说明                     |
+| ---------------------------------- | ------------------------ |
+| `serialize(layers, width, height)` | 序列化层数组 → RendxJSON |
+| `deserialize(json, cfg)`           | 反序列化 → Layer[]       |
+| `serializeLayer(layer)`            | 序列化单个层             |

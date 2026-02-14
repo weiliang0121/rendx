@@ -10,7 +10,7 @@ import type {RendererConfig} from './renderers/renderer';
 // JSON Schema Types
 // ========================
 
-export interface DyeJSON {
+export interface RendxJSON {
   version: 1;
   width: number;
   height: number;
@@ -192,7 +192,7 @@ export function serializeLayer(layer: Layer): LayerJSON {
 }
 
 /** 序列化整个 App 场景为 JSON */
-export function serialize(layers: Layer[], width: number, height: number): DyeJSON {
+export function serialize(layers: Layer[], width: number, height: number): RendxJSON {
   const layerJSONs: LayerJSON[] = [];
   for (const layer of layers) {
     if (layer.isEventLayer) continue;
@@ -248,7 +248,7 @@ function deserializeGroup(json: GroupJSON): Group {
 }
 
 /** 从 JSON 反序列化，创建层和节点（不包含 App 实例） */
-export function deserialize(json: DyeJSON, cfg: Partial<RendererConfig>): Layer[] {
+export function deserialize(json: RendxJSON, cfg: Partial<RendererConfig>): Layer[] {
   const layers: Layer[] = [];
   for (const layerJSON of json.layers) {
     const layer = new Layer(layerJSON.name, layerJSON.index, cfg);

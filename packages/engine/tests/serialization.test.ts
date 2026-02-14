@@ -22,7 +22,7 @@ import {Node, Group, Layer} from '../src/scene';
 import {App} from '../src/app';
 import {serialize, deserialize, serializeLayer} from '../src/serialization';
 
-import type {DyeJSON, NodeJSON, GroupJSON} from '../src/serialization';
+import type {RendxJSON, NodeJSON, GroupJSON} from '../src/serialization';
 
 // ========================
 // Helpers
@@ -145,7 +145,11 @@ describe('Serialization - 序列化', () => {
 
     it('polygon with options', () => {
       const node = Node.create('polygon', {fill: 'orange'});
-      node.shape.from([[0, 0], [100, 0], [50, 80]]);
+      node.shape.from([
+        [0, 0],
+        [100, 0],
+        [50, 80],
+      ]);
       node.shape.options('cardinal', false);
       node.setName('pg1');
       const layer = new Layer('l', 0, {width: 800, height: 600});
@@ -153,12 +157,24 @@ describe('Serialization - 序列化', () => {
       const json = serializeLayer(layer);
       const child = json.children[0] as NodeJSON;
       expect(child.shapeType).toBe('polygon');
-      expect(child.args).toEqual([[[0, 0], [100, 0], [50, 80]]]);
+      expect(child.args).toEqual([
+        [
+          [0, 0],
+          [100, 0],
+          [50, 80],
+        ],
+      ]);
       expect(child.options).toEqual(['cardinal', false]);
     });
 
     it('curve with options', () => {
-      const segments = [[[0, 0], [10, 20], [30, 10]]];
+      const segments = [
+        [
+          [0, 0],
+          [10, 20],
+          [30, 10],
+        ],
+      ];
       const node = Node.create('curve', {stroke: 'red'});
       node.shape.from(segments);
       node.shape.options('basis', true);
@@ -233,8 +249,18 @@ describe('Serialization - 序列化', () => {
     });
 
     it('area with options', () => {
-      const upper = [[[0, 0], [100, 0]]];
-      const lower = [[[0, 50], [100, 50]]];
+      const upper = [
+        [
+          [0, 0],
+          [100, 0],
+        ],
+      ];
+      const lower = [
+        [
+          [0, 50],
+          [100, 50],
+        ],
+      ];
       const node = Node.create('area', {fill: 'lightblue'});
       node.shape.from(upper, lower);
       node.shape.options('monotoneX');
@@ -410,7 +436,10 @@ describe('Serialization - 序列化', () => {
         id: 'grad',
         type: 'linear',
         direction: [0, 0, 1, 0],
-        stops: [[0, 'red'], [1, 'blue']],
+        stops: [
+          [0, 'red'],
+          [1, 'blue'],
+        ],
       });
 
       const layer = new Layer('l', 0, {width: 800, height: 600});
@@ -419,7 +448,10 @@ describe('Serialization - 序列化', () => {
       const child = json.children[0] as NodeJSON;
       expect(child.gradient).toBeDefined();
       expect(child.gradient!.type).toBe('linear');
-      expect(child.gradient!.stops).toEqual([[0, 'red'], [1, 'blue']]);
+      expect(child.gradient!.stops).toEqual([
+        [0, 'red'],
+        [1, 'blue'],
+      ]);
     });
 
     it('序列化 clipPath', () => {
@@ -442,25 +474,31 @@ describe('Deserialization - 反序列化', () => {
 
   describe('基本反序列化', () => {
     it('反序列化空场景', () => {
-      const json: DyeJSON = {version: 1, width: 800, height: 600, layers: []};
+      const json: RendxJSON = {version: 1, width: 800, height: 600, layers: []};
       const layers = deserialize(json, cfg);
       expect(layers).toEqual([]);
     });
 
     it('反序列化单层单节点', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'main',
-          index: 0,
-          children: [{
-            type: 'node',
-            shapeType: 'rect',
-            args: [10, 20, 100, 50],
-            name: 'r1',
-            attrs: {fill: 'red'},
-          }],
-        }],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'main',
+            index: 0,
+            children: [
+              {
+                type: 'node',
+                shapeType: 'rect',
+                args: [10, 20, 100, 50],
+                name: 'r1',
+                attrs: {fill: 'red'},
+              },
+            ],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       expect(layers.length).toBe(1);
@@ -479,8 +517,10 @@ describe('Deserialization - 反序列化', () => {
     });
 
     it('反序列化 culling=false', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
         layers: [{name: 'text', index: 0, culling: false, children: []}],
       };
       const layers = deserialize(json, cfg);
@@ -490,12 +530,17 @@ describe('Deserialization - 反序列化', () => {
 
   describe('Shape 类型反序列化', () => {
     it('circle', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'l', index: 0,
-          children: [{type: 'node', shapeType: 'circle', args: [50, 60, 25], attrs: {fill: 'blue'}}],
-        }],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'l',
+            index: 0,
+            children: [{type: 'node', shapeType: 'circle', args: [50, 60, 25], attrs: {fill: 'blue'}}],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       const node = layers[0].children[0] as InstanceType<typeof Node>;
@@ -507,23 +552,40 @@ describe('Deserialization - 反序列化', () => {
     });
 
     it('polygon with options', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'l', index: 0,
-          children: [{
-            type: 'node',
-            shapeType: 'polygon',
-            args: [[[0, 0], [100, 0], [50, 80]]],
-            options: ['cardinal', false],
-          }],
-        }],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'l',
+            index: 0,
+            children: [
+              {
+                type: 'node',
+                shapeType: 'polygon',
+                args: [
+                  [
+                    [0, 0],
+                    [100, 0],
+                    [50, 80],
+                  ],
+                ],
+                options: ['cardinal', false],
+              },
+            ],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       const node = layers[0].children[0] as InstanceType<typeof Node>;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const s = node.shape as any;
-      expect(s.points).toEqual([[0, 0], [100, 0], [50, 80]]);
+      expect(s.points).toEqual([
+        [0, 0],
+        [100, 0],
+        [50, 80],
+      ]);
       expect(s.curve).toBe('cardinal');
       expect(s.closed).toBe(false);
     });
@@ -531,19 +593,26 @@ describe('Deserialization - 反序列化', () => {
 
   describe('Transform 反序列化', () => {
     it('反序列化 translate/rotate/scale', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'l', index: 0,
-          children: [{
-            type: 'node',
-            shapeType: 'rect',
-            args: [0, 0, 100, 50],
-            translate: [100, 200],
-            rotate: Math.PI / 4,
-            scale: [2, 3],
-          }],
-        }],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'l',
+            index: 0,
+            children: [
+              {
+                type: 'node',
+                shapeType: 'rect',
+                args: [0, 0, 100, 50],
+                translate: [100, 200],
+                rotate: Math.PI / 4,
+                scale: [2, 3],
+              },
+            ],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       const node = layers[0].children[0] as InstanceType<typeof Node>;
@@ -555,21 +624,28 @@ describe('Deserialization - 反序列化', () => {
     });
 
     it('反序列化 z/visible/display/className/data', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'l', index: 0,
-          children: [{
-            type: 'node',
-            shapeType: 'rect',
-            args: [0, 0, 10, 10],
-            z: 5,
-            visible: false,
-            display: false,
-            className: 'foo bar',
-            data: {x: 1},
-          }],
-        }],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'l',
+            index: 0,
+            children: [
+              {
+                type: 'node',
+                shapeType: 'rect',
+                args: [0, 0, 10, 10],
+                z: 5,
+                visible: false,
+                display: false,
+                className: 'foo bar',
+                data: {x: 1},
+              },
+            ],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       const node = layers[0].children[0] as InstanceType<typeof Node>;
@@ -583,20 +659,27 @@ describe('Deserialization - 反序列化', () => {
 
   describe('Group 反序列化', () => {
     it('反序列化 Group 及子节点', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'l', index: 0,
-          children: [{
-            type: 'group',
-            name: 'g1',
-            translate: [10, 20],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'l',
+            index: 0,
             children: [
-              {type: 'node', shapeType: 'rect', args: [0, 0, 50, 30], name: 'r1'},
-              {type: 'node', shapeType: 'circle', args: [25, 15, 10], name: 'c1'},
+              {
+                type: 'group',
+                name: 'g1',
+                translate: [10, 20],
+                children: [
+                  {type: 'node', shapeType: 'rect', args: [0, 0, 50, 30], name: 'r1'},
+                  {type: 'node', shapeType: 'circle', args: [25, 15, 10], name: 'c1'},
+                ],
+              },
             ],
-          }],
-        }],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       const group = layers[0].children[0] as InstanceType<typeof Group>;
@@ -610,22 +693,29 @@ describe('Deserialization - 反序列化', () => {
     });
 
     it('反序列化嵌套 Group', () => {
-      const json: DyeJSON = {
-        version: 1, width: 800, height: 600,
-        layers: [{
-          name: 'l', index: 0,
-          children: [{
-            type: 'group',
-            name: 'outer',
-            children: [{
-              type: 'group',
-              name: 'inner',
-              children: [
-                {type: 'node', shapeType: 'rect', args: [0, 0, 10, 10]},
-              ],
-            }],
-          }],
-        }],
+      const json: RendxJSON = {
+        version: 1,
+        width: 800,
+        height: 600,
+        layers: [
+          {
+            name: 'l',
+            index: 0,
+            children: [
+              {
+                type: 'group',
+                name: 'outer',
+                children: [
+                  {
+                    type: 'group',
+                    name: 'inner',
+                    children: [{type: 'node', shapeType: 'rect', args: [0, 0, 10, 10]}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       };
       const layers = deserialize(json, cfg);
       const outer = layers[0].children[0] as InstanceType<typeof Group>;
@@ -735,7 +825,7 @@ describe('Round-trip - 序列化/反序列化往返', () => {
     layer.add(createRect('r1', 10, 20, 100, 50));
     const json = serialize([layer], cfg.width, cfg.height);
     const str = JSON.stringify(json);
-    const parsed = JSON.parse(str) as DyeJSON;
+    const parsed = JSON.parse(str) as RendxJSON;
     expect(parsed.version).toBe(1);
     expect(parsed.layers[0].children.length).toBe(1);
 

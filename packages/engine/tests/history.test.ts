@@ -38,7 +38,7 @@ import {App} from '../src/app';
 import {Node} from '../src/scene';
 
 import type {Plugin} from '../src/plugin';
-import type {DyeJSON} from '../src/serialization';
+import type {RendxJSON} from '../src/serialization';
 
 // ========================
 // History Plugin inline（避免跨包依赖，直接在测试中实现同等逻辑）
@@ -51,8 +51,8 @@ interface HistoryPluginOptions {
 class HistoryPlugin implements Plugin {
   name = 'history';
   #app: App | null = null;
-  #undoStack: DyeJSON[] = [];
-  #redoStack: DyeJSON[] = [];
+  #undoStack: RendxJSON[] = [];
+  #redoStack: RendxJSON[] = [];
   #options: Required<HistoryPluginOptions>;
 
   constructor(options: HistoryPluginOptions = {}) {

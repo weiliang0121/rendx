@@ -36,7 +36,7 @@ export default defineConfig({
         {
           text: '入门',
           items: [
-            {text: '为什么选择 Rendx', link: '/guide/why-dye'},
+            {text: '为什么选择 Rendx', link: '/guide/why-rendx'},
             {text: '快速开始', link: '/guide/getting-started'},
             {text: '核心概念', link: '/guide/concepts'},
             {text: '架构总览', link: '/guide/architecture'},

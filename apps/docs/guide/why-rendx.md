@@ -20,6 +20,7 @@ Rendx 的出发点很简单：**用最小的代码体积，覆盖 Canvas 2D 可�
 Rendx 不会把 Canvas 包装成 DOM。不提供 `querySelector`、不模拟 CSS 继承、不引入依赖注入容器。
 
 这些"看起来方便"的抽象，在实际可视化场景中往往带来更多问题：
+
 - CSS 属性计算让每个节点变重 3-5 倍
 - DOM 模拟 API 给人"可以插入 React 组件"的错觉，但实际做不好
 - DI 容器让调试链路变得不透明
@@ -59,33 +60,33 @@ Rendx 不提供 WebGL 后端，这是有意的取舍。与其做一个"什么都
 
 ### 代码量 vs 能力覆盖
 
-| 引擎 | 源码行数 | 核心能力覆盖 |
-|------|---------|-------------|
-| Rendx | ~7,800 行 | 场景图 + 双渲染后端 + 动画 + 事件 + 序列化 + 插件 |
-| Konva | ~30,000 行 | 场景图 + Canvas + 动画 + 事件 |
-| ZRender | ~40,000 行 | 场景图 + Canvas/SVG + 动画 + 事件 |
-| AntV/G | ~50,000+ 行 | 场景图 + Canvas/SVG/WebGL + CSS 兼容 + 动画 |
-| Fabric.js | ~60,000 行 | Canvas + 对象编辑 + 序列化 + SVG 导出 |
-| PixiJS | ~100,000+ 行 | WebGL/WebGPU + Canvas 回退 + 动画 + 滤镜 |
+| 引擎      | 源码行数     | 核心能力覆盖                                      |
+| --------- | ------------ | ------------------------------------------------- |
+| Rendx     | ~7,800 行    | 场景图 + 双渲染后端 + 动画 + 事件 + 序列化 + 插件 |
+| Konva     | ~30,000 行   | 场景图 + Canvas + 动画 + 事件                     |
+| ZRender   | ~40,000 行   | 场景图 + Canvas/SVG + 动画 + 事件                 |
+| AntV/G    | ~50,000+ 行  | 场景图 + Canvas/SVG/WebGL + CSS 兼容 + 动画       |
+| Fabric.js | ~60,000 行   | Canvas + 对象编辑 + 序列化 + SVG 导出             |
+| PixiJS    | ~100,000+ 行 | WebGL/WebGPU + Canvas 回退 + 动画 + 滤镜          |
 
 Rendx 用 **不到 1/5 的代码量** 实现了同类引擎 **60-70% 的核心渲染能力**。
 
 ### 功能对比
 
-| 能力 | Rendx | Konva | AntV/G | PixiJS |
-|------|-----|-------|--------|--------|
-| Canvas 2D | ✅ | ✅ | ✅ | ✅ 回退 |
-| SVG | ✅ | ❌ | ✅ | ❌ |
-| WebGL | ❌ | ❌ | ✅ | ✅ |
-| 多 Canvas 分层 | ✅ | ✅ | ❌ | ❌ |
-| 三阶段事件流 | ✅ | ❌ | ✅ | ✅ |
-| composedPath | ✅ | ❌ | ✅ | ❌ |
-| pointerEvents 穿透 | ✅ | ❌ | ✅ | ✅ |
-| 视口裁剪 | ✅ | ❌ | ✅ | ✅ |
-| 序列化 | ✅ | ✅ | ❌ | ❌ |
-| 插件系统 | ✅ | ❌ | ✅ | ✅ |
-| TypeScript strict | ✅ | ✅ | ✅ | ✅ |
-| Monorepo + Tree-shake | ✅ | ❌ | ✅ | ✅ |
+| 能力                  | Rendx | Konva | AntV/G | PixiJS  |
+| --------------------- | ----- | ----- | ------ | ------- |
+| Canvas 2D             | ✅    | ✅    | ✅     | ✅ 回退 |
+| SVG                   | ✅    | ❌    | ✅     | ❌      |
+| WebGL                 | ❌    | ❌    | ✅     | ✅      |
+| 多 Canvas 分层        | ✅    | ✅    | ❌     | ❌      |
+| 三阶段事件流          | ✅    | ❌    | ✅     | ✅      |
+| composedPath          | ✅    | ❌    | ✅     | ❌      |
+| pointerEvents 穿透    | ✅    | ❌    | ✅     | ✅      |
+| 视口裁剪              | ✅    | ❌    | ✅     | ✅      |
+| 序列化                | ✅    | ✅    | ❌     | ❌      |
+| 插件系统              | ✅    | ❌    | ✅     | ✅      |
+| TypeScript strict     | ✅    | ✅    | ✅     | ✅      |
+| Monorepo + Tree-shake | ✅    | ❌    | ✅     | ✅      |
 
 ### 事件系统
 
@@ -93,7 +94,7 @@ Rendx 实现了完整的 **W3C 三阶段事件模型**（capture → target → 
 
 ```js
 // 捕获阶段
-outer.on('click', handler, { capture: true });
+outer.on('click', handler, {capture: true});
 
 // 冒泡阶段
 inner.on('click', handler);
@@ -106,13 +107,13 @@ e.composedPath(); // [target, inner, outer, scene]
 
 Rendx 内置 5 种 Transform 子类，覆盖从几何变换到数据可视化的动画需求：
 
-| Transform | 用途 | 其他引擎 |
-|-----------|------|---------|
-| `GraphicsTransform` | translate / rotate / scale | 各引擎均有 |
+| Transform            | 用途                         | 其他引擎                |
+| -------------------- | ---------------------------- | ----------------------- |
+| `GraphicsTransform`  | translate / rotate / scale   | 各引擎均有              |
 | `AttributeTransform` | opacity / fill / stroke 插值 | Konva Tween / G animate |
-| `ClipBoxTransform` | 裁剪框揭露动效 (lr/rl/tb/bt) | **Rendx 独有** |
-| `ArcTransform` | 弧线角度动画 | 需手动实现 |
-| `SectorTransform` | 扇形角度 + 半径动画 | 需手动实现 |
+| `ClipBoxTransform`   | 裁剪框揭露动效 (lr/rl/tb/bt) | **Rendx 独有**          |
+| `ArcTransform`       | 弧线角度动画                 | 需手动实现              |
+| `SectorTransform`    | 扇形角度 + 半径动画          | 需手动实现              |
 
 状态机式的动画控制（7 种状态：start → init → waiting → running → last → end/clear），比简单的 tween 系统更精确可控。
 
@@ -120,22 +121,22 @@ Rendx 内置 5 种 Transform 子类，覆盖从几何变换到数据可视化的
 
 Rendx 最适合以下场景：
 
-| 场景 | 说明 |
-|------|------|
-| 📊 **图表可视化** | 柱状图、折线图、饼图、仪表盘等 — 内置 Arc/Sector/Area/Polygon 图形 |
-| 🔀 **图编辑 / 流程图** | 节点拖拽、连线、层级管理 — 场景图 + 事件系统 |
-| 📋 **Canvas 表格** | 大数据量单元格渲染 — RectBuffer 批量渲染 + Layer 分层 (冻结行列) |
-| 🎨 **图形标注** | 图片上叠加标注 — 图片加载 + 图形绘制 + 序列化保存 |
+| 场景                   | 说明                                                               |
+| ---------------------- | ------------------------------------------------------------------ |
+| 📊 **图表可视化**      | 柱状图、折线图、饼图、仪表盘等 — 内置 Arc/Sector/Area/Polygon 图形 |
+| 🔀 **图编辑 / 流程图** | 节点拖拽、连线、层级管理 — 场景图 + 事件系统                       |
+| 📋 **Canvas 表格**     | 大数据量单元格渲染 — RectBuffer 批量渲染 + Layer 分层 (冻结行列)   |
+| 🎨 **图形标注**        | 图片上叠加标注 — 图片加载 + 图形绘制 + 序列化保存                  |
 
 ## 不适用场景
 
-| 场景 | 推荐替代 |
-|------|---------|
-| 万级节点实时渲染 | PixiJS (WebGL) |
-| 3D 可视化 | Three.js / Babylon.js |
-| 需要大量 React/Vue 组件插入的编辑器 | ReactFlow / tldraw |
-| 游戏开发 | Phaser / PixiJS |
-| 需要 CSS 滤镜/阴影的设计工具 | Fabric.js |
+| 场景                                | 推荐替代              |
+| ----------------------------------- | --------------------- |
+| 万级节点实时渲染                    | PixiJS (WebGL)        |
+| 3D 可视化                           | Three.js / Babylon.js |
+| 需要大量 React/Vue 组件插入的编辑器 | ReactFlow / tldraw    |
+| 游戏开发                            | Phaser / PixiJS       |
+| 需要 CSS 滤镜/阴影的设计工具        | Fabric.js             |
 
 ## 总结
 

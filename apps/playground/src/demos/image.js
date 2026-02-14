@@ -1,4 +1,4 @@
-const {App, Node} = __dye_engine__;
+const {App, Node} = __rendx_engine__;
 
 const app = new App({width: 600, height: 400});
 app.mount(container);
@@ -10,7 +10,7 @@ app.scene.add(img);
 
 // Another image
 const img2 = Node.create('image');
-img2.shape.from('https://picsum.photos/seed/dye/180/180', 300, 100, 180, 180);
+img2.shape.from('https://picsum.photos/seed/rendx/180/180', 300, 100, 180, 180);
 app.scene.add(img2);
 
 // Label

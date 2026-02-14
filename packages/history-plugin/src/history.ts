@@ -1,4 +1,4 @@
-import type {App, Plugin, DyeJSON} from 'rendx-engine';
+import type {App, Plugin, RendxJSON} from 'rendx-engine';
 
 export interface HistoryPluginOptions {
   /** 最大历史步数，默认 50 */
@@ -13,8 +13,8 @@ class HistoryPlugin implements Plugin {
   name = 'history';
 
   #app: App | null = null;
-  #undoStack: DyeJSON[] = [];
-  #redoStack: DyeJSON[] = [];
+  #undoStack: RendxJSON[] = [];
+  #redoStack: RendxJSON[] = [];
   #options: Required<HistoryPluginOptions>;
 
   constructor(options: HistoryPluginOptions = {}) {

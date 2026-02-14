@@ -6,7 +6,7 @@ import {imageLoader} from './core/image-loader';
 
 import type {Mat2d} from 'rendx-core';
 import type {RendererConfig} from './renderers/renderer';
-import type {DyeJSON} from './serialization';
+import type {RendxJSON} from './serialization';
 import type {Plugin} from './plugin';
 
 export interface AppConfig extends RendererConfig {
@@ -283,7 +283,7 @@ export class App {
   }
 
   /** 序列化所有渲染层的场景图为 JSON，可用于保存/回放 */
-  toJSON(): DyeJSON {
+  toJSON(): RendxJSON {
     return serialize(this.scene.layers, this.cfg.width ?? 800, this.cfg.height ?? 600);
   }
 
@@ -292,7 +292,7 @@ export class App {
    * @param json - 由 toJSON() 生成的场景快照
    * @param cfg - 可选的额外配置（会与 json 中的 width/height 合并）
    */
-  static fromJSON(json: DyeJSON, cfg: Partial<AppConfig> = {}): App {
+  static fromJSON(json: RendxJSON, cfg: Partial<AppConfig> = {}): App {
     const merged: Partial<AppConfig> = {
       ...cfg,
       width: json.width,
@@ -316,7 +316,7 @@ export class App {
    * 将 JSON 快照恢复到当前 App 实例（就地替换所有渲染层内容）。
    * 与静态 fromJSON 不同，此方法不创建新 App，保留挂载状态和插件。
    */
-  restoreFromJSON(json: DyeJSON) {
+  restoreFromJSON(json: RendxJSON) {
     // 收集需要移除的渲染层名称（跳过事件层）
     const names = this.scene.layers.filter(l => !l.isEventLayer).map(l => l.layerName);
     for (const name of names) {

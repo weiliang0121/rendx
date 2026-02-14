@@ -1,4 +1,4 @@
-const {App, Node} = __dye_engine__;
+const {App, Node} = __rendx_engine__;
 
 // Create a custom plugin
 const FPSPlugin = {

@@ -36,15 +36,15 @@ App
 
 ```typescript
 // main.ts
-export * from './core';          // Graphics, Shape, Attributes, isHit, imageLoader
-export * from './scene';         // Scene, Group, Node, Layer
-export * from './renderers';     // Renderer
-export * from './shapes';        // 14 个 Shape 子类 + createShape
-export * from './events';        // EventTarget, SimulatedEvent, EventDispatcher, EventObserver
-export * from './app';           // App, AppConfig
-export * from './transforms';    // BaseTransform, GraphicsTransform, AttributeTransform, ClipBoxTransform, ArcTransform, SectorTransform
-export * from './serialization'; // serialize, deserialize, DyeJSON 等类型
-export * from './plugin';        // Plugin 接口
+export * from './core'; // Graphics, Shape, Attributes, isHit, imageLoader
+export * from './scene'; // Scene, Group, Node, Layer
+export * from './renderers'; // Renderer
+export * from './shapes'; // 14 个 Shape 子类 + createShape
+export * from './events'; // EventTarget, SimulatedEvent, EventDispatcher, EventObserver
+export * from './app'; // App, AppConfig
+export * from './transforms'; // BaseTransform, GraphicsTransform, AttributeTransform, ClipBoxTransform, ArcTransform, SectorTransform
+export * from './serialization'; // serialize, deserialize, RendxJSON 等类型
+export * from './plugin'; // Plugin 接口
 ```
 
 ## 核心模块
@@ -57,13 +57,13 @@ export * from './plugin';        // Plugin 接口
 
 **类型编号**：
 
-| type | 节点类型 |
-|------|---------|
-| 0 | Graphics 基类 |
-| 1 | Scene |
-| 2 | Group |
-| 3 | Node |
-| 4 | Layer |
+| type | 节点类型      |
+| ---- | ------------- |
+| 0    | Graphics 基类 |
+| 1    | Scene         |
+| 2    | Group         |
+| 3    | Node          |
+| 4    | Layer         |
 
 **树操作**：`add`, `remove`, `removeChildren`, `unshift`, `find(name)`, `query(path)`, `traverse(fn)`, `path()`, `root`, `has(name, deep?)`, `source(target)`
 
@@ -72,6 +72,7 @@ export * from './plugin';        // Plugin 接口
 **可见性**：`setVisible(v, bySelf?)`, `setDisplay(d, bySelf?)`, `setPointerEvents(pe, bySelf?)` — 支持父级继承控制（`autoVisible`/`autoDisplay`/`autoPointerEvents`）
 
 **变换**：
+
 - 增量变换：`translate(tx,ty)`, `translateX/Y/XY`, `rotate(r)`, `rotateZ`, `scale(sx,sy)`, `scaleX/Y/XY`
 - 矩阵设置：`setMatrix(mat2d)`, `setWorldMatrix(mat2d)`
 - 只读 getter：`translation`, `rotation`, `scaling`
@@ -165,22 +166,22 @@ export * from './plugin';        // Plugin 接口
 
 ### shapes/ — Shape 子类
 
-| 类 | command | from() 参数 | 注册名 |
-|---|---------|-------------|--------|
-| TextShape | `'text'` | `(x, y, text)` | `text` |
-| CircleShape | `'circle'` | `(cx, cy, r)` | `circle` |
-| RectShape | `'rect'` | `(x, y, width, height)` | `rect` |
-| LineShape | `'line'` | `(x1, y1, x2, y2)` | `line` |
-| ImageShape | `'image'` | `(src, x, y, width, height)` | `image` |
-| PathShape | `'path'` | 自由路径（rendx-shape 生成） | `path` |
-| CurveShape | `'path'` | 曲线路径 | `curve` |
-| AreaShape | `'path'` | 面积路径 | `area` |
-| PolygonShape | `'path'` | 多边形 | `polygon` |
-| SectorShape | `'path'` | 扇形 | `sector` |
-| ArcShape | `'path'` | 弧线 | `arc` |
-| SymbolShape | `'path'` | 符号标记 | `symbol` |
-| RoundShape | `'path'` | 圆角矩形 | `round` |
-| RectBufferShape | `'path'` | 批量矩形（性能优化） | `rectBuffer` |
+| 类              | command    | from() 参数                  | 注册名       |
+| --------------- | ---------- | ---------------------------- | ------------ |
+| TextShape       | `'text'`   | `(x, y, text)`               | `text`       |
+| CircleShape     | `'circle'` | `(cx, cy, r)`                | `circle`     |
+| RectShape       | `'rect'`   | `(x, y, width, height)`      | `rect`       |
+| LineShape       | `'line'`   | `(x1, y1, x2, y2)`           | `line`       |
+| ImageShape      | `'image'`  | `(src, x, y, width, height)` | `image`      |
+| PathShape       | `'path'`   | 自由路径（rendx-shape 生成） | `path`       |
+| CurveShape      | `'path'`   | 曲线路径                     | `curve`      |
+| AreaShape       | `'path'`   | 面积路径                     | `area`       |
+| PolygonShape    | `'path'`   | 多边形                       | `polygon`    |
+| SectorShape     | `'path'`   | 扇形                         | `sector`     |
+| ArcShape        | `'path'`   | 弧线                         | `arc`        |
+| SymbolShape     | `'path'`   | 符号标记                     | `symbol`     |
+| RoundShape      | `'path'`   | 圆角矩形                     | `round`      |
+| RectBufferShape | `'path'`   | 批量矩形（性能优化）         | `rectBuffer` |
 
 `createShape(command)` — 工厂函数，按注册名创建 Shape 实例。
 
@@ -200,13 +201,13 @@ export * from './plugin';        // Plugin 接口
 
 #### 子类
 
-| 类 | 用途 | 所在目录 |
-|---|------|---------|
-| GraphicsTransform | translate/rotate/scale 几何动画 | `transforms/graphics.ts` |
-| AttributeTransform | opacity/fill/stroke 属性动画 | `transforms/attributes.ts` |
-| ClipBoxTransform | 裁剪框动画（lr/rl/tb/bt 方向） | `transforms/clip.ts` |
-| ArcTransform | 弧线专用动画 | `transforms/shape/arc.ts` |
-| SectorTransform | 扇形专用动画 | `transforms/shape/sector.ts` |
+| 类                 | 用途                            | 所在目录                     |
+| ------------------ | ------------------------------- | ---------------------------- |
+| GraphicsTransform  | translate/rotate/scale 几何动画 | `transforms/graphics.ts`     |
+| AttributeTransform | opacity/fill/stroke 属性动画    | `transforms/attributes.ts`   |
+| ClipBoxTransform   | 裁剪框动画（lr/rl/tb/bt 方向）  | `transforms/clip.ts`         |
+| ArcTransform       | 弧线专用动画                    | `transforms/shape/arc.ts`    |
+| SectorTransform    | 扇形专用动画                    | `transforms/shape/sector.ts` |
 
 ### events/ — 事件系统
 
@@ -259,23 +260,23 @@ DOM → SimulatedEvent 桥接。3 组原生事件（去重绑定）：
 
 **App** 类：
 
-| 方法 | 说明 |
-|------|------|
+| 方法                          | 说明                                         |
+| ----------------------------- | -------------------------------------------- |
 | `constructor(cfg: AppConfig)` | 创建 Scene + 事件层 + 默认层 + EventObserver |
-| `mount(container)` | 挂载 DOM、堆叠各层 Canvas、绑定事件 |
-| `render()` | 同步渲染一帧（仅重绘脏层） |
-| `requestRender()` | rAF 异步渲染循环 |
-| `resize(w, h)` | 更新所有层、容器和视口矩阵 |
-| `addLayer(name, index)` | 动态添加渲染层 |
-| `getLayer(name)` | 获取层 |
-| `use(plugin)` | 注册插件（同名不重复） |
-| `getPlugin(name)` | 获取已注册插件 |
-| `toCanvas()` | 合成所有层到单个 Canvas |
-| `toJSON()` | 序列化场景图为 DyeJSON |
-| `App.fromJSON(json, cfg?)` | 静态工厂：从 JSON 创建 App |
-| `restoreFromJSON(json)` | 就地恢复场景（保留挂载和插件） |
-| `container` / `mounted` | getter |
-| `clear()` / `dispose()` | 清理和销毁 |
+| `mount(container)`            | 挂载 DOM、堆叠各层 Canvas、绑定事件          |
+| `render()`                    | 同步渲染一帧（仅重绘脏层）                   |
+| `requestRender()`             | rAF 异步渲染循环                             |
+| `resize(w, h)`                | 更新所有层、容器和视口矩阵                   |
+| `addLayer(name, index)`       | 动态添加渲染层                               |
+| `getLayer(name)`              | 获取层                                       |
+| `use(plugin)`                 | 注册插件（同名不重复）                       |
+| `getPlugin(name)`             | 获取已注册插件                               |
+| `toCanvas()`                  | 合成所有层到单个 Canvas                      |
+| `toJSON()`                    | 序列化场景图为 RendxJSON                     |
+| `App.fromJSON(json, cfg?)`    | 静态工厂：从 JSON 创建 App                   |
+| `restoreFromJSON(json)`       | 就地恢复场景（保留挂载和插件）               |
+| `container` / `mounted`       | getter                                       |
+| `clear()` / `dispose()`       | 清理和销毁                                   |
 
 **AppConfig** 扩展 `RendererConfig`，新增 `layers?: string[]` 和 `autoResize?: boolean`。
 
@@ -292,10 +293,11 @@ interface Plugin {
 
 ### serialization.ts — 序列化
 
-**类型**：`DyeJSON`, `LayerJSON`, `NodeJSON`, `GroupJSON`, `GraphicsJSON`, `ChildJSON`
+**类型**：`RendxJSON`, `LayerJSON`, `NodeJSON`, `GroupJSON`, `GraphicsJSON`, `ChildJSON`
 
 **函数**：
-- `serialize(layers, width, height)` → `DyeJSON`
+
+- `serialize(layers, width, height)` → `RendxJSON`
 - `deserialize(json, cfg)` → `Layer[]`
 - `serializeLayer(layer)` → `LayerJSON`
 
@@ -337,18 +339,18 @@ EventObserver
 
 ## 测试覆盖
 
-| 测试文件 | 覆盖范围 |
-|---------|---------|
-| graphics.test.ts | 树操作、脏标记、矩阵变换、sign、可见性、z-index、className |
-| scene.test.ts | getQueue 排序缓存、pick 命中、position 映射、Node/Group |
-| layer.test.ts | 分层渲染、Layer 队列、视口裁剪 |
-| transforms.test.ts | 状态机、delay/repeat/easing、GraphicsTransform/AttributeTransform |
-| events.test.ts | 惰性 emitter、composedPath 缓存、三阶段事件流、模拟 enter/leave |
-| renderer.test.ts | IGraphicsRenderer 注入、viewMatrix、draw 管线 |
-| serialization.test.ts | toJSON/fromJSON 往返序列化 |
-| plugin.test.ts | 插件注册/去重/dispose |
-| image.test.ts | ImageShape + imageLoader |
-| culling.test.ts | 视口裁剪逻辑 |
-| history.test.ts | 历史记录插件集成 |
-| text-measure.test.ts | 文本测量 |
-| benchmark.test.ts | 性能基准测试 |
+| 测试文件              | 覆盖范围                                                          |
+| --------------------- | ----------------------------------------------------------------- |
+| graphics.test.ts      | 树操作、脏标记、矩阵变换、sign、可见性、z-index、className        |
+| scene.test.ts         | getQueue 排序缓存、pick 命中、position 映射、Node/Group           |
+| layer.test.ts         | 分层渲染、Layer 队列、视口裁剪                                    |
+| transforms.test.ts    | 状态机、delay/repeat/easing、GraphicsTransform/AttributeTransform |
+| events.test.ts        | 惰性 emitter、composedPath 缓存、三阶段事件流、模拟 enter/leave   |
+| renderer.test.ts      | IGraphicsRenderer 注入、viewMatrix、draw 管线                     |
+| serialization.test.ts | toJSON/fromJSON 往返序列化                                        |
+| plugin.test.ts        | 插件注册/去重/dispose                                             |
+| image.test.ts         | ImageShape + imageLoader                                          |
+| culling.test.ts       | 视口裁剪逻辑                                                      |
+| history.test.ts       | 历史记录插件集成                                                  |
+| text-measure.test.ts  | 文本测量                                                          |
+| benchmark.test.ts     | 性能基准测试                                                      |
