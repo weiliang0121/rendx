@@ -8,6 +8,10 @@ types/
 # Turbo
 .turbo/
 
+# VitePress cache
+.vitepress/cache/
+.vitepress/dist/
+
 # IDE
 .vscode/
 .idea/
