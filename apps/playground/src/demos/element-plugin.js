@@ -1,116 +1,186 @@
 const {App, Node, Group} = __rendx_engine__;
-const {elementPlugin, blueprintRenderer, createListBlueprint, createListNodeRenderer} = __rendx_element_plugin__;
+const {createElement, graphPlugin} = __rendx_element_plugin__;
 
 const app = new App({width: 800, height: 600});
 app.mount(container);
 
-// 初始化元素插件
-const element = elementPlugin();
-app.use(element);
+// ── 1. 定义 Element 类型 ── 用 engine 原生 API，像写 shader 一样
 
-// 注册类型 —— 插件不再内置任何渲染器，按需注册
-element.registerType('blueprint', blueprintRenderer);
-element.registerType('list-node', createListNodeRenderer());
+// Card: 简单矩形卡片
+const Card = createElement((ctx, data) => {
+  const bg = Node.create('round', {
+    fill: data.color ?? '#ffffff',
+    stroke: data.borderColor ?? '#333333',
+    strokeWidth: 2,
+  });
+  bg.shape.from(0, 0, ctx.width, ctx.height);
+  bg.shape.options(6, 6);
+  ctx.group.add(bg);
 
-// ── 1. QueueControl —— 用 list-node 便捷类型 ──
-element.addNode({
+  if (data.title) {
+    const label = Node.create('text', {
+      fill: '#333333',
+      fontSize: 14,
+      fontWeight: 'bold',
+      textAnchor: 'middle',
+      dominantBaseline: 'central',
+    });
+    label.shape.from(data.title, ctx.width / 2, ctx.height / 2);
+    ctx.group.add(label);
+  }
+
+  ctx.port('in', 'left');
+  ctx.port('out', 'right');
+});
+
+// ListNode: 带标题和多行的复合节点
+const ListNode = createElement((ctx, data) => {
+  const rowHeight = 30;
+  const headerHeight = 32;
+  const rows = data.rows ?? [];
+  const totalHeight = headerHeight + rows.length * rowHeight;
+  const w = ctx.width;
+  const themeColor = data.themeColor ?? '#6e8efb';
+
+  // 背景
+  const bg = Node.create('round', {fill: '#ffffff', stroke: themeColor, strokeWidth: 2});
+  bg.shape.from(0, 0, w, totalHeight);
+  bg.shape.options(6, 6);
+  ctx.group.add(bg);
+
+  // 标题栏背景
+  const headerBg = Node.create('rect', {fill: themeColor, opacity: 0.12});
+  headerBg.shape.from(1, 1, w - 2, headerHeight - 1);
+  ctx.group.add(headerBg);
+
+  // 标题文字
+  if (data.header) {
+    const title = Node.create('text', {
+      fill: '#333333',
+      fontSize: 13,
+      fontWeight: 'bold',
+      textAnchor: 'middle',
+      dominantBaseline: 'central',
+    });
+    title.shape.from(data.header, w / 2, headerHeight / 2);
+    ctx.group.add(title);
+  }
+
+  // 分隔线
+  const divider = Node.create('line', {stroke: themeColor, strokeWidth: 0.5, opacity: 0.4});
+  divider.shape.from(0, headerHeight, w, headerHeight);
+  ctx.group.add(divider);
+
+  // 行
+  rows.forEach((row, i) => {
+    const y = headerHeight + i * rowHeight;
+    const centerY = y + rowHeight / 2;
+
+    // 行间分隔线
+    if (i > 0) {
+      const sep = Node.create('line', {stroke: themeColor, strokeWidth: 0.5, opacity: 0.2});
+      sep.shape.from(12, y, w - 12, y);
+      ctx.group.add(sep);
+    }
+
+    // 标签
+    const label = Node.create('text', {
+      fill: '#555555',
+      fontSize: 12,
+      textAnchor: 'start',
+      dominantBaseline: 'central',
+    });
+    label.shape.from(row.label, 20, centerY);
+    ctx.group.add(label);
+
+    // 端口小方块
+    const portSize = 8;
+    const leftPort = Node.create('rect', {fill: themeColor});
+    leftPort.shape.from(-portSize / 2, centerY - portSize / 2, portSize, portSize);
+    ctx.group.add(leftPort);
+
+    const rightPort = Node.create('rect', {fill: themeColor});
+    rightPort.shape.from(w - portSize / 2, centerY - portSize / 2, portSize, portSize);
+    ctx.group.add(rightPort);
+
+    // 声明端口
+    ctx.port(`${row.id}:in`, 'left', centerY / totalHeight);
+    ctx.port(`${row.id}:out`, 'right', centerY / totalHeight);
+  });
+});
+
+// ── 2. Graph 管理器 ──
+
+const graph = graphPlugin();
+app.use(graph);
+
+graph.register('card', Card);
+graph.register('list-node', ListNode);
+
+// ── 3. 添加实例 ──
+
+const qc = graph.add('list-node', {
   id: 'queue-ctrl',
-  type: 'list-node',
   x: 80,
   y: 60,
   width: 220,
-  label: 'QueueControl',
-  style: {fill: '#ffffff', stroke: '#6e8efb', strokeWidth: 2},
-  data: {
-    rows: [
-      {id: 'in1', label: 'input1', inputCount: 1, outputCount: 1},
-      {id: 'in2', label: 'input2', inputCount: 1, outputCount: 1},
-      {id: 'in3', label: 'input3', inputCount: 1, outputCount: 1},
-    ],
-    portColor: '#6e8efb',
-    headerFill: '#6e8efb',
-  },
+  header: 'QueueControl',
+  themeColor: '#6e8efb',
+  rows: [
+    {id: 'in1', label: 'input1'},
+    {id: 'in2', label: 'input2'},
+    {id: 'in3', label: 'input3'},
+  ],
 });
 
-// ── 2. DataProcessor —— 用 blueprint 原始类型，手写蓝图 ──
-element.addNode({
-  id: 'data-proc',
-  type: 'blueprint',
+const proc = graph.add('list-node', {
+  id: 'processor',
   x: 480,
   y: 40,
-  width: 240,
-  style: {fill: '#ffffff', stroke: '#f59f00', strokeWidth: 2},
-  data: {
-    blueprint: {
-      sections: [
-        {type: 'header', label: 'DataProcessor', height: 30, fill: '#f59f00'},
-        {type: 'divider'},
-        {type: 'row', id: 'src', label: 'source', ports: {left: 1, right: 0}},
-        {type: 'divider', opacity: 0.2, indent: 12},
-        {type: 'row', id: 'filter', label: 'filter', ports: {left: 1, right: 1}},
-        {type: 'divider', opacity: 0.2, indent: 12},
-        {type: 'row', id: 'map', label: 'transform', ports: {left: 0, right: 1}},
-        {type: 'divider', opacity: 0.2, indent: 12},
-        {type: 'row', id: 'sink', label: 'output', ports: {left: 0, right: 1}},
-      ],
-      portColor: '#f59f00',
-    },
-  },
+  width: 220,
+  header: 'DataProcessor',
+  themeColor: '#f59f00',
+  rows: [
+    {id: 'src', label: 'source'},
+    {id: 'filter', label: 'filter'},
+    {id: 'transform', label: 'transform'},
+    {id: 'output', label: 'output'},
+  ],
 });
 
-// ── 3. Aggregator —— 用 createListBlueprint 工厂 ──
-element.addNode({
+const agg = graph.add('card', {
   id: 'aggregator',
-  type: 'blueprint',
-  x: 260,
-  y: 300,
-  width: 200,
-  style: {fill: '#ffffff', stroke: '#51cf66', strokeWidth: 2},
-  data: {
-    blueprint: createListBlueprint('Aggregator', {
-      rows: [
-        {id: 'a', label: 'stream A', inputCount: 1, outputCount: 0},
-        {id: 'b', label: 'stream B', inputCount: 1, outputCount: 0},
-        {id: 'merged', label: 'merged', inputCount: 0, outputCount: 1},
-      ],
-      portColor: '#51cf66',
-      headerFill: '#51cf66',
-    }),
-  },
+  x: 300,
+  y: 340,
+  width: 160,
+  height: 60,
+  title: 'Aggregator',
+  color: '#f0fff0',
+  borderColor: '#51cf66',
 });
 
-// ── 连接线（演示端口坐标对齐） ──
-function drawConnection(fromNodeId, fromPortId, toNodeId, toPortId, color) {
-  const from = element.getPortPosition(fromNodeId, fromPortId);
-  const to = element.getPortPosition(toNodeId, toPortId);
+// ── 4. 连接线 ──
+
+function drawConnection(fromEl, fromPortId, toEl, toPortId, color) {
+  const from = fromEl.getPortPosition(fromPortId);
+  const to = toEl.getPortPosition(toPortId);
   if (!from || !to) return;
 
-  // 贝塞尔曲线连接
   const dx = Math.abs(to[0] - from[0]) * 0.5;
-  const path = Node.create('path', {
-    stroke: color,
-    strokeWidth: 2,
-    fill: 'none',
-    opacity: 0.7,
-  });
+  const path = Node.create('path', {stroke: color, strokeWidth: 2, fill: 'none', opacity: 0.7});
   path.shape.from(`M ${from[0]} ${from[1]} C ${from[0] + dx} ${from[1]}, ${to[0] - dx} ${to[1]}, ${to[0]} ${to[1]}`);
   app.scene.add(path);
 }
 
-// QueueControl.out → DataProcessor.in
-drawConnection('queue-ctrl', 'in1:out:0', 'data-proc', 'src:in:0', '#6e8efb');
-drawConnection('queue-ctrl', 'in2:out:0', 'data-proc', 'filter:in:0', '#6e8efb');
-
-// QueueControl → Aggregator
-drawConnection('queue-ctrl', 'in3:out:0', 'aggregator', 'a:in:0', '#51cf66');
-
-// DataProcessor → Aggregator
-drawConnection('data-proc', 'filter:out:0', 'aggregator', 'b:in:0', '#f59f00');
+drawConnection(qc, 'in1:out', proc, 'src:in', '#6e8efb');
+drawConnection(qc, 'in2:out', proc, 'filter:in', '#6e8efb');
+drawConnection(qc, 'in3:out', agg, 'in', '#51cf66');
+drawConnection(proc, 'output:out', agg, 'in', '#f59f00');
 
 app.render();
 
-console.log('Element Plugin — Blueprint 声明式节点 demo');
-console.log('节点:', element.getNodeIds());
-console.log('QueueControl (list-node 便捷类型) ports:', element.getNode('queue-ctrl')?.ports?.length);
-console.log('DataProcessor (原始 blueprint) height:', element.getNode('data-proc')?.height);
-console.log('Aggregator (createListBlueprint 工厂) height:', element.getNode('aggregator')?.height);
+console.log('Graph Plugin — createElement + graphPlugin demo');
+console.log('Elements:', graph.getIds());
+console.log('QueueControl ports:', qc.ports.length);
+console.log('DataProcessor ports:', proc.ports.length);
+console.log('Aggregator ports:', agg.ports.length);

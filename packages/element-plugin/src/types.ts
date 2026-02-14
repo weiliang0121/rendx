@@ -1,21 +1,21 @@
 /**
- * Element 类型定义 — TypeScript Interface 即 DSL。
+ * Element Plugin — 类型定义。
  *
- * 用户通过这些类型声明图元素结构，IDE 自动提供补全和校验，
- * 无需编写独立的 DSL 语法或 schema 文件。
+ * 零运行时，纯接口。
+ * 为 createElement / Element / Graph 提供类型约束。
  */
 
 import type {Group} from 'rendx-engine';
 
 // ========================
-// Port（端口 / 连接锚点）
+// Port（连接锚点）
 // ========================
 
 /** 端口位置 — 四边 */
 export type PortPosition = 'top' | 'right' | 'bottom' | 'left';
 
 /** 端口定义 */
-export interface PortDefinition {
+export interface PortInfo {
   /** 端口唯一标识 */
   id: string;
   /** 所在边 */
@@ -25,101 +25,115 @@ export interface PortDefinition {
 }
 
 // ========================
-// Element Style
-// ========================
-
-/** 元素视觉样式（传递给底层 rendx Node 的 Attributes） */
-export interface ElementStyle {
-  fill?: string;
-  stroke?: string;
-  strokeWidth?: number;
-  opacity?: number;
-  fontSize?: number;
-  fontFamily?: string;
-  [key: string]: unknown;
-}
-
-// ========================
-// Element Node Data
+// Element Base Data
 // ========================
 
 /**
- * 图元素数据 — element 插件的核心数据结构。
- *
- * 一个 ElementNodeData 对应一个业务层"节点"（区别于渲染层的 rendx Node）。
- * element 插件负责将其映射为 rendx 的 Group → Node 树以完成渲染。
- *
- * @example
- * ```ts
- * element.addNode({
- *   id: 'node-1',
- *   type: 'rect',
- *   x: 100, y: 100,
- *   width: 200, height: 80,
- *   label: '处理器',
- *   ports: [
- *     { id: 'in',  position: 'left' },
- *     { id: 'out', position: 'right' },
- *   ],
- *   style: { fill: '#e6f7ff', stroke: '#1890ff' },
- *   data: { status: 'running' },
- * });
- * ```
+ * 所有 Element 实例共享的基础定位字段。
+ * 用户自定义数据 T 与此合并作为完整的 element data。
  */
-export interface ElementNodeData {
+export interface ElementBase {
   /** 唯一标识 */
   id: string;
-  /** 元素类型（内置: 'rect' | 'circle' | 'round'，或自定义注册类型） */
-  type: string;
   /** X 坐标（世界坐标） */
   x: number;
   /** Y 坐标（世界坐标） */
   y: number;
-  /** 宽度（矩形类元素使用，默认 100） */
+  /** 宽度（px） */
   width?: number;
-  /** 高度（矩形类元素使用，默认 60） */
+  /** 高度（px） */
   height?: number;
-  /** 标签文本（显示在元素中心） */
-  label?: string;
-  /** 端口定义列表 */
-  ports?: PortDefinition[];
-  /** 视觉样式（覆盖默认值） */
-  style?: ElementStyle;
-  /** 用户业务数据（不影响渲染，由消费方自行使用） */
-  data?: Record<string, unknown>;
 }
 
+/** 完整的 element data = 基础定位 + 用户自定义数据 */
+export type ElementData<T = Record<string, unknown>> = ElementBase & T;
+
 // ========================
-// Element Renderer / Updater
+// Render Context（render fn 的上下文）
 // ========================
 
 /**
- * 元素渲染器 — 接收元素数据，返回一个 rendx Group 作为渲染载体。
+ * render 函数的上下文 — 在 fn(ctx, data) 中使用。
  *
- * Group 内部可包含任意 Node/子 Group 组合。
- * 注意：返回的 Group 的 translate 由插件统一管理（不要在 renderer 内设置 translate）。
- *
- * 可返回 Group（简单模式）或 RenderResult（自动计算 height/ports）。
+ * ctx 提供：
+ * - group: 已创建好的 Group 容器（translate 已设置）
+ * - width / height: 元素尺寸
+ * - port(): 声明端口
+ * - onCleanup(): 注册清理回调
  */
-export type ElementRenderer = (data: ElementNodeData) => Group | RenderResult;
-
-/**
- * 渲染结果 — 允许 renderer 返回自动计算的元数据。
- *
- * - height: 覆盖 ElementNodeData.height（蓝图系统用于自动撑开）
- * - ports:  覆盖 ElementNodeData.ports（蓝图系统用于自动生成）
- */
-export interface RenderResult {
-  /** 渲染后的 Group */
-  group: Group;
-  /** 自动计算的高度（将覆盖 ElementNodeData.height） */
-  height?: number;
-  /** 自动生成的端口定义（将覆盖 ElementNodeData.ports） */
-  ports?: PortDefinition[];
+export interface ElementContext {
+  /** 自动创建的 Group 容器，用户往里 add Node/子 Group */
+  readonly group: Group;
+  /** 元素宽度 */
+  readonly width: number;
+  /** 元素高度 */
+  readonly height: number;
+  /** 声明一个端口 */
+  port(id: string, position: PortPosition, offset?: number): void;
+  /** 注册清理回调（update/dispose 时调用） */
+  onCleanup(fn: () => void): void;
 }
 
 /**
- * 元素更新器 — 接收已有 Group 和变更数据，就地更新（避免 destroy+recreate）。
- * 可选：不提供时插件会 destroy+recreate。
+ * 用户编写的 render 函数签名。
+ * 在 Group 内用 Node.create / group.add 等 engine 原生 API 构建子树。
  */
-export type ElementUpdater = (group: Group, data: ElementNodeData, changed: Partial<ElementNodeData>) => void;
+export type ElementRenderFn<T = Record<string, unknown>> = (ctx: ElementContext, data: ElementData<T>) => void;
+
+// ========================
+// Element Definition
+// ========================
+
+/**
+ * 元素定义 — createElement() 的返回值。
+ * 持有 render 函数引用 + 类型标记，供 Graph 实例化使用。
+ */
+export interface ElementDef<T = Record<string, unknown>> {
+  /** 标记为 element 定义（运行时类型检查用） */
+  readonly __element_def__: true;
+  /** 用户提供的 render 函数 */
+  readonly render: ElementRenderFn<T>;
+}
+
+// ========================
+// Element Instance
+// ========================
+
+/**
+ * Element 实例 — 一份 data 对应一棵 Group 子树。
+ *
+ * 由 Graph.add() 创建，管理 data ↔ scene graph 的绑定关系。
+ */
+export interface Element<T = Record<string, unknown>> {
+  /** 元素 ID */
+  readonly id: string;
+  /** 当前数据快照（只读） */
+  readonly data: Readonly<ElementData<T>>;
+  /** 底层 Group（可直接操作 engine API） */
+  readonly group: Group;
+  /** 是否已挂载到 scene */
+  readonly mounted: boolean;
+  /** 当前端口列表 */
+  readonly ports: ReadonlyArray<PortInfo>;
+
+  /**
+   * 更新数据 — 合并 partial → 清空 children → 重跑 render fn。
+   * 位置变化只更新 translate，不重建子树。
+   */
+  update(partial: Partial<ElementData<T>>): void;
+
+  /**
+   * 获取端口的世界坐标。
+   * @returns [x, y] 或 null（端口不存在时）
+   */
+  getPortPosition(portId: string): [number, number] | null;
+
+  /**
+   * 获取所有端口的世界坐标。
+   * @returns Record<portId, [x, y]>
+   */
+  getPortPositions(): Record<string, [number, number]>;
+
+  /** 销毁元素（清理回调 + 移除 group children + 从 scene 移除） */
+  dispose(): void;
+}
