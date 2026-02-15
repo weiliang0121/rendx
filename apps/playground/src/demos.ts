@@ -61,6 +61,10 @@ import selectionGraphDemo from './demos/selection-graph.js?raw';
 import dragBasicDemo from './demos/drag-basic.js?raw';
 import dragGraphDemo from './demos/drag-graph.js?raw';
 
+// --- Plugin: Connect Plugin ---
+import connectBasicDemo from './demos/connect-basic.js?raw';
+import connectGraphDemo from './demos/connect-graph.js?raw';
+
 export interface Demo {
   name: string;
   code: string;
@@ -129,4 +133,8 @@ export const demos: Demo[] = [
   // ── Plugin: Drag Plugin ──
   {name: '拖拽基础 Drag Basic', code: dragBasicDemo},
   {name: '拖拽+图集成 Drag Graph', code: dragGraphDemo},
+
+  // ── Plugin: Connect Plugin ──
+  {name: '连线基础 Connect Basic', code: connectBasicDemo},
+  {name: '连线+图集成 Connect Graph', code: connectGraphDemo},
 ];

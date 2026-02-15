@@ -68,6 +68,9 @@ importers:
 
   apps/playground:
     dependencies:
+      rendx-connect-plugin:
+        specifier: workspace:^
+        version: link:../../packages/connect-plugin
       rendx-curve:
         specifier: workspace:^
         version: link:../../packages/curve
@@ -120,6 +123,15 @@ importers:
       rendx-shape:
         specifier: workspace:^
         version: link:../shape
+
+  packages/connect-plugin:
+    dependencies:
+      rendx-core:
+        specifier: workspace:^
+        version: link:../core
+      rendx-engine:
+        specifier: workspace:^
+        version: link:../engine
 
   packages/core: {}
 

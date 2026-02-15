@@ -25,13 +25,13 @@ interface Plugin {
 
 ## 插件分类
 
-Rendx 内置 6 个插件，按职责可分为三类：
+Rendx 内置 7 个插件，按职责可分为三类：
 
-| 类型         | 插件                                        | 定位                                            |
-| ------------ | ------------------------------------------- | ----------------------------------------------- |
-| **数据管理** | Graph Plugin                                | 管理 Node/Edge 元素的创建、更新、销毁和依赖追踪 |
-| **交互增强** | Selection Plugin、Drag Plugin               | 选中/悬停/框选、拖拽移动/约束/多选联动          |
-| **视觉辅助** | Grid Plugin、Minimap Plugin、History Plugin | 网格背景、缩略导航、撤销重做                    |
+| 类型         | 插件                                          | 定位                                            |
+| ------------ | --------------------------------------------- | ----------------------------------------------- |
+| **数据管理** | Graph Plugin                                  | 管理 Node/Edge 元素的创建、更新、销毁和依赖追踪 |
+| **交互增强** | Selection Plugin、Drag Plugin、Connect Plugin | 选中/悬停/框选、拖拽移动/约束、连线交互         |
+| **视觉辅助** | Grid Plugin、Minimap Plugin、History Plugin   | 网格背景、缩略导航、撤销重做                    |
 
 ---
 
@@ -419,6 +419,88 @@ app.use(
 | --------------- | ------------ | ---------------- |
 | `drag:dragging` | `boolean`    | 是否正在拖拽     |
 | `drag:targets`  | `Graphics[]` | 当前拖拽目标列表 |
+
+---
+
+## Connect Plugin（连线交互）
+
+**包名**：`rendx-connect-plugin`
+
+为节点提供交互式连线能力。从可连接的端口拖出预览线，吸附到目标端口后松开鼠标完成连接。独立运行于纯 engine 场景，也可与 graph-plugin 协同实现自动 edge 创建。
+
+### 核心概念
+
+#### 状态机
+
+```
+Idle ──[pointerdown 命中 connectable]──→ Connecting
+                                            │
+                      [pointermove]  更新预览线 + 吸附检测
+                                            │
+                      ┌── pointerup + 有吸附 ──→ 完成连接 ──→ Idle
+                      │
+                 Connecting
+                      │
+                      ├── pointerup + 无吸附 ──→ 取消 ──→ Idle
+                      │
+                      └── Escape ──→ 取消 ──→ Idle
+```
+
+#### 双模式边创建
+
+插件根据运行环境自动选择边的创建路径：
+
+| 模式               | 条件                              | 行为                                        |
+| ------------------ | --------------------------------- | ------------------------------------------- |
+| **Graph 模式**     | graph-plugin 存在 + 设置 edgeType | 调用 `graph.add(edgeType, edgeData)` 创建边 |
+| **纯 Engine 模式** | 无 graph-plugin 或未设置 edgeType | 自行创建 `Node.create('line')` 添加到场景   |
+
+#### 自动桥接（parent chain 溯源）
+
+graph-plugin 的 `ElementImpl` 将 element ID 设为 group 的 `name`。连接完成时，插件从端口 Graphics 沿 parent chain 向上搜索，通过 `graph.has(current.name)` 自动找到对应的 element ID，无需手动标记 `nodeId`。
+
+#### className 标记
+
+只有带 `connectable` className（可配置）的 Graphics 才响应连接交互。建议将端口元素标记为 `connectable`，节点主体不标记，从而与 drag-plugin 互不干扰。
+
+### 插件感知机制
+
+Connect Plugin 在运行时**软感知**以下插件，增强行为但不产生硬依赖：
+
+| 被感知插件   | 探测方式                        | 增强行为                           | 未安装时降级       |
+| ------------ | ------------------------------- | ---------------------------------- | ------------------ |
+| graph-plugin | `app.getPlugin('graph')`        | `graph.add(edgeType, data)` 创建边 | 自行创建 line Node |
+| drag-plugin  | `app.getState('drag:dragging')` | 拖拽中不触发连接                   | 无限制             |
+
+### 基本使用
+
+```typescript
+import {connectPlugin} from 'rendx-connect-plugin';
+
+// 纯 engine 场景
+const connect = connectPlugin();
+app.use(connect);
+
+// 标记可连接的端口
+circle.addClassName('connectable');
+
+// 配合 graph-plugin
+app.use(connectPlugin({edgeType: 'edge'}));
+```
+
+### 事件与状态
+
+| 事件名             | 触发时机                | 关键负载                         |
+| ------------------ | ----------------------- | -------------------------------- |
+| `connect:start`    | 命中 connectable        | `source`, `origin`               |
+| `connect:move`     | 每帧 pointermove        | `source`, `cursor`, `snapTarget` |
+| `connect:complete` | 松开鼠标完成连接        | `source`, `target`               |
+| `connect:cancel`   | Escape / 无吸附目标松开 | `source`                         |
+
+| State Key            | 类型      | 说明         |
+| -------------------- | --------- | ------------ | ------------ |
+| `connect:connecting` | `boolean` | 是否正在连接 |
+| `connect:source`     | `Graphics | null`        | 当前连接起点 |
 
 ---
 

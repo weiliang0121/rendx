@@ -1,0 +1,49 @@
+{
+  "name": "rendx-connect-plugin",
+  "version": "0.1.0",
+  "description": "Connect interaction plugin for Rendx engine — interactive edge creation",
+  "license": "MIT",
+  "author": "wei.liang (https://github.com/weiliang0121)",
+  "type": "module",
+  "keywords": [
+    "rendx",
+    "2d",
+    "canvas",
+    "rendering",
+    "visualization",
+    "scene-graph",
+    "connect",
+    "edge"
+  ],
+  "homepage": "https://weiliang0121.github.io/rendx/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weiliang0121/rendx.git",
+    "directory": "packages/connect-plugin"
+  },
+  "main": "dist/main.cjs",
+  "module": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js",
+      "require": "./dist/main.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "rendx-core": "workspace:^",
+    "rendx-engine": "workspace:^"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

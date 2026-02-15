@@ -41,6 +41,7 @@ Layer 4 (顶层)
 └── rendx-engine       场景图引擎（整合所有包）
 
 插件
+├── rendx-connect-plugin    连线交互插件
 ├── rendx-drag-plugin       拖拽交互插件
 ├── rendx-graph-plugin      图元素生命周期管理插件
 ├── rendx-grid-plugin       网格插件
@@ -114,6 +115,7 @@ app.render(); // 静态渲染一帧
 | rendx-svg              | `packages/svg/AGENTS.md`              |
 | rendx-gradient         | `packages/gradient/AGENTS.md`         |
 | rendx-dom              | `packages/dom/AGENTS.md`              |
+| rendx-connect-plugin   | `packages/connect-plugin/AGENTS.md`   |
 | rendx-drag-plugin      | `packages/drag-plugin/AGENTS.md`      |
 | rendx-graph-plugin     | `packages/graph-plugin/AGENTS.md`     |
 | rendx-grid-plugin      | `packages/grid-plugin/AGENTS.md`      |
