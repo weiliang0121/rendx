@@ -605,6 +605,94 @@ describe('ConnectPlugin — custom anchor', () => {
 });
 
 // ════════════════════════════════════════════════════════════
+//  自定义预览路径
+// ════════════════════════════════════════════════════════════
+
+describe('ConnectPlugin — custom previewPath', () => {
+  it('should call previewPath during connecting', () => {
+    const {app} = createApp();
+    const previewPath = vi.fn((source: [number, number], target: [number, number]) => `M${source[0]} ${source[1]}C${(source[0] + target[0]) / 2} ${source[1]},${(source[0] + target[0]) / 2} ${target[1]},${target[0]} ${target[1]}`);
+    const plugin = connectPlugin({previewPath, snapRadius: 100});
+    app.use(plugin);
+
+    const src = createConnectableNode('n1', 0, 0, 50, 50);
+    const tgt = createConnectableNode('n2', 200, 0, 50, 50);
+    app.scene.add(src);
+    app.scene.add(tgt);
+    app.render();
+
+    // Start connection
+    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    app.scene.emit('pointerdown', downE);
+    expect(plugin.isConnecting()).toBe(true);
+
+    // Move — should call previewPath
+    const moveE = createSimEvent('pointermove', src, {worldX: 100, worldY: 25});
+    app.scene.emit('pointermove', moveE);
+
+    expect(previewPath).toHaveBeenCalled();
+    const lastCall = previewPath.mock.calls[previewPath.mock.calls.length - 1];
+    expect(lastCall[0]).toBeInstanceOf(Array); // source point
+    expect(lastCall[1]).toBeInstanceOf(Array); // target point
+  });
+
+  it('should remove preview from layer on cancel', () => {
+    const {app} = createApp();
+    const plugin = connectPlugin({snapRadius: 100});
+    app.use(plugin);
+
+    const src = createConnectableNode('n1', 0, 0, 50, 50);
+    app.scene.add(src);
+    app.render();
+
+    // Start connection
+    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    app.scene.emit('pointerdown', downE);
+    expect(plugin.isConnecting()).toBe(true);
+
+    // Move to show preview
+    const moveE = createSimEvent('pointermove', src, {worldX: 100, worldY: 100});
+    app.scene.emit('pointermove', moveE);
+
+    // Cancel via pointerup without snap target
+    window.dispatchEvent(new PointerEvent('pointerup'));
+    expect(plugin.isConnecting()).toBe(false);
+
+    // Preview line should be removed from layer (connect layer should have no children)
+    const connectLayer = app.getLayer('connect');
+    expect(connectLayer!.children.length).toBe(0);
+  });
+
+  it('should remove preview from layer on complete', () => {
+    const {app} = createApp();
+    const plugin = connectPlugin({snapRadius: 100});
+    app.use(plugin);
+
+    const src = createConnectableNode('n1', 0, 0, 50, 50);
+    const tgt = createConnectableNode('n2', 200, 0, 50, 50);
+    app.scene.add(src);
+    app.scene.add(tgt);
+    app.render();
+
+    // Start connection
+    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    app.scene.emit('pointerdown', downE);
+
+    // Move to snap target
+    const moveE = createSimEvent('pointermove', src, {worldX: 225, worldY: 25});
+    app.scene.emit('pointermove', moveE);
+
+    // Complete
+    window.dispatchEvent(new PointerEvent('pointerup'));
+    expect(plugin.isConnecting()).toBe(false);
+
+    // Preview line should be removed from layer
+    const connectLayer = app.getLayer('connect');
+    expect(connectLayer!.children.length).toBe(0);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
 //  Graph 集成
 // ════════════════════════════════════════════════════════════
 

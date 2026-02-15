@@ -122,6 +122,20 @@ export interface ConnectPluginOptions {
   /** 预览线虚线模式 @default [6, 4] */
   previewDash?: number[];
 
+  /**
+   * 自定义预览路径生成器。
+   * 接收起点和终点坐标，返回 SVG path data 字符串。
+   * 未设置则使用直线 (`M x1 y1 L x2 y2`)。
+   * @example
+   * ```typescript
+   * previewPath: ([sx, sy], [tx, ty]) => {
+   *   const mx = (sx + tx) / 2;
+   *   return `M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ty}, ${tx} ${ty}`;
+   * }
+   * ```
+   */
+  previewPath?: (source: Point, target: Point) => string;
+
   // ── 吸附 ──
 
   /**

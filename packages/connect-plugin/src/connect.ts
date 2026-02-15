@@ -37,6 +37,7 @@ interface ResolvedOptions {
   previewStroke: string;
   previewStrokeWidth: number;
   previewDash: number[];
+  previewPath: ((source: Point, target: Point) => string) | null;
   snapRadius: number;
   cursor: string;
 }
@@ -99,6 +100,7 @@ export class ConnectPlugin implements Plugin {
       previewStroke: options.previewStroke ?? DEFAULT_PREVIEW_STROKE,
       previewStrokeWidth: options.previewStrokeWidth ?? DEFAULT_PREVIEW_STROKE_WIDTH,
       previewDash: options.previewDash ?? DEFAULT_PREVIEW_DASH,
+      previewPath: options.previewPath ?? null,
       snapRadius: options.snapRadius ?? DEFAULT_SNAP_RADIUS,
       cursor: options.cursor ?? DEFAULT_CURSOR,
     };
@@ -211,26 +213,38 @@ export class ConnectPlugin implements Plugin {
   // ════════════════════════════════════════════════════════════
 
   #createPreviewLine() {
-    this.#previewLine = EngineNode.create('line', {
+    this.#previewLine = EngineNode.create('path', {
       stroke: this.#opts.previewStroke,
       strokeWidth: this.#opts.previewStrokeWidth,
       strokeDasharray: this.#opts.previewDash,
+      fill: 'none',
     });
-    this.#previewLine.setDisplay(false);
-    this.#connectLayer!.add(this.#previewLine);
+    // 不预先 add 到 layer，showPreview 时按需 add
   }
 
   #showPreview(x1: number, y1: number, x2: number, y2: number) {
     if (!this.#previewLine) return;
-    this.#previewLine.shape.from(x1, y1, x2, y2);
+
+    const source: Point = [x1, y1];
+    const target: Point = [x2, y2];
+    const pathData = this.#opts.previewPath ? this.#opts.previewPath(source, target) : `M${x1} ${y1}L${x2} ${y2}`;
+
+    this.#previewLine.shape.from(pathData);
     this.#previewLine.setDisplay(true);
+
+    // 确保已添加到 overlay 层
+    if (!this.#previewLine.parent) {
+      this.#connectLayer!.add(this.#previewLine);
+    }
     this.#previewLine.setDirty(true);
   }
 
   #hidePreview() {
     if (!this.#previewLine) return;
-    this.#previewLine.setDisplay(false);
-    this.#previewLine.setDirty(true);
+    // 从 overlay 层移除，强制层重绘清除画面
+    if (this.#previewLine.parent) {
+      this.#previewLine.parent.remove(this.#previewLine);
+    }
   }
 
   // ════════════════════════════════════════════════════════════

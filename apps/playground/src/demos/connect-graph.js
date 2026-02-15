@@ -111,7 +111,15 @@ app.use(drag);
 const connect = connectPlugin({
   edgeType: 'edge',
   snapRadius: 30,
-  // 默认 edgeFactory — 自动溯源 element ID + 携带 port data
+  // 预览线用 bumpX 贝塞尔曲线，与实际 edge 一致
+  previewPath: ([sx, sy], [tx, ty]) => {
+    const p = new Path();
+    bumpX(p, [
+      [sx, sy],
+      [tx, ty],
+    ]);
+    return p.toString();
+  },
 });
 app.use(connect);
 
