@@ -154,7 +154,7 @@ export class GraphPlugin implements Plugin, GraphQuery {
       for (const elem of [...nodes, ...edges]) {
         const def = this.#types.get(elem.typeName);
         if (!def) {
-          console.warn(`[rendx-element-plugin] Cannot restore element: type "${elem.typeName}" not registered`);
+          console.warn(`[rendx-graph-plugin] Cannot restore element: type "${elem.typeName}" not registered`);
           continue;
         }
         this.add(elem.typeName, elem.data as never, {layer: elem.layer, deps: elem.deps});

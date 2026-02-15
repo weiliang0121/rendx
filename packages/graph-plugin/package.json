@@ -1,7 +1,7 @@
 {
-  "name": "rendx-element-plugin",
+  "name": "rendx-graph-plugin",
   "version": "0.0.1",
-  "description": "Element management plugin for Rendx engine — graph node CRUD, ports, and custom type registry",
+  "description": "Graph element management plugin for Rendx engine — node/edge CRUD, dependency tracking, and custom type registry",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
   "type": "module",
@@ -18,7 +18,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/weiliang0121/rendx.git",
-    "directory": "packages/element-plugin"
+    "directory": "packages/graph-plugin"
   },
   "main": "dist/main.cjs",
   "module": "dist/main.js",

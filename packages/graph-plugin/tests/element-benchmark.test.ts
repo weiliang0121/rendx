@@ -25,7 +25,7 @@ import type {GraphPlugin} from '../src/graph';
 import type {NodeBase, EdgeBase} from '../src/types';
 
 /**
- * Element-plugin 性能基准测试
+ * Graph-plugin 性能基准测试
  * 覆盖元素 CRUD、批量操作、依赖追踪、serialize/deserialize 的耗时。
  */
 
@@ -73,7 +73,7 @@ const Link = createEdge<LinkData>((ctx, data) => {
 // Tests
 // ═══════════════════════════════════════════════
 
-describe('Element-plugin 性能基准', () => {
+describe('Graph-plugin 性能基准', () => {
   let container: HTMLDivElement;
   let app: App;
   let graph: GraphPlugin;

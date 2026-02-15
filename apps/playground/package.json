@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "rendx-engine": "workspace:^",
-    "rendx-element-plugin": "workspace:^",
+    "rendx-graph-plugin": "workspace:^",
     "rendx-history-plugin": "workspace:^",
     "rendx-path": "workspace:^",
     "rendx-curve": "workspace:^"

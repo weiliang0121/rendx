@@ -1,4 +1,4 @@
-# rendx-element-plugin
+# rendx-graph-plugin
 
 ## 概述
 
@@ -151,7 +151,7 @@ src/
 ## 典型用法
 
 ```typescript
-import {graphPlugin, createNode, createEdge} from 'rendx-element-plugin';
+import {graphPlugin, createNode, createEdge} from 'rendx-graph-plugin';
 
 // 1. 安装插件
 const graph = graphPlugin();

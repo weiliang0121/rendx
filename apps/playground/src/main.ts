@@ -127,7 +127,7 @@ async function runCode() {
   try {
     // Dynamic import the engine so user code can reference it
     const engine = await import('rendx-engine');
-    const elementPlugin = await import('rendx-element-plugin');
+    const graphPluginMod = await import('rendx-graph-plugin');
     const historyPlugin = await import('rendx-history-plugin');
     const pathPkg = await import('rendx-path');
     const curvePkg = await import('rendx-curve');
@@ -137,8 +137,8 @@ async function runCode() {
     const wrappedCode = code
       .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-engine['"]\s*;?/g, 'const {$1} = __rendx_engine__;')
       .replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-engine['"]\s*;?/g, 'const $1 = __rendx_engine__;')
-      .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-element-plugin['"]\s*;?/g, 'const {$1} = __rendx_element_plugin__;')
-      .replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-element-plugin['"]\s*;?/g, 'const $1 = __rendx_element_plugin__;')
+      .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-graph-plugin['"]\s*;?/g, 'const {$1} = __rendx_graph_plugin__;')
+      .replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-graph-plugin['"]\s*;?/g, 'const $1 = __rendx_graph_plugin__;')
       .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-history-plugin['"]\s*;?/g, 'const {$1} = __rendx_history_plugin__;')
       .replace(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]rendx-history-plugin['"]\s*;?/g, 'const $1 = __rendx_history_plugin__;')
       .replace(/import\s*\{([^}]+)\}\s*from\s*['"]rendx-path['"]\s*;?/g, 'const {$1} = __rendx_path__;')
@@ -154,7 +154,7 @@ async function runCode() {
     // Execute using Function constructor (safer than eval, same origin)
     const fn = new Function(
       '__rendx_engine__',
-      '__rendx_element_plugin__',
+      '__rendx_graph_plugin__',
       '__rendx_history_plugin__',
       '__rendx_path__',
       '__rendx_curve__',
@@ -164,7 +164,7 @@ async function runCode() {
       `,
     );
 
-    const result = fn(engine, elementPlugin, historyPlugin, pathPkg, curvePkg, containerEl);
+    const result = fn(engine, graphPluginMod, historyPlugin, pathPkg, curvePkg, containerEl);
 
     // Try to capture the app instance for cleanup
     if (result && typeof result.dispose === 'function') {

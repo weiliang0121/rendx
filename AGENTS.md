@@ -111,7 +111,7 @@ app.render(); // 静态渲染一帧
 | rendx-svg            | `packages/svg/AGENTS.md`            |
 | rendx-gradient       | `packages/gradient/AGENTS.md`       |
 | rendx-dom            | `packages/dom/AGENTS.md`            |
-| rendx-element-plugin | `packages/element-plugin/AGENTS.md` |
+| rendx-graph-plugin   | `packages/graph-plugin/AGENTS.md`   |
 | rendx-grid-plugin    | `packages/grid-plugin/AGENTS.md`    |
 | rendx-history-plugin | `packages/history-plugin/AGENTS.md` |
 | rendx-minimap-plugin | `packages/minimap-plugin/AGENTS.md` |

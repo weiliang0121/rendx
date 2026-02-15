@@ -48,10 +48,10 @@ import serialization from './demos/serialization.js?raw';
 import plugin from './demos/plugin.js?raw';
 import randomCircles from './demos/random-circles.js?raw';
 
-// --- Plugin: Element Plugin ---
-import elementPluginDemo from './demos/element-plugin.js?raw';
-import elementLifecycleDemo from './demos/element-lifecycle.js?raw';
-import elementHistoryDemo from './demos/element-history.js?raw';
+// --- Plugin: Graph Plugin ---
+import graphPluginDemo from './demos/graph-plugin.js?raw';
+import elementLifecycleDemo from './demos/graph-lifecycle.js?raw';
+import elementHistoryDemo from './demos/graph-history.js?raw';
 
 export interface Demo {
   name: string;
@@ -109,8 +109,8 @@ export const demos: Demo[] = [
   {name: '插件系统 Plugin', code: plugin},
   {name: '随机圆 Random Circles', code: randomCircles},
 
-  // ── Plugin: Element Plugin ──
-  {name: '元素插件 Element Plugin', code: elementPluginDemo},
+  // ── Plugin: Graph Plugin ──
+  {name: '图插件 Graph Plugin', code: graphPluginDemo},
   {name: '元素生命周期 Element Lifecycle', code: elementLifecycleDemo},
   {name: '元素+历史 Element History', code: elementHistoryDemo},
 ];

@@ -71,12 +71,12 @@ importers:
       rendx-curve:
         specifier: workspace:^
         version: link:../../packages/curve
-      rendx-element-plugin:
-        specifier: workspace:^
-        version: link:../../packages/element-plugin
       rendx-engine:
         specifier: workspace:^
         version: link:../../packages/engine
+      rendx-graph-plugin:
+        specifier: workspace:^
+        version: link:../../packages/graph-plugin
       rendx-history-plugin:
         specifier: workspace:^
         version: link:../../packages/history-plugin
@@ -134,19 +134,6 @@ importers:
 
   packages/ease: {}
 
-  packages/element-plugin:
-    dependencies:
-      rendx-engine:
-        specifier: workspace:^
-        version: link:../engine
-    devDependencies:
-      rendx-canvas:
-        specifier: workspace:^
-        version: link:../canvas
-      rendx-svg:
-        specifier: workspace:^
-        version: link:../svg
-
   packages/engine:
     dependencies:
       eventemitter3:
@@ -188,6 +175,19 @@ importers:
       rendx-dom:
         specifier: workspace:^
         version: link:../dom
+
+  packages/graph-plugin:
+    dependencies:
+      rendx-engine:
+        specifier: workspace:^
+        version: link:../engine
+    devDependencies:
+      rendx-canvas:
+        specifier: workspace:^
+        version: link:../canvas
+      rendx-svg:
+        specifier: workspace:^
+        version: link:../svg
 
   packages/grid-plugin:
     dependencies:
