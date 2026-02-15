@@ -114,11 +114,11 @@ describe('ConnectPlugin basics', () => {
     expect(plugin.state[1].key).toBe('connect:source');
   });
 
-  it('should declare connect layer', () => {
+  it('should declare selection overlay layer', () => {
     const plugin = connectPlugin();
     expect(plugin.layers).toHaveLength(1);
-    expect(plugin.layers[0].name).toBe('connect');
-    expect(plugin.layers[0].zIndex).toBe(900);
+    expect(plugin.layers[0].name).toBe('selection');
+    expect(plugin.layers[0].zIndex).toBe(10);
   });
 
   it('should install without errors', () => {
@@ -636,7 +636,7 @@ describe('ConnectPlugin — custom previewPath', () => {
     expect(lastCall[1]).toBeInstanceOf(Array); // target point
   });
 
-  it('should remove preview from layer on cancel', () => {
+  it('should hide preview in layer on cancel', () => {
     const {app} = createApp();
     const plugin = connectPlugin({snapRadius: 100});
     app.use(plugin);
@@ -658,12 +658,13 @@ describe('ConnectPlugin — custom previewPath', () => {
     window.dispatchEvent(new PointerEvent('pointerup'));
     expect(plugin.isConnecting()).toBe(false);
 
-    // Preview line should be removed from layer (connect layer should have no children)
-    const connectLayer = app.getLayer('connect');
-    expect(connectLayer!.children.length).toBe(0);
+    // Preview line should be hidden (display=false) but still in layer
+    const overlayLayer = app.getLayer('selection');
+    expect(overlayLayer!.children.length).toBe(1);
+    expect(overlayLayer!.children[0].display).toBe(false);
   });
 
-  it('should remove preview from layer on complete', () => {
+  it('should hide preview in layer on complete', () => {
     const {app} = createApp();
     const plugin = connectPlugin({snapRadius: 100});
     app.use(plugin);
@@ -686,9 +687,10 @@ describe('ConnectPlugin — custom previewPath', () => {
     window.dispatchEvent(new PointerEvent('pointerup'));
     expect(plugin.isConnecting()).toBe(false);
 
-    // Preview line should be removed from layer
-    const connectLayer = app.getLayer('connect');
-    expect(connectLayer!.children.length).toBe(0);
+    // Preview line should be hidden (display=false) but still in layer
+    const overlayLayer = app.getLayer('selection');
+    expect(overlayLayer!.children.length).toBe(1);
+    expect(overlayLayer!.children[0].display).toBe(false);
   });
 });
 

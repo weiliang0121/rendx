@@ -176,9 +176,11 @@ interface ConnectCancelEvent {
 
 ## Overlay Layer
 
-| 层名      | zIndex | 说明                                         |
-| --------- | ------ | -------------------------------------------- |
-| `connect` | 900    | 预览线层，pointerEvents=false, culling=false |
+| 层名        | zIndex | 说明                                                                 |
+| ----------- | ------ | -------------------------------------------------------------------- |
+| `selection` | 10     | 与 selection-plugin 共享的交互层，pointerEvents=false, culling=false |
+
+预览线永久挂载在 overlay 层中，通过 `setDisplay(true/false)` 切换显隐（同 selection-plugin 的 marquee 模式）。
 
 ## 源文件
 

@@ -54,7 +54,7 @@ export class ConnectPlugin implements Plugin {
     {key: 'connect:source', description: '连接起点 Graphics', initial: null as Graphics | null},
   ];
 
-  readonly layers = [{name: 'connect', zIndex: 900}];
+  readonly layers = [{name: 'selection', zIndex: 10}];
 
   // ── 私有字段 ──
 
@@ -76,11 +76,8 @@ export class ConnectPlugin implements Plugin {
   /** 预览线 Node */
   #previewLine: EngineNode | null = null;
 
-  /** 预览线是否已添加到 overlay 层 */
-  #previewAdded = false;
-
-  /** overlay 层 */
-  #connectLayer: Layer | null = null;
+  /** overlay 层（与 selection-plugin 共享的交互层） */
+  #overlayLayer: Layer | null = null;
 
   /** 纯引擎模式下维护的连接列表 */
   #connections: Map<string, ConnectionRecord> = new Map();
@@ -116,12 +113,12 @@ export class ConnectPlugin implements Plugin {
   install(app: App) {
     this.#app = app;
 
-    // 获取 overlay 层
-    this.#connectLayer = app.getLayer('connect')!;
-    this.#connectLayer.setPointerEvents(false);
-    this.#connectLayer.culling = false;
+    // 获取交互层（与 selection-plugin 共享 'selection' 层）
+    this.#overlayLayer = app.getLayer('selection')!;
+    this.#overlayLayer.setPointerEvents(false);
+    this.#overlayLayer.culling = false;
 
-    // 创建预览线（默认隐藏）
+    // 创建预览线（默认隐藏，永久驻留在 overlay 层中）
     this.#createPreviewLine();
 
     this.#bindEvents();
@@ -158,10 +155,9 @@ export class ConnectPlugin implements Plugin {
     }
     this.#connections.clear();
 
-    // 清理预览线
-    if (this.#previewAdded && this.#previewLine) {
-      this.#connectLayer?.remove(this.#previewLine);
-      this.#previewAdded = false;
+    // 清理预览线（从 overlay 层移除）
+    if (this.#previewLine) {
+      this.#overlayLayer?.remove(this.#previewLine);
     }
     this.#previewLine = null;
 
@@ -223,7 +219,9 @@ export class ConnectPlugin implements Plugin {
       strokeDasharray: this.#opts.previewDash,
       fill: 'none',
     });
-    // 不预先 add 到 layer，showPreview 时按需 add
+    // 默认隐藏，永久挂载到 overlay 层
+    this.#previewLine.setDisplay(false);
+    this.#overlayLayer!.add(this.#previewLine);
   }
 
   #showPreview(x1: number, y1: number, x2: number, y2: number) {
@@ -235,22 +233,13 @@ export class ConnectPlugin implements Plugin {
 
     this.#previewLine.shape.from(pathData);
     this.#previewLine.setDisplay(true);
-
-    // 确保已添加到 overlay 层
-    if (!this.#previewAdded) {
-      this.#connectLayer!.add(this.#previewLine);
-      this.#previewAdded = true;
-    }
     this.#previewLine.setDirty(true);
   }
 
   #hidePreview() {
     if (!this.#previewLine) return;
-    // 从 overlay 层移除，强制层重绘清除画面
-    if (this.#previewAdded) {
-      this.#connectLayer!.remove(this.#previewLine);
-      this.#previewAdded = false;
-    }
+    this.#previewLine.setDisplay(false);
+    this.#previewLine.setDirty(true);
   }
 
   // ════════════════════════════════════════════════════════════
