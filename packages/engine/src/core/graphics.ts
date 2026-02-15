@@ -189,6 +189,7 @@ export class Graphics extends EventTarget {
       const node = this.children[index];
       this.children.splice(index, 1);
       this.#removeFromNameMap(node);
+      node.parent = null;
       this.setDirty(true);
     }
     return this;
