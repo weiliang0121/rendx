@@ -76,6 +76,9 @@ export class ConnectPlugin implements Plugin {
   /** 预览线 Node */
   #previewLine: EngineNode | null = null;
 
+  /** 预览线是否已添加到 overlay 层 */
+  #previewAdded = false;
+
   /** overlay 层 */
   #connectLayer: Layer | null = null;
 
@@ -156,8 +159,9 @@ export class ConnectPlugin implements Plugin {
     this.#connections.clear();
 
     // 清理预览线
-    if (this.#previewLine && this.#previewLine.parent) {
-      this.#previewLine.parent.remove(this.#previewLine);
+    if (this.#previewAdded && this.#previewLine) {
+      this.#connectLayer?.remove(this.#previewLine);
+      this.#previewAdded = false;
     }
     this.#previewLine = null;
 
@@ -233,8 +237,9 @@ export class ConnectPlugin implements Plugin {
     this.#previewLine.setDisplay(true);
 
     // 确保已添加到 overlay 层
-    if (!this.#previewLine.parent) {
+    if (!this.#previewAdded) {
       this.#connectLayer!.add(this.#previewLine);
+      this.#previewAdded = true;
     }
     this.#previewLine.setDirty(true);
   }
@@ -242,8 +247,9 @@ export class ConnectPlugin implements Plugin {
   #hidePreview() {
     if (!this.#previewLine) return;
     // 从 overlay 层移除，强制层重绘清除画面
-    if (this.#previewLine.parent) {
-      this.#previewLine.parent.remove(this.#previewLine);
+    if (this.#previewAdded) {
+      this.#connectLayer!.remove(this.#previewLine);
+      this.#previewAdded = false;
     }
   }
 
