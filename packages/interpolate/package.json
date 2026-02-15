@@ -1,6 +1,6 @@
 {
   "name": "rendx-interpolate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Interpolators for numbers, colors, vectors, and matrices",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

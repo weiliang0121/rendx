@@ -1,5 +1,28 @@
 # @vis/engine
 
+## 0.3.0
+
+### Minor Changes
+
+- [`c100f35`](https://github.com/weiliang0121/rendx/commit/c100f3508027b5dc8ca97a07276801b34d1a1c62) - 增强插件系统与引擎核心能力：
+  - App 类新增集中状态管理、事件总线（bus）、`acquireLayer` 插件层分配、全局序列化协议
+  - 插件接口重构，支持 zIndex 全局排序与冲突解决
+  - 新增 `Scheduler` 调度器模块
+  - 序列化协议微调
+  - 新增插件系统、调度器、序列化与历史记录基准测试
+
+### Patch Changes
+
+- Updated dependencies [[`c100f35`](https://github.com/weiliang0121/rendx/commit/c100f3508027b5dc8ca97a07276801b34d1a1c62)]:
+  - rendx-bounding@0.1.1
+  - rendx-canvas@0.1.1
+  - rendx-core@0.1.1
+  - rendx-ease@0.1.1
+  - rendx-interpolate@0.1.1
+  - rendx-path@0.1.1
+  - rendx-shape@0.1.1
+  - rendx-svg@0.1.1
+
 ## 0.2.0
 
 ### Minor Changes
