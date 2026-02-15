@@ -1,5 +1,14 @@
 # @vis/engine
 
+## 0.4.1
+
+### Patch Changes
+
+- [`f7a3d1b`](https://github.com/weiliang0121/rendx/commit/f7a3d1ba29eb94cf4dc2b825b0e04d0a74f1eb7f) - fix: 修复渲染管线脏标记相关的三个 bug
+  - Graphics.remove() 未清除 child.parent，导致子节点仍持有旧父引用
+  - pick() 调用 getQueue() 时会清除子树的渲染脏标记，导致后续渲染帧跳过重绘
+  - sign() 中 display 检查优先于 dirty 检查，导致 setDisplay(false) 后层级无法感知变更
+
 ## 0.4.0
 
 ### Minor Changes
