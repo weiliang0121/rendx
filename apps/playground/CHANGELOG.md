@@ -1,5 +1,13 @@
 # @dye/playground
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`ca9c014`](https://github.com/weiliang0121/rendx/commit/ca9c01452ce527aa3cb98044134de0e50a9898e3), [`f7a3d1b`](https://github.com/weiliang0121/rendx/commit/f7a3d1ba29eb94cf4dc2b825b0e04d0a74f1eb7f)]:
+  - rendx-connect-plugin@0.2.0
+  - rendx-engine@0.4.1
+
 ## 0.0.5
 
 ### Patch Changes
