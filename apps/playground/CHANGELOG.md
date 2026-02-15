@@ -1,5 +1,16 @@
 # @dye/playground
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`c100f35`](https://github.com/weiliang0121/rendx/commit/c100f3508027b5dc8ca97a07276801b34d1a1c62), [`c100f35`](https://github.com/weiliang0121/rendx/commit/c100f3508027b5dc8ca97a07276801b34d1a1c62), [`c100f35`](https://github.com/weiliang0121/rendx/commit/c100f3508027b5dc8ca97a07276801b34d1a1c62)]:
+  - rendx-curve@0.1.1
+  - rendx-history-plugin@0.1.1
+  - rendx-path@0.1.1
+  - rendx-engine@0.3.0
+  - rendx-graph-plugin@0.1.0
+
 ## 0.0.2
 
 ### Patch Changes
