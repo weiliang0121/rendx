@@ -497,10 +497,10 @@ app.use(connectPlugin({edgeType: 'edge'}));
 | `connect:complete` | 松开鼠标完成连接        | `source`, `target`               |
 | `connect:cancel`   | Escape / 无吸附目标松开 | `source`                         |
 
-| State Key            | 类型      | 说明         |
-| -------------------- | --------- | ------------ | ------------ |
-| `connect:connecting` | `boolean` | 是否正在连接 |
-| `connect:source`     | `Graphics | null`        | 当前连接起点 |
+| State Key            | 类型               | 说明         |
+| -------------------- | ------------------ | ------------ |
+| `connect:connecting` | `boolean`          | 是否正在连接 |
+| `connect:source`     | `Graphics \| null` | 当前连接起点 |
 
 ---
 
@@ -639,6 +639,7 @@ import {App, Node} from 'rendx-engine';
 import {graphPlugin, createNode, createEdge} from 'rendx-graph-plugin';
 import {selectionPlugin} from 'rendx-selection-plugin';
 import {dragPlugin} from 'rendx-drag-plugin';
+import {connectPlugin} from 'rendx-connect-plugin';
 import {gridPlugin} from 'rendx-grid-plugin';
 import {historyPlugin} from 'rendx-history-plugin';
 import {minimapPlugin} from 'rendx-minimap-plugin';
@@ -679,6 +680,13 @@ app.use(
   }),
 );
 
+// 连线交互
+app.use(
+  connectPlugin({
+    edgeType: 'line-edge',
+  }),
+);
+
 // 撤销重做
 const history = historyPlugin({maxSteps: 50});
 app.use(history);
@@ -707,11 +715,12 @@ app.render();
 2. **Graph Plugin** — 数据管理，早于交互插件
 3. **Selection Plugin** — 依赖场景中已有节点进行交互
 4. **Drag Plugin** — 运行时探测 graph/selection 插件，安装在它们之后
-5. **History Plugin** — 记录操作后的场景状态
-6. **Minimap Plugin** — 依赖场景中的节点进行缩略渲染
+5. **Connect Plugin** — 运行时探测 graph/drag 插件，安装在它们之后
+6. **History Plugin** — 记录操作后的场景状态
+7. **Minimap Plugin** — 依赖场景中的节点进行缩略渲染
 
 ::: info 软感知不是硬依赖
-Drag Plugin 通过 `app.getPlugin()` 运行时探测其他插件。即使单独安装也能正常工作（纯 engine 模式）。但建议安装在 graph/selection 之后，确保探测时它们已就绪。
+Drag Plugin 和 Connect Plugin 通过 `app.getPlugin()` / `app.getState()` 运行时探测其他插件。即使单独安装也能正常工作（纯 engine 模式）。但建议安装在 graph/selection 之后，确保探测时它们已就绪。
 :::
 
 ---

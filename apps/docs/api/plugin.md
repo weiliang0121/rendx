@@ -73,14 +73,17 @@ const p = app.getPlugin('my-plugin');
 
 ## 内置插件
 
-| 插件      | 包                       | 说明                                   |
-| --------- | ------------------------ | -------------------------------------- |
-| Graph     | `rendx-graph-plugin`     | 图元素管理（Node/Edge CRUD、依赖追踪） |
-| Selection | `rendx-selection-plugin` | 选框交互（点选/多选/框选/悬停高亮）    |
-| Drag      | `rendx-drag-plugin`      | 拖拽交互（约束/多选联动/插件软感知）   |
-| Grid      | `rendx-grid-plugin`      | 网格背景                               |
-| History   | `rendx-history-plugin`   | 撤销/重做                              |
-| Minimap   | `rendx-minimap-plugin`   | 缩略图导航                             |
+| 插件      | 包                                                     | 说明                                   |
+| --------- | ------------------------------------------------------ | -------------------------------------- |
+| Graph     | [`rendx-graph-plugin`](/packages/graph-plugin)         | 图元素管理（Node/Edge CRUD、依赖追踪） |
+| Selection | [`rendx-selection-plugin`](/packages/selection-plugin) | 选框交互（点选/多选/框选/悬停高亮）    |
+| Drag      | [`rendx-drag-plugin`](/packages/drag-plugin)           | 拖拽交互（约束/多选联动/插件软感知）   |
+| Connect   | [`rendx-connect-plugin`](/packages/connect-plugin)     | 连线交互（端口吸附/预览线/双模式）     |
+| Grid      | [`rendx-grid-plugin`](/packages/grid-plugin)           | 网格背景                               |
+| History   | [`rendx-history-plugin`](/packages/history-plugin)     | 撤销/重做                              |
+| Minimap   | [`rendx-minimap-plugin`](/packages/minimap-plugin)     | 缩略图导航                             |
+
+各插件的完整 API 文档请查阅对应的[包参考](/packages/graph-plugin)页面。
 
 ## 插件间通信
 

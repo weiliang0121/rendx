@@ -123,6 +123,7 @@ const plugin = app.getPlugin('name');
 | Graph Plugin     | `rendx-graph-plugin`     | Node/Edge 生命周期管理、类型注册、依赖追踪、自动分层 |
 | Selection Plugin | `rendx-selection-plugin` | 点击选中、框选、悬停高亮、命中委托                   |
 | Drag Plugin      | `rendx-drag-plugin`      | 拖拽移动、约束系统、多选联动、插件软感知             |
+| Connect Plugin   | `rendx-connect-plugin`   | 连线交互、端口吸附、预览线、双模式边创建             |
 | Grid Plugin      | `rendx-grid-plugin`      | 点阵网格背景                                         |
 | History Plugin   | `rendx-history-plugin`   | 基于场景快照的撤销/重做                              |
 | Minimap Plugin   | `rendx-minimap-plugin`   | 缩略导航小地图                                       |

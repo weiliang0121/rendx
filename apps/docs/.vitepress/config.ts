@@ -64,10 +64,6 @@ export default defineConfig({
             {text: 'Plugin', link: '/api/plugin'},
           ],
         },
-        {
-          text: '插件 API',
-          items: [{text: 'Selection Plugin', link: '/api/selection-plugin'}],
-        },
       ],
       '/packages/': [
         {
