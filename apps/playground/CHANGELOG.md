@@ -1,5 +1,13 @@
 # @dye/playground
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`9c1daec`](https://github.com/weiliang0121/rendx/commit/9c1daec1606478b4858967d8e4cc2bff025b74f0), [`9c1daec`](https://github.com/weiliang0121/rendx/commit/9c1daec1606478b4858967d8e4cc2bff025b74f0)]:
+  - rendx-drag-plugin@0.2.0
+  - rendx-selection-plugin@0.2.1
+
 ## 0.0.4
 
 ### Patch Changes
