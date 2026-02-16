@@ -288,6 +288,15 @@ export class SelectionPlugin implements Plugin {
       window.addEventListener('pointerup', onUp);
       this.#cleanups.push(() => window.removeEventListener('pointerup', onUp));
     }
+
+    // zoom 变化后刷新 overlay（选中节点的 worldBBox 跟随 scene 变换而改变）
+    const onZoom = () => {
+      if (this.#selected.length > 0 || this.#hovering) {
+        this.#updateOverlay();
+      }
+    };
+    this.#app!.bus.on('zoom:change', onZoom);
+    this.#cleanups.push(() => this.#app?.bus.off('zoom:change', onZoom));
   }
 
   // ════════════════════════════════════════════════════════════
@@ -484,10 +493,11 @@ export class SelectionPlugin implements Plugin {
    *
    * 坐标策略：
    * - getWorldBBox() 返回的是 worldMatrix 变换后的 AABB（画布像素坐标）。
-   * - overlay Node 也在同一棵 Scene 树中（selection Layer），和 default Layer 共享
-   *   相同的 Scene.worldMatrix → Layer.worldMatrix 链。
-   * - 因此直接使用 worldBBox 坐标作为 overlay rect 的 shape 坐标即可。
-   *   在渲染阶段，两者经过相同的 worldMatrix × DPR 变换，自然对齐。
+   * - selection Layer 设置了 independentTransform = true，其 worldMatrix 不继承
+   *   Scene 的变换，因此 overlay rect 的 shape 坐标就是最终屏幕坐标，不会被
+   *   scene 的 zoom/pan 再次叠加。
+   * - 当 zoom 变化时，target 的 worldBBox 随之改变，需通过 zoom:change 事件
+   *   触发 #updateOverlay() 来同步。
    */
   #updateOverlay() {
     this.#updateSelectionOverlay();
