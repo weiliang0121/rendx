@@ -1,6 +1,6 @@
 {
   "name": "rendx-graph-plugin",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Graph element management plugin for Rendx engine — node/edge CRUD, dependency tracking, and custom type registry",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

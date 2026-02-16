@@ -1,5 +1,20 @@
 # @dye/playground
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`069e2a3`](https://github.com/weiliang0121/rendx/commit/069e2a39bc501716c68bf1346dcde0fd805063aa), [`069e2a3`](https://github.com/weiliang0121/rendx/commit/069e2a39bc501716c68bf1346dcde0fd805063aa), [`069e2a3`](https://github.com/weiliang0121/rendx/commit/069e2a39bc501716c68bf1346dcde0fd805063aa), [`069e2a3`](https://github.com/weiliang0121/rendx/commit/069e2a39bc501716c68bf1346dcde0fd805063aa), [`069e2a3`](https://github.com/weiliang0121/rendx/commit/069e2a39bc501716c68bf1346dcde0fd805063aa)]:
+  - rendx-connect-plugin@0.3.0
+  - rendx-drag-plugin@0.2.1
+  - rendx-graph-plugin@0.2.0
+  - rendx-engine@0.5.0
+  - rendx-selection-plugin@0.2.2
+  - rendx-grid-plugin@0.1.3
+  - rendx-history-plugin@0.1.3
+  - rendx-minimap-plugin@0.1.3
+  - rendx-zoom-plugin@0.1.1
+
 ## 0.0.6
 
 ### Patch Changes

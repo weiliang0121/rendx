@@ -1,6 +1,6 @@
 {
   "name": "rendx-connect-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Connect interaction plugin for Rendx engine — interactive edge creation",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

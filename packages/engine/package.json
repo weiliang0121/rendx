@@ -1,6 +1,6 @@
 {
   "name": "rendx-engine",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "2D scene graph engine with animation, events, and plugin system",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

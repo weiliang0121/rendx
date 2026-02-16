@@ -1,6 +1,6 @@
 {
   "name": "rendx-zoom-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Zoom and pan plugin for Rendx engine",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",

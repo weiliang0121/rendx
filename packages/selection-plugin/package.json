@@ -1,6 +1,6 @@
 {
   "name": "rendx-selection-plugin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Selection and highlight plugin for Rendx engine",
   "license": "MIT",
   "author": "wei.liang (https://github.com/weiliang0121)",
