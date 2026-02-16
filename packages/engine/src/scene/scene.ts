@@ -113,6 +113,15 @@ export class Scene extends Graphics {
     return vec2.transformMat2d(vec2.create(), point, this.#invertWorldMatrix) as Point;
   }
 
+  /**
+   * 更新 Scene 自身的 local/world matrix，并清除逆矩阵缓存。
+   * 由 App.render() / App.#frame() 在每帧渲染前调用。
+   */
+  override updateMatrix() {
+    super.updateMatrix();
+    this.#invertWorldMatrix = null;
+  }
+
   override setMatrix(matrix: Mat2d, needUpdate?: boolean) {
     this.#invertWorldMatrix = null;
     return super.setMatrix(matrix, needUpdate);

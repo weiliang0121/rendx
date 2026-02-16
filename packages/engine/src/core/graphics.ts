@@ -38,6 +38,12 @@ export class Graphics extends EventTarget {
   needUpdate: boolean = true;
   worldMatrixNeedUpdate: boolean = true;
 
+  /**
+   * 独立变换：worldMatrix 不乘 parent 的 worldMatrix，直接使用自身 matrix。
+   * 典型场景：selection overlay 层不跟随 Scene 的缩放平移，使用屏幕像素坐标绘制。
+   */
+  independentTransform: boolean = false;
+
   data: AO = {};
 
   ez: number = 0;
@@ -424,8 +430,11 @@ export class Graphics extends EventTarget {
 
   #updateWorldMatrix() {
     if (!this.worldMatrixNeedUpdate) return;
-    if (this.parent) mat2d.multiply(this.worldMatrix, this.parent.worldMatrix, this.matrix);
-    else mat2d.copy(this.worldMatrix, this.matrix);
+    if (this.parent && !this.independentTransform) {
+      mat2d.multiply(this.worldMatrix, this.parent.worldMatrix, this.matrix);
+    } else {
+      mat2d.copy(this.worldMatrix, this.matrix);
+    }
     this.worldMatrixNeedUpdate = false;
   }
 

@@ -264,6 +264,7 @@ class ZoomPlugin implements Plugin {
   #markLayersDirty() {
     const scene = this.#app!.scene;
     for (const layer of scene.layers) {
+      if (layer.independentTransform) continue; // 独立变换层不受 scene 变换影响
       layer.worldMatrixNeedUpdate = true;
       layer.setDirty(true);
     }

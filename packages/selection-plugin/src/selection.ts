@@ -126,6 +126,8 @@ export class SelectionPlugin implements Plugin {
     layer.setPointerEvents(false);
     // 不裁剪 — overlay 始终绘制
     layer.culling = false;
+    // 独立变换 — overlay 使用 worldBBox 屏幕坐标绘制，不跟随 scene 缩放平移
+    layer.independentTransform = true;
 
     // ── 创建几何容器 ──
     this.#boxGroup = this.#createGroup('__sel_boxes__');
@@ -201,6 +203,7 @@ export class SelectionPlugin implements Plugin {
 
     layer.setPointerEvents(false);
     layer.culling = false;
+    layer.independentTransform = true;
     layer.removeChildren();
 
     // 3. 重建 overlay 容器
