@@ -12,6 +12,9 @@ hero:
       text: Playground
       link: /playground
     - theme: alt
+      text: Graph Editor
+      link: https://weiliang0121.github.io/rendx/playground/editor.html
+    - theme: alt
       text: API 参考
       link: /api/engine
 features:

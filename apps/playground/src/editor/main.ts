@@ -2,7 +2,7 @@
    Rendx Graph Editor — Main entry
    ══════════════════════════════════════════════ */
 
-import {App, type Graphics} from 'rendx-engine';
+import {App, Node, type Graphics} from 'rendx-engine';
 import {graphPlugin} from 'rendx-graph-plugin';
 import {selectionPlugin} from 'rendx-selection-plugin';
 import {dragPlugin} from 'rendx-drag-plugin';
@@ -10,6 +10,7 @@ import {connectPlugin} from 'rendx-connect-plugin';
 import {gridPlugin} from 'rendx-grid-plugin';
 import {minimapPlugin} from 'rendx-minimap-plugin';
 import {historyPlugin} from 'rendx-history-plugin';
+import {zoomPlugin} from 'rendx-zoom-plugin';
 import {Path} from 'rendx-path';
 import {bumpX} from 'rendx-curve';
 
@@ -60,7 +61,7 @@ for (const [name, def] of Object.entries(nodeDefs)) {
 }
 graph.register('edge', createBezierEdgeDef());
 
-// 3. Selection
+// 3. Selection — supports both nodes and edges
 const selection = selectionPlugin({
   enableHover: true,
   enableMarquee: true,
@@ -69,15 +70,36 @@ const selection = selectionPlugin({
   hoverStyle: {stroke: '#89b4fa44', strokeWidth: 1, padding: 4},
   marqueeStyle: {fill: 'rgba(137,180,250,0.08)', stroke: '#89b4fa', strokeWidth: 1},
   hitDelegate: (target: Graphics) => {
+    // Skip connectable ports
     if (target.hasClassName('connectable')) return null;
+    // Walk up to find selectable ancestor (graph element or selectable className)
     let current: Graphics | null = target;
     while (current && current.type !== 4) {
+      if (current.hasClassName('selectable')) return current;
       if (current.name && graph.has(current.name)) return current;
       current = current.parent;
     }
     return null;
   },
-  filter: (target: Graphics) => !target.hasClassName('graph-edge'),
+  // Custom overlay: edges use thickened stroke path, nodes use default rect
+  renderOverlay: (target: Graphics, type: 'selection' | 'hover') => {
+    if (!target.hasClassName('graph-edge')) return null;
+
+    // Find the visual path node (the one with pointerEvents disabled)
+    const visualPath = target.children.find((c: Graphics) => c.type === 3 && c.pointerEvents === false);
+    if (!visualPath) return null;
+
+    const isSelection = type === 'selection';
+    const overlay = Node.create('path', {
+      stroke: '#89b4fa',
+      strokeWidth: isSelection ? 6 : 4,
+      fill: 'none',
+      opacity: isSelection ? 0.35 : 0.25,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    overlay.shape.from((visualPath as unknown as Record<string, any>).shape.d);
+    return overlay;
+  },
 });
 app.use(selection);
 
@@ -133,131 +155,31 @@ const minimap = minimapPlugin({
 app.use(minimap);
 
 /* ══════════════════════════════════════════════
-   Viewport — Pan / Zoom
+   Viewport — Pan / Zoom (via zoom plugin)
    ══════════════════════════════════════════════ */
 
-let zoomLevel = 1;
-const ZOOM_MIN = 0.15;
-const ZOOM_MAX = 4;
-const ZOOM_STEP = 0.1;
-
-function setZoom(newZoom: number, cx?: number, cy?: number) {
-  newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
-  const oldZoom = zoomLevel;
-  if (Math.abs(newZoom - oldZoom) < 0.001) return;
-
-  // Zoom around center point
-  const [stx, sty] = app.scene.translation;
-  const containerRect = container.getBoundingClientRect();
-  const centerX = cx ?? containerRect.width / 2;
-  const centerY = cy ?? containerRect.height / 2;
-
-  const worldCX = (centerX - stx) / oldZoom;
-  const worldCY = (centerY - sty) / oldZoom;
-
-  const newTx = centerX - worldCX * newZoom;
-  const newTy = centerY - worldCY * newZoom;
-
-  // Reset scene transform
-  app.scene.scale(newZoom / oldZoom, newZoom / oldZoom);
-  app.scene.translate((newTx - stx) / newZoom, (newTy - sty) / newZoom);
-
-  zoomLevel = newZoom;
-  zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
-  app.render();
-  minimap.draw();
-}
-
-// Wheel zoom
-container.addEventListener(
-  'wheel',
-  (e: WheelEvent) => {
-    e.preventDefault();
-    if (e.ctrlKey || e.metaKey) {
-      // Pinch zoom
-      const delta = -e.deltaY * 0.01;
-      setZoom(zoomLevel * (1 + delta), e.offsetX, e.offsetY);
-    } else {
-      // Scroll pan
-      const dx = -e.deltaX / zoomLevel;
-      const dy = -e.deltaY / zoomLevel;
-      app.scene.translate(dx, dy);
-      app.render();
-      minimap.draw();
-    }
+// 8. Zoom
+const zoom = zoomPlugin({
+  minZoom: 0.15,
+  maxZoom: 4,
+  zoomStep: 0.1,
+  enableSpacePan: true,
+  enableMiddleButtonPan: true,
+  onZoomChange: e => {
+    zoomLabel.textContent = `${Math.round(e.zoom * 100)}%`;
+    minimap.draw();
   },
-  {passive: false},
-);
-
-// Space + drag pan
-let isPanning = false;
-let spaceDown = false;
-let panStart: [number, number] = [0, 0];
-
-window.addEventListener('keydown', (e: KeyboardEvent) => {
-  if (e.code === 'Space' && !e.repeat && !isEditing()) {
-    e.preventDefault();
-    spaceDown = true;
-    container.style.cursor = 'grab';
-  }
 });
-
-window.addEventListener('keyup', (e: KeyboardEvent) => {
-  if (e.code === 'Space') {
-    spaceDown = false;
-    isPanning = false;
-    container.style.cursor = '';
-  }
-});
-
-container.addEventListener('pointerdown', (e: PointerEvent) => {
-  if (spaceDown) {
-    isPanning = true;
-    panStart = [e.clientX, e.clientY];
-    container.style.cursor = 'grabbing';
-    e.preventDefault();
-    e.stopPropagation();
-  }
-});
-
-window.addEventListener('pointermove', (e: PointerEvent) => {
-  if (!isPanning) return;
-  const dx = (e.clientX - panStart[0]) / zoomLevel;
-  const dy = (e.clientY - panStart[1]) / zoomLevel;
-  panStart = [e.clientX, e.clientY];
-  app.scene.translate(dx, dy);
-  app.render();
-  minimap.draw();
-});
-
-window.addEventListener('pointerup', () => {
-  if (isPanning) {
-    isPanning = false;
-    container.style.cursor = spaceDown ? 'grab' : '';
-  }
-});
-
-function isEditing(): boolean {
-  const tag = document.activeElement?.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
-}
+app.use(zoom);
 
 /* ══════════════════════════════════════════════
    Toolbar actions
    ══════════════════════════════════════════════ */
 
-btnZoomIn.addEventListener('click', () => setZoom(zoomLevel + ZOOM_STEP));
-btnZoomOut.addEventListener('click', () => setZoom(zoomLevel - ZOOM_STEP));
+btnZoomIn.addEventListener('click', () => zoom.zoomIn());
+btnZoomOut.addEventListener('click', () => zoom.zoomOut());
 btnFit.addEventListener('click', () => {
-  // Reset to center
-  const [tx, ty] = app.scene.translation;
-  app.scene.translate(-tx / zoomLevel, -ty / zoomLevel);
-  const ratio = 1 / zoomLevel;
-  app.scene.scale(ratio, ratio);
-  zoomLevel = 1;
-  zoomLabel.textContent = '100%';
-  app.render();
-  minimap.draw();
+  zoom.reset();
 });
 
 btnDelete.addEventListener('click', deleteSelected);
@@ -285,6 +207,11 @@ btnRedo.addEventListener('click', () => {
 /* ══════════════════════════════════════════════
    Keyboard shortcuts
    ══════════════════════════════════════════════ */
+
+function isEditing(): boolean {
+  const tag = document.activeElement?.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
 
 window.addEventListener('keydown', (e: KeyboardEvent) => {
   if (isEditing()) return;
@@ -322,15 +249,15 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
   // Zoom shortcuts
   if ((e.metaKey || e.ctrlKey) && (e.key === '=' || e.key === '+')) {
     e.preventDefault();
-    setZoom(zoomLevel + ZOOM_STEP);
+    zoom.zoomIn();
   }
   if ((e.metaKey || e.ctrlKey) && e.key === '-') {
     e.preventDefault();
-    setZoom(zoomLevel - ZOOM_STEP);
+    zoom.zoomOut();
   }
   if ((e.metaKey || e.ctrlKey) && e.key === '0') {
     e.preventDefault();
-    btnFit.click();
+    zoom.reset();
   }
 });
 
@@ -464,13 +391,23 @@ app.bus.on('selection:change', () => {
     const g = selected[0];
     const el = g.name ? graph.get(g.name) : null;
     if (el) {
-      const d = el.data as unknown as NodeData;
-      infoPanel.innerHTML = `
-        <div class="info-row"><span class="info-label">ID</span><span class="info-value">${d.id}</span></div>
-        <div class="info-row"><span class="info-label">类型</span><span class="info-value">${d.nodeType ?? el.role}</span></div>
-        <div class="info-row"><span class="info-label">坐标</span><span class="info-value">${Math.round(d.x)}, ${Math.round(d.y)}</span></div>
-        ${d.width ? `<div class="info-row"><span class="info-label">尺寸</span><span class="info-value">${d.width} × ${d.height}</span></div>` : ''}
-      `;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = el.data as any;
+      if (el.role === 'edge') {
+        infoPanel.innerHTML = `
+          <div class="info-row"><span class="info-label">ID</span><span class="info-value">${d.id}</span></div>
+          <div class="info-row"><span class="info-label">类型</span><span class="info-value">边</span></div>
+          <div class="info-row"><span class="info-label">源</span><span class="info-value">${d.source}</span></div>
+          <div class="info-row"><span class="info-label">目标</span><span class="info-value">${d.target}</span></div>
+        `;
+      } else {
+        infoPanel.innerHTML = `
+          <div class="info-row"><span class="info-label">ID</span><span class="info-value">${d.id}</span></div>
+          <div class="info-row"><span class="info-label">类型</span><span class="info-value">${d.nodeType ?? el.role}</span></div>
+          <div class="info-row"><span class="info-label">坐标</span><span class="info-value">${Math.round(d.x)}, ${Math.round(d.y)}</span></div>
+          ${d.width ? `<div class="info-row"><span class="info-label">尺寸</span><span class="info-value">${d.width} × ${d.height}</span></div>` : ''}
+        `;
+      }
     }
   } else {
     infoPanel.innerHTML = `<p class="hint">${selected.length} 个元素被选中</p>`;

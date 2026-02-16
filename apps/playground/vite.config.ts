@@ -24,6 +24,7 @@ export default defineConfig({
       'rendx-history-plugin': path.resolve(__dirname, '../../packages/history-plugin/src/main.ts'),
       'rendx-grid-plugin': path.resolve(__dirname, '../../packages/grid-plugin/src/main.ts'),
       'rendx-minimap-plugin': path.resolve(__dirname, '../../packages/minimap-plugin/src/main.ts'),
+      'rendx-zoom-plugin': path.resolve(__dirname, '../../packages/zoom-plugin/src/main.ts'),
     },
   },
   build: {

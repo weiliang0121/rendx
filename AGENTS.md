@@ -47,7 +47,8 @@ Layer 4 (顶层)
 ├── rendx-grid-plugin       网格插件
 ├── rendx-history-plugin    历史记录插件
 ├── rendx-minimap-plugin    小地图插件
-└── rendx-selection-plugin  选框交互插件
+├── rendx-selection-plugin  选框交互插件
+└── rendx-zoom-plugin       画布缩放平移插件
 ```
 
 ## 快速上手
@@ -122,6 +123,7 @@ app.render(); // 静态渲染一帧
 | rendx-history-plugin   | `packages/history-plugin/AGENTS.md`   |
 | rendx-minimap-plugin   | `packages/minimap-plugin/AGENTS.md`   |
 | rendx-selection-plugin | `packages/selection-plugin/AGENTS.md` |
+| rendx-zoom-plugin      | `packages/zoom-plugin/AGENTS.md`      |
 
 ## 编码规范
 

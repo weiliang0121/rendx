@@ -98,6 +98,9 @@ importers:
       rendx-selection-plugin:
         specifier: workspace:^
         version: link:../../packages/selection-plugin
+      rendx-zoom-plugin:
+        specifier: workspace:^
+        version: link:../../packages/zoom-plugin
     devDependencies:
       monaco-editor:
         specifier: ^0.52.2
@@ -293,6 +296,12 @@ importers:
       rendx-shape:
         specifier: workspace:^
         version: link:../shape
+
+  packages/zoom-plugin:
+    dependencies:
+      rendx-engine:
+        specifier: workspace:^
+        version: link:../engine
 
 packages:
 

@@ -36,6 +36,7 @@ export default defineConfig({
         ],
       },
       {text: 'Playground', link: '/playground'},
+      {text: 'Graph Editor', link: 'https://weiliang0121.github.io/rendx/playground/editor.html'},
     ],
 
     sidebar: {
@@ -92,6 +93,7 @@ export default defineConfig({
             {text: 'rendx-selection-plugin', link: '/packages/selection-plugin'},
             {text: 'rendx-drag-plugin', link: '/packages/drag-plugin'},
             {text: 'rendx-connect-plugin', link: '/packages/connect-plugin'},
+            {text: 'rendx-zoom-plugin', link: '/packages/zoom-plugin'},
           ],
         },
       ],

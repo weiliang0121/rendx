@@ -54,18 +54,28 @@ export function createBezierEdgeDef() {
       [sx, sy],
       [tx, ty],
     ]);
+    const d = p.toString();
 
-    // Edge stroke
+    // Hit area — transparent wide stroke for click detection
+    const hitArea = Node.create('path', {
+      stroke: 'transparent',
+      strokeWidth: 10,
+      fill: 'none',
+    });
+    hitArea.shape.from(d);
+    ctx.group.add(hitArea);
+
+    // Edge visual stroke — does not receive pointer events
     const pathNode = Node.create('path', {
       stroke: data.edgeColor ?? '#6c7086',
       strokeWidth: 2,
       fill: 'none',
     });
-    pathNode.shape.from(p.toString());
-    pathNode.setClassName('graph-edge');
+    pathNode.setPointerEvents(false);
+    pathNode.shape.from(d);
     ctx.group.add(pathNode);
 
-    // Arrow head at target
+    // Arrow head at target — does not receive pointer events
     const arrowSize = 8;
     const angle = Math.atan2(ty - sy, tx - sx);
     const ax1 = tx - arrowSize * Math.cos(angle - Math.PI / 6);
@@ -84,7 +94,12 @@ export function createBezierEdgeDef() {
       strokeWidth: 2,
       fill: 'none',
     });
+    arrow.setPointerEvents(false);
     arrow.shape.from(arrowPath.toString());
     ctx.group.add(arrow);
+
+    // Mark group as selectable edge
+    ctx.group.addClassName('selectable');
+    ctx.group.addClassName('graph-edge');
   });
 }
