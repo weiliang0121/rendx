@@ -371,6 +371,14 @@ export class ConnectPlugin implements Plugin {
   #completeConnect(target: Graphics) {
     const source = this.#source!;
 
+    // ── 重复边检查 ──
+    // 如果 graph-plugin 中已存在连接相同 source → target 的边，跳过创建
+    if (this.#hasDuplicateEdge(source, target)) {
+      this.#hidePreview();
+      this.#cleanupState();
+      return;
+    }
+
     this.#hidePreview();
 
     // 创建边
@@ -653,6 +661,22 @@ export class ConnectPlugin implements Plugin {
       current = current.parent;
     }
     return null;
+  }
+
+  /**
+   * 检查 graph-plugin 中是否已存在相同 source→target 的边（防止重复连线）。
+   */
+  #hasDuplicateEdge(source: Graphics, target: Graphics): boolean {
+    const graph = this.#getGraph();
+    if (!graph || typeof graph.getEdges !== 'function') return false;
+
+    const sourceId = this.#resolveElementId(source);
+    const targetId = this.#resolveElementId(target);
+    if (!sourceId || !targetId) return false;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const edges = graph.getEdges() as any[];
+    return edges.some((e: {data: {source: string; target: string}}) => e.data.source === sourceId && e.data.target === targetId);
   }
 
   // ════════════════════════════════════════════════════════════

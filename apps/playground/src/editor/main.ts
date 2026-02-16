@@ -185,6 +185,7 @@ btnFit.addEventListener('click', () => {
 btnDelete.addEventListener('click', deleteSelected);
 btnClear.addEventListener('click', () => {
   history.push();
+  selection.clearSelection();
   const ids = graph.getIds();
   for (const id of ids) graph.remove(id);
   app.render();

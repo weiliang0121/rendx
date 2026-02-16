@@ -302,6 +302,8 @@ export class App {
 
   /** 同步渲染一帧。适用于静态内容，仅重绘脏层 */
   render() {
+    // 确保 Scene 的 local/world matrix 已刷新（zoom-plugin 等外部修改 translate/scale 后需要）
+    this.scene.updateMatrix();
     for (const layer of this.scene.layers) {
       if (layer.sign()) {
         layer.draw();
@@ -322,6 +324,7 @@ export class App {
     this.#renderDirty = false;
 
     this.scene.tick(time);
+    this.scene.updateMatrix();
 
     let anyDirty = false;
     for (const layer of this.scene.layers) {

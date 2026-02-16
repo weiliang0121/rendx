@@ -429,6 +429,17 @@ export class Graphics extends EventTarget {
     this.worldMatrixNeedUpdate = false;
   }
 
+  /**
+   * 仅更新当前节点的 local matrix 和 world matrix，不递归子节点。
+   *
+   * 典型场景：Scene 的 translate/scale 被外部（如 zoom-plugin）修改后，
+   * 需要在 render 前刷新 Scene 的矩阵，以便子层读取到最新的 worldMatrix。
+   */
+  updateMatrix() {
+    this.#updateMat2d();
+    this.#updateWorldMatrix();
+  }
+
   #updateEZ() {
     this.ez = this.parent ? this.parent.ez + this.z : this.z;
   }

@@ -161,6 +161,62 @@ export class SelectionPlugin implements Plugin {
     this.#app = null;
   }
 
+  // ── 序列化 / 反序列化（供 history-plugin 等消费） ──
+
+  /**
+   * 选中状态是临时交互态，不序列化具体内容。
+   * 返回空对象让 history-plugin 识别到该插件并在 restore 时调用 deserialize。
+   */
+  serialize(): Record<string, unknown> {
+    return {};
+  }
+
+  /**
+   * 场景快照恢复后重建 overlay 层。
+   *
+   * restoreFromJSON 会移除旧的 "selection" Layer 并反序列化出新 Layer，
+   * 导致插件持有的 #boxGroup / #hoverGroup / #marqueeNode 引用失效。
+   * 此方法：
+   * 1. 清空选中 / 悬停状态
+   * 2. 获取新 "selection" Layer 并清除反序列化残留
+   * 3. 重建 overlay 容器并挂载
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  deserialize(_data: Record<string, unknown>) {
+    if (!this.#app) return;
+
+    // 1. 清空交互状态
+    this.#selected = [];
+    this.#hovering = null;
+    this.#isDragging = false;
+    this.#dragStartOffset = null;
+    this.#lastDragOffset = null;
+    this.#skipNextClick = false;
+    this.#syncState();
+    this.#app.setState('selection:hovering', null);
+
+    // 2. 获取新 layer 并清除残留
+    const layer = this.#app.getLayer('selection');
+    if (!layer) return;
+
+    layer.setPointerEvents(false);
+    layer.culling = false;
+    layer.removeChildren();
+
+    // 3. 重建 overlay 容器
+    this.#boxGroup = this.#createGroup('__sel_boxes__');
+    this.#hoverGroup = this.#createGroup('__sel_hover__');
+    layer.add(this.#boxGroup);
+    layer.add(this.#hoverGroup);
+
+    this.#marqueeNode = this.#createOverlayRect(this.#opts.marqueeStyle);
+    this.#marqueeNode.setDisplay(false);
+    layer.add(this.#marqueeNode);
+
+    // 4. 触发 selection:change 通知外部（如 info-panel）
+    this.#emitSelectionChange([], []);
+  }
+
   // ════════════════════════════════════════════════════════════
   //  Public API
   // ════════════════════════════════════════════════════════════
