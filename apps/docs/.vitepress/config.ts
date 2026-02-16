@@ -37,7 +37,7 @@ export default defineConfig({
         ],
       },
       {text: 'Playground', link: '/playground'},
-      {text: 'Graph Editor', link: '/guide/graph-editor'},
+      {text: 'Graph Editor', link: '/graph-editor'},
     ],
 
     sidebar: {
@@ -50,7 +50,6 @@ export default defineConfig({
             {text: '核心概念', link: '/guide/concepts'},
             {text: '架构总览', link: '/guide/architecture'},
             {text: '插件指南', link: '/guide/plugins'},
-            {text: 'Graph Editor', link: '/guide/graph-editor'},
           ],
         },
       ],

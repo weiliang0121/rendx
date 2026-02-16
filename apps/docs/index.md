@@ -13,7 +13,7 @@ hero:
       link: /playground
     - theme: alt
       text: Graph Editor
-      link: /guide/graph-editor
+      link: /graph-editor
     - theme: alt
       text: API 参考
       link: /api/engine

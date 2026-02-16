@@ -25,13 +25,13 @@ interface Plugin {
 
 ## 插件分类
 
-Rendx 内置 7 个插件，按职责可分为三类：
+Rendx 内置 8 个插件，按职责可分为三类：
 
-| 类型         | 插件                                          | 定位                                            |
-| ------------ | --------------------------------------------- | ----------------------------------------------- |
-| **数据管理** | Graph Plugin                                  | 管理 Node/Edge 元素的创建、更新、销毁和依赖追踪 |
-| **交互增强** | Selection Plugin、Drag Plugin、Connect Plugin | 选中/悬停/框选、拖拽移动/约束、连线交互         |
-| **视觉辅助** | Grid Plugin、Minimap Plugin、History Plugin   | 网格背景、缩略导航、撤销重做                    |
+| 类型         | 插件                                                     | 定位                                            |
+| ------------ | -------------------------------------------------------- | ----------------------------------------------- |
+| **数据管理** | Graph Plugin                                             | 管理 Node/Edge 元素的创建、更新、销毁和依赖追踪 |
+| **交互增强** | Selection Plugin、Drag Plugin、Connect Plugin            | 选中/悬停/框选、拖拽移动/约束、连线交互         |
+| **视觉辅助** | Grid Plugin、Minimap Plugin、Zoom Plugin、History Plugin | 网格背景、缩略导航、画布缩放平移、撤销重做      |
 
 ---
 
@@ -630,6 +630,68 @@ minimap.update({position: 'top-left', margin: 20});
 
 ---
 
+## Zoom Plugin（画布缩放平移）
+
+**包名**：`rendx-zoom-plugin`
+
+提供滚轮缩放、触控板 pinch、空格+拖拽平移、鼠标中键平移和编程式缩放控制。
+
+### 实现原理
+
+通过操作 Scene 的 `scale()` 和 `translate()` 控制视口变换。缩放围绕鼠标位置（焦点缩放），数学公式：
+
+```
+newTranslate = oldTranslate + mousePos × (oldScale − newScale)
+```
+
+### 交互模式
+
+| 操作             | 条件                         | 行为                               |
+| ---------------- | ---------------------------- | ---------------------------------- |
+| 滚轮             | `ctrlZoom=false`（默认）     | 直接缩放                           |
+| Ctrl/Meta + 滚轮 | `ctrlZoom=true`              | 按住修饰键才缩放                   |
+| 触控板 pinch     | 自动识别                     | 缩放（浏览器自动设置 ctrlKey）     |
+| 空格 + 拖拽      | `enableSpacePan=true`        | 画布平移，光标变为 `grab/grabbing` |
+| 鼠标中键拖拽     | `enableMiddleButtonPan=true` | 画布平移                           |
+
+### 使用
+
+```typescript
+import {zoomPlugin} from 'rendx-zoom-plugin';
+
+const zoom = zoomPlugin({
+  minZoom: 0.1,
+  maxZoom: 5,
+  zoomStep: 0.1,
+  ctrlZoom: false,
+  enableSpacePan: true,
+  enableMiddleButtonPan: true,
+});
+app.use(zoom);
+
+// 编程式控制
+zoom.setZoom(1.5); // 设置缩放比例
+zoom.setZoom(2, 400, 300); // 以 (400,300) 为焦点缩放到 2x
+zoom.zoomIn(); // 放大一步
+zoom.zoomOut(); // 缩小一步
+zoom.panBy(100, 0); // 向右平移 100px
+zoom.reset(); // 重置为初始状态
+zoom.fitView(20); // 适应所有节点 + 20px 边距
+
+// 查询
+zoom.getZoom(); // 当前缩放比例
+zoom.getPan(); // 当前平移 [tx, ty]
+zoom.isPanning(); // 是否正在平移
+```
+
+### 事件
+
+| 事件名        | 负载            | 触发时机            |
+| ------------- | --------------- | ------------------- |
+| `zoom:change` | `{ zoom, pan }` | 每次缩放/平移变化时 |
+
+---
+
 ## 插件组合
 
 在图编辑器场景中，多个插件通常一起使用：
@@ -643,6 +705,7 @@ import {connectPlugin} from 'rendx-connect-plugin';
 import {gridPlugin} from 'rendx-grid-plugin';
 import {historyPlugin} from 'rendx-history-plugin';
 import {minimapPlugin} from 'rendx-minimap-plugin';
+import {zoomPlugin} from 'rendx-zoom-plugin';
 
 const app = new App({width: 1200, height: 800});
 app.mount(container);
@@ -694,6 +757,9 @@ app.use(history);
 // 小地图
 app.use(minimapPlugin({position: 'bottom-right'}));
 
+// 缩放平移
+app.use(zoomPlugin({minZoom: 0.1, maxZoom: 5}));
+
 // 注册类型 + 添加元素
 graph.register('rect-node', myNode);
 graph.register('line-edge', myEdge);
@@ -718,6 +784,7 @@ app.render();
 5. **Connect Plugin** — 运行时探测 graph/drag 插件，安装在它们之后
 6. **History Plugin** — 记录操作后的场景状态
 7. **Minimap Plugin** — 依赖场景中的节点进行缩略渲染
+8. **Zoom Plugin** — 控制视口变换，安装在最后
 
 ::: info 软感知不是硬依赖
 Drag Plugin 和 Connect Plugin 通过 `app.getPlugin()` / `app.getState()` 运行时探测其他插件。即使单独安装也能正常工作（纯 engine 模式）。但建议安装在 graph/selection 之后，确保探测时它们已就绪。

@@ -141,7 +141,8 @@ app.render();
 ## 下一步
 
 - [核心概念](./concepts) — 理解场景图、脏标记、渲染管线
-- [架构总览](./architecture) — 了解包层级和依赖关系
-- [插件指南](./plugins) — Graph、Selection、Drag 等插件用法
+- [架构总览](./architecture) — 了解设计思想和包层级
+- [插件指南](./plugins) — Graph、Selection、Drag、Zoom 等插件用法
 - [API 参考](/api/engine) — 完整 API 文档
 - [Playground](/playground) — 在线体验
+- [Graph Editor](/graph-editor) — 完整图编辑器 Demo 与代码解析

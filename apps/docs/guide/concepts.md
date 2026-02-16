@@ -127,5 +127,6 @@ const plugin = app.getPlugin('name');
 | Grid Plugin      | `rendx-grid-plugin`      | 点阵网格背景                                         |
 | History Plugin   | `rendx-history-plugin`   | 基于场景快照的撤销/重做                              |
 | Minimap Plugin   | `rendx-minimap-plugin`   | 缩略导航小地图                                       |
+| Zoom Plugin      | `rendx-zoom-plugin`      | 画布缩放平移、焦点缩放、视口适应                     |
 
 > 插件之间无硬依赖，可按需组合。详细用法请参阅 [插件指南](./plugins)。
