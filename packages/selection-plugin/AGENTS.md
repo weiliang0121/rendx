@@ -235,3 +235,20 @@ app.use(
 
 - **graph-plugin**：通过 `hitDelegate` + `filter` 适配复合节点模型
 - **history-plugin**：可监听 `selection:change` 做选中状态快照
+
+### 跨插件互斥（显式感知）
+
+当其他交互插件正在处理用户操作时，selection-plugin 需要主动退让，避免冲突。该机制通过 `app.getState()` **软感知**实现，无硬依赖——对应插件未安装时静默跳过。
+
+| 感知的 State Key     | 来源插件       | 屏蔽行为                   |
+| -------------------- | -------------- | -------------------------- |
+| `connect:connecting` | connect-plugin | 屏蔽 click、hover、marquee |
+| `drag:dragging`      | drag-plugin    | 屏蔽 click、hover、marquee |
+
+**为什么需要显式感知：**
+
+1. **hover vs drag**：拖拽中 Selection 的 hover 逻辑会覆盖 Drag 设置的 `grabbing` 光标
+2. **click vs drag**：拖拽结束后浏览器触发的 click 会将多选缩减为单选
+3. **marquee vs connect**：hitDelegate 过滤掉 connectable 端口后，点击端口被视为“空白区域”触发框选
+
+**实现位置：** `#isOtherPluginBusy()` 私有方法，在 `#onClick`、`#onPointerMove`、`#onPointerDown` 入口处调用。

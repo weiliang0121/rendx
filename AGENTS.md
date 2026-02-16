@@ -125,6 +125,34 @@ app.render(); // 静态渲染一帧
 | rendx-selection-plugin | `packages/selection-plugin/AGENTS.md` |
 | rendx-zoom-plugin      | `packages/zoom-plugin/AGENTS.md`      |
 
+## 跨插件互斥（Cross-Plugin Mutual Exclusion）
+
+交互类插件（selection、drag、connect）共享同一套 pointer 事件流，存在操作冲突。通过 **State 软感知** 模式实现互斥：
+
+### 协议
+
+- 每个交互插件在 `state[]` 中声明自己的忙碌状态（如 `drag:dragging`、`connect:connecting`）
+- 需要退让的插件通过 `app.getState(key)` 读取其他插件状态，在事件处理入口提前返回
+- 对应插件未安装时，`getState()` 抛出异常，catch 后视为 false（无硬依赖）
+
+### 感知关系图
+
+```
+connect-plugin ──发布 connect:connecting──→ selection-plugin（屏蔽 click/hover/marquee）
+drag-plugin    ──发布 drag:dragging     ──→ selection-plugin（屏蔽 click/hover/marquee）
+drag-plugin    ──发布 drag:dragging     ──→ connect-plugin  （拖拽中不触发连线）
+drag-plugin    ──读取 selection:selected──→ selection-plugin （多选联动拖拽）
+drag-plugin    ──调用 refreshOverlay()  ──→ selection-plugin （拖拽后刷新选框）
+```
+
+### 设计约束
+
+1. **单向感知**：只有被动方读取主动方的 state，不反向通知
+2. **无硬依赖**：所有跨插件读取均包裹在 try/catch 中，缺失时静默降级
+3. **入口守卫**：互斥检查统一放在事件回调的第一行，不散布在逻辑中间
+
+各插件 `AGENTS.md` 的「跨插件互斥」章节有具体实现细节。
+
 ## 编码规范
 
 ### 命名

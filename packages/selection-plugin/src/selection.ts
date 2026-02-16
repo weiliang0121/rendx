@@ -242,8 +242,8 @@ export class SelectionPlugin implements Plugin {
       return;
     }
 
-    // 连线进行中 → 跳过（connect-plugin 互斥）
-    if (this.#isConnectActive()) return;
+    // 其他插件交互进行中 → 跳过
+    if (this.#isOtherPluginBusy()) return;
 
     const hit = this.#resolve(e.target);
 
@@ -279,8 +279,8 @@ export class SelectionPlugin implements Plugin {
   };
 
   #onPointerMove = (e: SimulatedEvent) => {
-    // 连线进行中 → 跳过（connect-plugin 互斥）
-    if (this.#isConnectActive()) return;
+    // 其他插件交互进行中 → 跳过
+    if (this.#isOtherPluginBusy()) return;
 
     // ── 框选拖拽中 ──
     if (this.#isDragging && this.#dragStartOffset) {
@@ -328,8 +328,8 @@ export class SelectionPlugin implements Plugin {
   };
 
   #onPointerDown = (e: SimulatedEvent) => {
-    // 连线进行中 → 跳过框选（connect-plugin 互斥）
-    if (this.#isConnectActive()) return;
+    // 其他插件交互进行中 → 跳过框选
+    if (this.#isOtherPluginBusy()) return;
 
     // 仅空白区域开始框选
     const hit = this.#resolve(e.target);
@@ -487,13 +487,28 @@ export class SelectionPlugin implements Plugin {
   // ════════════════════════════════════════════════════════════
 
   /**
-   * 检测 connect-plugin 是否正在连接中。
-   * 通过 app 全局 state 软感知，无硬依赖。
+   * 检测其他交互插件是否正忙（连线中 / 拖拽中）。
+   *
+   * 跨插件互斥策略：通过 app 全局 state 软感知，无硬依赖。
+   * 当对应插件未安装时 getState 会抛出异常，catch 后返回 false。
+   *
+   * 已感知的 state key:
+   * - `connect:connecting` — connect-plugin 正在连线
+   * - `drag:dragging`      — drag-plugin 正在拖拽
+   *
+   * @see AGENTS.md "跨插件互斥" 章节
    */
-  #isConnectActive(): boolean {
+  #isOtherPluginBusy(): boolean {
     if (!this.#app) return false;
+    return this.#readState<boolean>('connect:connecting') || this.#readState<boolean>('drag:dragging');
+  }
+
+  /**
+   * 安全读取 state，未注册时返回 false。
+   */
+  #readState<T>(key: string): boolean {
     try {
-      return this.#app.getState<boolean>('connect:connecting') === true;
+      return this.#app!.getState<T>(key) === true;
     } catch {
       return false;
     }

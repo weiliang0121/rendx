@@ -61,9 +61,18 @@ graph-plugin 的 `ElementImpl` 会将 element ID 设为 group 的 name（`group.
 
 ### 与其他插件的协同
 
+#### 跨插件互斥
+
+connect-plugin 通过 `connect:connecting` state 发布连线状态，供其他插件感知。同时主动感知 drag-plugin 的拖拽状态。
+
+| 方向 | State Key            | 作用                                               |
+| ---- | -------------------- | -------------------------------------------------- |
+| 发布 | `connect:connecting` | 被 selection-plugin 感知，屏蔽 hover/click/marquee |
+| 感知 | `drag:dragging`      | 拖拽中不触发连接                                   |
+
 - **drag-plugin**：通过 `app.getState('drag:dragging')` 检测拖拽状态，拖拽中不触发连接。设计上建议：drag 的 `filter` 排除 connectable，connect 的 className 排除 draggable。
 - **graph-plugin**：软感知，通过 `app.getPlugin('graph')` 获取。不存在时降级为纯 engine 模式。
-- **selection-plugin**：无直接交互。
+- **selection-plugin**：无直接交互，但 selection-plugin 主动感知本插件的 `connect:connecting` 状态。
 
 ### 坐标系
 

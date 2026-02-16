@@ -8,6 +8,22 @@
 
 无强制前置插件依赖。可与 `rendx-selection-plugin`、`rendx-graph-plugin` 协同增强，但独立运行于纯 engine 场景。
 
+### 跨插件互斥（被感知方）
+
+drag-plugin 通过 `drag:dragging` state 发布拖拽状态，供其他插件感知。
+
+| State Key       | 读取方           | 作用                               |
+| --------------- | ---------------- | ---------------------------------- |
+| `drag:dragging` | selection-plugin | 拖拽中屏蔽 hover / click / marquee |
+
+同时，drag-plugin 主动感知 selection-plugin：
+
+| 感知的 State Key     | 来源插件         | 用途         |
+| -------------------- | ---------------- | ------------ |
+| `selection:selected` | selection-plugin | 多选联动拖拽 |
+
+还通过 `app.getPlugin('selection')` 调用 `refreshOverlay()` 刷新选框位置。
+
 ## 核心能力
 
 | 功能           | 说明                                                                       |
