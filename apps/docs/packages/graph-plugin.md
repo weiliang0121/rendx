@@ -1,6 +1,6 @@
 # rendx-graph-plugin
 
-图元素生命周期管理插件，提供 Node/Edge 两类元素的类型注册、CRUD 操作、自动分层、依赖追踪和图查询能力。
+图元素生命周期管理插件，提供 Node/Edge 两类元素的类型注册、CRUD 操作、自动分层、依赖追踪、图查询能力和元素特征（Traits）系统。
 
 ## 安装
 
@@ -16,8 +16,11 @@ app.use(graphPlugin());
 
 ### createNode
 
+支持两种调用方式：
+
 ```typescript
-const MyNode = createNode<{label: string}>((ctx, data, graph) => {
+// 简写 — 仅传入 render 函数
+const SimpleNode = createNode<{label: string}>((ctx, data, graph) => {
   const rect = Node.create('rect', {fill: '#4dabf7', stroke: '#1c7ed6'});
   rect.shape.from(0, 0, data.width ?? 100, data.height ?? 40);
   ctx.group.add(rect);
@@ -25,6 +28,24 @@ const MyNode = createNode<{label: string}>((ctx, data, graph) => {
   const text = Node.create('text', {fill: '#333', fontSize: 14});
   text.shape.from(10, 25, data.label);
   ctx.group.add(text);
+});
+
+// 完整 — 传入选项对象，可声明特征
+const PortNode = createNode<{label: string}>({
+  render: (ctx, data, graph) => {
+    const rect = Node.create('rect', {fill: '#fff', stroke: '#ddd'});
+    rect.shape.from(0, 0, 120, 60);
+    ctx.group.add(rect);
+
+    // 端口
+    const port = Node.create('circle', {fill: '#1890ff'});
+    port.shape.from(120, 30, 6);
+    port.data = {role: 'port', side: 'right'};
+    ctx.group.add(port);
+  },
+  traits: {
+    connectable: group => group.children.filter(c => c.data?.role === 'port'),
+  },
 });
 ```
 
@@ -36,6 +57,75 @@ const MyEdge = createEdge<{}>((ctx, data, graph) => {
   line.shape.from(ctx.source.x, ctx.source.y, ctx.target.x, ctx.target.y);
   ctx.group.add(line);
 });
+```
+
+## Element Traits（元素特征）
+
+每个元素在创建时自动合并 **角色默认值** 和 **定义时声明的 traits**，供其他插件通过 `app.interaction.queryTraits(target)` 查询。
+
+### 默认值
+
+| Trait             | Node 默认 | Edge 默认 | 说明                    |
+| ----------------- | --------- | --------- | ----------------------- |
+| `draggable`       | `true`    | `false`   | 是否可拖拽              |
+| `selectable`      | `true`    | `true`    | 是否可选中              |
+| `connectable`     | `true`    | `false`   | 是否可连线 / 端口解析器 |
+| `deletable`       | `true`    | `true`    | 是否可删除              |
+| `positionDerived` | `false`   | `true`    | 位置是否由其他元素派生  |
+
+### connectable 特征
+
+`connectable` 支持三种值：
+
+| 值             | 行为                               |
+| -------------- | ---------------------------------- |
+| `false`        | 不可连线                           |
+| `true`         | element group 本身作为连接目标     |
+| `PortResolver` | 函数返回端口 Graphics 列表（推荐） |
+
+```typescript
+type PortResolver = (group: Group) => Graphics[];
+```
+
+### 覆盖默认特征
+
+```typescript
+// 禁用拖拽和连接
+const StaticNode = createNode({
+  render: (ctx, data) => {
+    /* ... */
+  },
+  traits: {draggable: false, connectable: false},
+});
+
+// Edge 也可声明特征
+const DraggableEdge = createEdge({
+  render: (ctx, data) => {
+    /* ... */
+  },
+  traits: {draggable: true},
+});
+```
+
+### TraitProvider 注册
+
+graph-plugin 安装时自动向 `app.interaction` 注册 TraitProvider，其他插件通过统一接口查询元素特征：
+
+```typescript
+// graph-plugin 内部在 install 时注册
+app.interaction.registerTraitProvider('graph', target => {
+  // 从 target Graphics 匹配到 element，返回 traits
+  return element ? {...element.traits} : null;
+});
+
+// 其他插件查询
+const traits = app.interaction.queryTraits(someGraphics);
+if (traits.draggable) {
+  /* ... */
+}
+if (typeof traits.connectable === 'function') {
+  /* PortResolver */
+}
 ```
 
 ## 使用
@@ -71,6 +161,7 @@ graph.remove('n1');
 | `notifyUpdate(id)`          | 通知元素更新，触发依赖链重绘 |
 | `serialize()`               | 序列化所有元素数据           |
 | `deserialize(data)`         | 从序列化数据恢复元素         |
+| `getTraits(id)`             | 获取指定元素的特征           |
 
 ## 图查询（GraphQuery）
 
@@ -93,6 +184,7 @@ graph.remove('n1');
 | `role`          | `'node' \| 'edge'`（只读） |
 | `group`         | 场景节点（只读）           |
 | `data`          | 当前数据（只读）           |
+| `traits`        | 合并后的元素特征（只读）   |
 | `mounted`       | 是否已挂载（只读）         |
 | `update(patch)` | 部分更新数据               |
 | `dispose()`     | 销毁元素                   |

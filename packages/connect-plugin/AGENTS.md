@@ -4,25 +4,23 @@
 
 ## 依赖层级
 
-插件层，依赖 `rendx-engine`、`rendx-core`。
-
-无强制前置插件依赖。可与 `rendx-graph-plugin`、`rendx-drag-plugin` 协同增强，但独立运行于纯 engine 场景。
+插件层，依赖 `rendx-engine`、`rendx-core`。需配合 `rendx-graph-plugin` 使用（通过 traits 判定可连接目标）。可与 `rendx-drag-plugin` 协同增强。
 
 ## 核心能力
 
-| 功能            | 说明                                                                     |
-| --------------- | ------------------------------------------------------------------------ |
-| 连线交互        | pointerdown 可连接目标 → 拖拽预览线 → pointerup 吸附目标完成连接         |
-| Graph 集成      | 若已安装 graph-plugin 且设置 `edgeType`，自动调用 `graph.add()` 创建边   |
-| 纯 engine 模式  | 无 graph-plugin 时，自行创建 `line` Node 并维护连接列表                  |
-| 自动桥接        | 从端口 Graphics 沿 parent chain 自动溯源 element ID，无需手动传入 nodeId |
-| className 标记  | 只有带 `connectable` className 的 Graphics 才响应连接交互                |
-| 吸附检测        | 鼠标接近可连接目标 snapRadius 范围内自动吸附                             |
-| 自环控制        | `allowSelfLoop` 控制是否允许同一元素自连                                 |
-| canConnect 过滤 | 自定义验证函数控制连接合法性                                             |
-| 预览线          | 连接过程中显示虚线预览，样式可配置                                       |
-| Escape 取消     | 连接中按 Escape 取消当前连接                                             |
-| Drag 互斥       | 自动检测 drag-plugin 状态，拖拽中不触发连接                              |
+| 功能            | 说明                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| 连线交互        | pointerdown 可连接目标 → 拖拽预览线 → pointerup 吸附目标完成连接                                |
+| Graph 集成      | 若已安装 graph-plugin 且设置 `edgeType`，自动调用 `graph.add()` 创建边                          |
+| 纯 engine 模式  | 未设置 edgeType 时，自行创建 `line` Node 并维护连接列表                                         |
+| 自动桥接        | 从端口 Graphics 沿 parent chain 自动溯源 element ID，无需手动传入 nodeId                        |
+| Traits 驱动     | 通过 `connectable` trait 判定：`true` = group 本身、`PortResolver` = 指定端口、`false` = 不可连 |
+| 吸附检测        | 鼠标接近可连接目标 snapRadius 范围内自动吸附                                                    |
+| 自环控制        | `allowSelfLoop` 控制是否允许同一元素自连                                                        |
+| canConnect 过滤 | 自定义验证函数控制连接合法性                                                                    |
+| 预览线          | 连接过程中显示虚线预览，样式可配置                                                              |
+| Escape 取消     | 连接中按 Escape 取消当前连接                                                                    |
+| Drag 互斥       | 通过 InteractionManager 通道锁协调，拖拽中不触发连接                                            |
 
 ## 架构设计
 
@@ -31,7 +29,15 @@
 插件根据环境自动选择边的创建方式：
 
 1. **Graph 模式**：检测到 `graph-plugin` 且配置了 `edgeType` → 调用 `graph.add(edgeType, edgeData)` → 由 graph-plugin 管理边的生命周期
-2. **纯 Engine 模式**：无 graph-plugin → 自行创建 `Node.create('line')` 并添加到场景 → 通过 `#connections` Map 维护
+2. **纯 Engine 模式**：有 `graph-plugin` 但未设置 `edgeType` → 自行创建 `Node.create('line')` 并添加到场景 → 通过 `#connections` Map 维护
+
+### connectable trait 解析
+
+通过 `graph-plugin` 定义的 `connectable` trait 判定元素是否可连接及如何连接：
+
+- `connectable: false` — 不可连接
+- `connectable: true` — element group 本身作为连接端点
+- `connectable: PortResolver` — 调用 `(group: Group) => Graphics[]` 函数返回端口列表，只有端口 Graphics 可被连接
 
 ### 状态机
 
@@ -70,13 +76,25 @@ connect-plugin 通过 `connect:connecting` state 发布连线状态，供其他�
 | 发布 | `connect:connecting` | 被 selection-plugin 感知，屏蔽 hover/click/marquee |
 | 感知 | `drag:dragging`      | 拖拽中不触发连接                                   |
 
-- **drag-plugin**：通过 `app.getState('drag:dragging')` 检测拖拽状态，拖拽中不触发连接。设计上建议：drag 的 `filter` 排除 connectable，connect 的 className 排除 draggable。
-- **graph-plugin**：软感知，通过 `app.getPlugin('graph')` 获取。不存在时降级为纯 engine 模式。
+- **drag-plugin**：通过 InteractionManager 通道锁协调，拖拽中不触发连接。drag 的 `hitDelegate` 应排除端口 Graphics（如 `target.data?.role === 'port'`）。
+- **graph-plugin**：必需依赖，通过 traits 系统判定 connectable。
 - **selection-plugin**：无直接交互，但 selection-plugin 主动感知本插件的 `connect:connecting` 状态。
 
 ### 坐标系
 
-锚点、预览线端点、吸附距离均基于世界坐标系（`worldX` / `worldY`）。
+预览线挂载在 `selection` Layer（`independentTransform = true`），不跟随 Scene 缩放平移。因此锚点、预览线端点、吸附距离均基于**画布像素坐标**（`offsetX` / `offsetY`）。
+
+- `e.offsetX/offsetY`：画布像素坐标，与 `#getAnchor()` 返回值、selection 层坐标系一致
+- `e.worldX/worldY`：场景逻辑坐标（逆 zoom/pan），仅用于用户事件回调（`connect:start`、`connect:move`）
+- `worldMatrix`：包含 Scene 变换的画布像素坐标，`#getAnchor()` 从中取值
+
+### 重复边检测
+
+连接完成前会检测是否已存在相同连接：
+
+- **`connectable: true` 模式**：比较节点级 ID（`source` / `target`），相同即重复
+- **PortResolver 模式**：节点 ID 相同后，进一步比较端口 data（`sourcePort` / `targetPort`），只有节点 + 端口都匹配才算重复
+- 纯引擎模式不做重复检测（无 graph-plugin）
 
 ## API 参考
 
@@ -101,9 +119,6 @@ function connectPlugin(options?: ConnectPluginOptions): ConnectPlugin;
 
 ```typescript
 interface ConnectPluginOptions {
-  // ── 标识 ──
-  className?: string; // 默认 'connectable'
-
   // ── 过滤 ──
   canConnect?: (source: Graphics, target: Graphics) => boolean;
   allowSelfLoop?: boolean; // 默认 false
@@ -185,9 +200,9 @@ interface ConnectCancelEvent {
 
 ## Overlay Layer
 
-| 层名        | zIndex | 说明                                                                 |
-| ----------- | ------ | -------------------------------------------------------------------- |
-| `selection` | 10     | 与 selection-plugin 共享的交互层，pointerEvents=false, culling=false |
+| 层名        | zIndex | 说明                                                                                            |
+| ----------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `selection` | 10     | 与 selection-plugin 共享的交互层，independentTransform=true, pointerEvents=false, culling=false |
 
 预览线永久挂载在 overlay 层中，通过 `setDisplay(true/false)` 切换显隐（同 selection-plugin 的 marquee 模式）。
 
@@ -201,34 +216,41 @@ interface ConnectCancelEvent {
 
 ## 使用示例
 
-### 纯 engine（无 graph-plugin）
+### connectable: true（group 本身作为端点）
 
 ```typescript
 import {App, Node} from 'rendx-engine';
+import {graphPlugin, createNode} from 'rendx-graph-plugin';
 import {connectPlugin} from 'rendx-connect-plugin';
 
 const app = new App({width: 800, height: 600});
 app.mount(container);
 
+const graph = graphPlugin();
+app.use(graph);
+
+// 定义可连接节点 — connectable: true，group 本身是端点
+const CircleNode = createNode({
+  render: ctx => {
+    const circle = Node.create('circle', {fill: '#ff0000'});
+    circle.shape.from(ctx.width / 2, ctx.height / 2, 30);
+    ctx.group.add(circle);
+  },
+  traits: {connectable: true},
+});
+graph.register('circle', CircleNode);
+
 const connect = connectPlugin();
 app.use(connect);
 
-// 创建可连接的节点
-const circle = Node.create('circle', {fill: '#ff0000'});
-circle.shape.from(200, 200, 30);
-circle.addClassName('connectable'); // 标记为可连接
-app.scene.add(circle);
-
-const rect = Node.create('rect', {fill: '#0066ff'});
-rect.shape.from(400, 200, 60, 60);
-rect.addClassName('connectable');
-app.scene.add(rect);
+graph.add('circle', {id: 'c1', x: 200, y: 200, width: 60, height: 60});
+graph.add('circle', {id: 'c2', x: 400, y: 200, width: 60, height: 60});
 
 app.render();
-// → 从 circle 拖到 rect 时自动创建 line 连接
+// → 从 c1 拖到 c2 时自动创建连接
 ```
 
-### 配合 graph-plugin
+### PortResolver（指定端口 Graphics）
 
 ```typescript
 import {connectPlugin} from 'rendx-connect-plugin';
@@ -236,14 +258,42 @@ import {graphPlugin, createNode, createEdge} from 'rendx-graph-plugin';
 import {dragPlugin} from 'rendx-drag-plugin';
 
 const graph = graphPlugin();
-graph.register('card', createNode({...}));   // 注册节点类型
-graph.register('edge', createEdge({...}));   // 注册边类型
+
+// 定义带端口的节点 — PortResolver 指定哪些子 Graphics 是端口
+const CardNode = createNode({
+  render: (ctx) => {
+    const bg = Node.create('round', {fill: '#fff', stroke: '#333', strokeWidth: 2});
+    bg.shape.from(0, 0, ctx.width, ctx.height);
+    ctx.group.add(bg);
+
+    const leftPort = Node.create('circle', {fill: '#333'});
+    leftPort.shape.from(0, ctx.height / 2, 5);
+    leftPort.data = {role: 'port', side: 'left'};
+    ctx.group.add(leftPort);
+
+    const rightPort = Node.create('circle', {fill: '#333'});
+    rightPort.shape.from(ctx.width, ctx.height / 2, 5);
+    rightPort.data = {role: 'port', side: 'right'};
+    ctx.group.add(rightPort);
+  },
+  traits: {
+    connectable: (group) => group.children.filter(c => c.data?.role === 'port'),
+  },
+});
+
+graph.register('card', CardNode);
+graph.register('edge', createEdge({...}));
 
 const drag = dragPlugin({
   hitDelegate: t => {
-    // 排除 connectable 端口，只拖节点主体
-    while (t && !t.hasClassName('graph-node')) t = t.parent!;
-    return t;
+    // 排除端口 Graphics，只拖节点主体
+    if (t.data?.role === 'port') return null;
+    let current = t;
+    while (current.parent) {
+      if (current.name && graph.has(current.name)) return current;
+      current = current.parent;
+    }
+    return null;
   },
 });
 

@@ -210,3 +210,4 @@ app.scene.add(hint);
 app.render();
 
 console.log('Graph + Selection — 节点和边均可选中，边使用 stroke hit detection');
+console.log('✨ selectable trait 默认为 true — Node 和 Edge 均可选中');

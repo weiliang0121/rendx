@@ -90,6 +90,10 @@ export class DragPlugin implements Plugin {
 
   install(app: App) {
     this.#app = app;
+
+    // 注册到交互管理器
+    app.interaction.register('drag', {channels: ['pointer-exclusive'], priority: 10});
+
     this.#bindEvents();
   }
 
@@ -107,6 +111,7 @@ export class DragPlugin implements Plugin {
     for (const fn of this.#cleanups) fn();
     this.#cleanups = [];
 
+    this.#app?.interaction.unregister('drag');
     this.#app?.resetCursor();
     this.#reset();
     this.#app = null;
@@ -172,6 +177,9 @@ export class DragPlugin implements Plugin {
   #onPointerDown = (e: SimulatedEvent) => {
     if (this.#state !== DragState.Idle) return;
 
+    // 通道锁检查：pointer-exclusive 被其他插件占用时跳过
+    if (this.#app!.interaction.isLockedByOther('pointer-exclusive', 'drag')) return;
+
     // 解析拖拽目标
     const hit = this.#resolve(e.target);
     if (!hit) return;
@@ -208,6 +216,14 @@ export class DragPlugin implements Plugin {
 
       // 进入 dragging
       this.#state = DragState.Dragging;
+
+      // 获取 pointer-exclusive 通道锁
+      if (!this.#app!.interaction.acquire('pointer-exclusive', 'drag')) {
+        // 无法获取锁（更高优先级插件持有），放弃拖拽
+        this.#reset();
+        return;
+      }
+
       this.#app!.setCursor(this.#opts.cursor);
       this.#app!.setState('drag:dragging', true);
       this.#app!.setState('drag:targets', [...this.#targets]);
@@ -322,6 +338,7 @@ export class DragPlugin implements Plugin {
    * 拖拽结束后的通用清理
    */
   #cleanup() {
+    this.#app!.interaction.release('pointer-exclusive', 'drag');
     this.#app!.resetCursor();
     this.#app!.setState('drag:dragging', false);
     this.#app!.setState('drag:targets', []);
@@ -352,6 +369,11 @@ export class DragPlugin implements Plugin {
     const resolved = this.#opts.hitDelegate ? this.#opts.hitDelegate(target) : target;
     if (!resolved) return null;
     if (this.#opts.filter && !this.#opts.filter(resolved)) return null;
+
+    // 通过 InteractionManager 查询 draggable trait
+    const traits = this.#app!.interaction.queryTraits(resolved);
+    if (traits.draggable === false) return null;
+
     return resolved;
   }
 
@@ -367,9 +389,14 @@ export class DragPlugin implements Plugin {
         if (selected && Array.isArray(selected) && selected.length > 0) {
           // 命中节点在选中集中 → 拖拽整个选中集
           if (selected.includes(hit)) {
-            // 对选中集合应用 filter，排除不可拖拽的元素（如 edge）
+            // 对选中集合应用 filter + traits，排除不可拖拽的元素（如 edge）
             // 避免 edge group 被施加 translate 导致渲染错位
-            const filtered = this.#opts.filter ? selected.filter(t => this.#opts.filter!(t)) : [...selected];
+            const filtered = selected.filter(t => {
+              if (this.#opts.filter && !this.#opts.filter(t)) return false;
+              const traits = this.#app!.interaction.queryTraits(t);
+              if (traits.draggable === false) return false;
+              return true;
+            });
             return filtered.length > 0 ? filtered : [hit];
           }
         }

@@ -125,8 +125,6 @@ const myNode = createNode((ctx, data) => {
   const rect = Node.create('rect', {fill: data.color ?? '#4a90d9'});
   rect.shape.from(0, 0, ctx.width, ctx.height);
   ctx.group.add(rect);
-  ctx.group.addClassName('selectable');
-  ctx.group.addClassName('graph-node');
 });
 graph.register('card', myNode);
 
@@ -136,13 +134,13 @@ graph.add('card', {id: 'n2', x: 350, y: 200, width: 120, height: 50, color: '#ff
 
 app.render();
 // → 节点可点击选中、框选、拖拽移动
+// → 默认 traits: draggable=true, selectable=true
 ```
 
 ## 下一步
 
-- [核心概念](./concepts) — 理解场景图、脏标记、渲染管线
-- [架构总览](./architecture) — 了解设计思想和包层级
-- [插件指南](./plugins) — Graph、Selection、Drag、Zoom 等插件用法
+- [核心概念与架构](./concepts) — 理解场景图、脏标记、渲染管线、设计思想和包层级
+- [插件指南](./plugins/) — Graph、Selection、Drag、Zoom 等插件用法
 - [API 参考](/api/engine) — 完整 API 文档
 - [Playground](/playground) — 在线体验
 - [Graph Editor](/graph-editor) — 完整图编辑器 Demo 与代码解析

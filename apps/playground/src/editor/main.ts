@@ -70,8 +70,8 @@ const selection = selectionPlugin({
   hoverStyle: {stroke: '#89b4fa44', strokeWidth: 1, padding: 4},
   marqueeStyle: {fill: 'rgba(137,180,250,0.08)', stroke: '#89b4fa', strokeWidth: 1},
   hitDelegate: (target: Graphics) => {
-    // Skip connectable ports
-    if (target.hasClassName('connectable')) return null;
+    // Skip port Graphics
+    if (target.data?.role === 'port') return null;
     // Walk up to find selectable ancestor (graph element or selectable className)
     let current: Graphics | null = target;
     while (current && current.type !== 4) {
@@ -106,7 +106,7 @@ app.use(selection);
 // 4. Drag
 const drag = dragPlugin({
   hitDelegate: (target: Graphics) => {
-    if (target.hasClassName('connectable')) return null;
+    if (target.data?.role === 'port') return null;
     let current: Graphics | null = target;
     while (current && current.type !== 4) {
       if (current.name && graph.has(current.name)) return current;

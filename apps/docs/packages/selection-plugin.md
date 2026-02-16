@@ -87,7 +87,9 @@ app.bus.on('selection:hover-change', e => {
 app.use(
   selectionPlugin({
     renderOverlay: (target, type) => {
-      if (target.hasClassName('edge')) {
+      // 通过 graph element 角色判断是否为边
+      const el = graph.get(target.name);
+      if (el?.role === 'edge') {
         const overlay = Node.create('path', {
           stroke: '#1890ff',
           strokeWidth: type === 'selection' ? 6 : 4,
@@ -111,7 +113,10 @@ app.use(
     hitDelegate: target => {
       let node = target;
       while (node && node.type !== 4) {
-        if (node.hasClassName('selectable')) return node;
+        // 跳过端口（由 connect-plugin 处理）
+        if (node.data?.role === 'port') return null;
+        // 通过 graph element name 匹配
+        if (node.name && graph.has(node.name)) return node;
         node = node.parent;
       }
       return null;

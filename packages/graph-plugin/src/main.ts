@@ -1,5 +1,6 @@
 // ── Factory ──
 export {createNode, createEdge} from './create';
+export type {CreateNodeOptions, CreateEdgeOptions} from './create';
 
 // ── Runtime ──
 export {ElementImpl} from './element';
@@ -8,4 +9,4 @@ export {ElementImpl} from './element';
 export {GraphPlugin, graphPlugin} from './graph';
 
 // ── Types ──
-export type {NodeBase, EdgeBase, NodeContext, EdgeContext, NodeRenderFn, EdgeRenderFn, NodeDef, EdgeDef, ElementDef, Element, GraphQuery} from './types';
+export type {NodeBase, EdgeBase, NodeContext, EdgeContext, NodeRenderFn, EdgeRenderFn, NodeDef, EdgeDef, ElementDef, Element, GraphQuery, GraphElementTraits, PortResolver} from './types';

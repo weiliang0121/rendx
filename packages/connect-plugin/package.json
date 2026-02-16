@@ -39,6 +39,9 @@
     "rendx-core": "workspace:^",
     "rendx-engine": "workspace:^"
   },
+  "devDependencies": {
+    "rendx-graph-plugin": "workspace:^"
+  },
   "sideEffects": false,
   "files": [
     "dist"

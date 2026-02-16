@@ -1,6 +1,24 @@
 import {Group} from 'rendx-engine';
 
-import type {Element, ElementDef, NodeBase, EdgeBase, NodeContext, EdgeContext, GraphQuery} from './types';
+import type {Element, ElementDef, NodeBase, EdgeBase, NodeContext, EdgeContext, GraphQuery, GraphElementTraits} from './types';
+
+/** Node 角色的默认特征 */
+const DEFAULT_NODE_TRAITS: Readonly<GraphElementTraits> = {
+  draggable: true,
+  selectable: true,
+  connectable: true,
+  deletable: true,
+  positionDerived: false,
+};
+
+/** Edge 角色的默认特征 */
+const DEFAULT_EDGE_TRAITS: Readonly<GraphElementTraits> = {
+  draggable: false,
+  selectable: true,
+  connectable: false,
+  deletable: true,
+  positionDerived: true,
+};
 
 /**
  * ElementImpl — 元素运行时实例。
@@ -16,6 +34,8 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
   readonly deps: string[];
   /** 创建时使用的类型名称（对应 register 的 name），用于序列化 */
   readonly typeName: string;
+  /** 合并后的元素特征 — 角色默认值 + 定义时声明 */
+  readonly traits: Readonly<GraphElementTraits>;
 
   #data: T & (NodeBase | EdgeBase);
   #def: ElementDef;
@@ -34,6 +54,10 @@ export class ElementImpl<T = Record<string, unknown>> implements Element<T> {
     this.layer = layer;
     this.deps = deps;
     this.#onUpdate = onUpdate ?? null;
+
+    // 合并特征：角色默认值 + 定义时声明的 traits
+    const defaults = def.role === 'node' ? DEFAULT_NODE_TRAITS : DEFAULT_EDGE_TRAITS;
+    this.traits = Object.freeze({...defaults, ...def.traits});
 
     this.group = new Group();
     this.group.setName(id);

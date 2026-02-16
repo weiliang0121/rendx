@@ -4,6 +4,7 @@ import {Scene} from './scene';
 import {Layer} from './scene/layer';
 import {EventObserver} from './events';
 import {Scheduler} from './scheduler';
+import {InteractionManager} from './interaction';
 import {serialize, deserialize} from './serialization';
 import {imageLoader} from './core/image-loader';
 
@@ -49,6 +50,23 @@ export class App {
    * 消费方通过 `app.bus.on('eventName', handler)` 订阅。
    */
   bus = new EventEmitter();
+
+  /**
+   * 插件交互协调器 — 管理通道锁和元素特征查询。
+   *
+   * 通道锁用于解决交互插件之间的互斥（如 drag/connect/selection marquee
+   * 在同一个 pointer 流上的冲突），元素特征查询用于在插件间传递元素语义
+   * （如 "这个元素是否可拖拽"）。
+   *
+   * @example
+   * ```ts
+   * // 在插件 install() 中注册
+   * app.interaction.register('drag', { channels: ['pointer-exclusive'], priority: 10 });
+   * // 在事件回调中获取锁
+   * if (app.interaction.acquire('pointer-exclusive', 'drag')) { ... }
+   * ```
+   */
+  interaction = new InteractionManager();
 
   #rafId: number | null = null;
   #renderDirty = false;
@@ -420,11 +438,12 @@ export class App {
     }
     this.#plugins = [];
 
-    // 清理事件总线和状态
+    // 清理事件总线、状态和交互管理器
     this.bus.removeAllListeners();
     this.#state.clear();
     this.#stateMeta.clear();
     this.#scheduler.clear();
+    this.interaction.dispose();
 
     if (this.#resizeObserver) {
       this.#resizeObserver.disconnect();

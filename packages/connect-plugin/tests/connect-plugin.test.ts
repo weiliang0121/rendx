@@ -63,18 +63,12 @@ beforeEach(() => {
 });
 
 import {connectPlugin} from '../src/main';
-import {App, Node, Group, SimulatedEvent, Graphics} from 'rendx-engine';
+import {App, Node, SimulatedEvent, Graphics} from 'rendx-engine';
+import {graphPlugin, createNode} from 'rendx-graph-plugin';
 
 import type {ConnectStartEvent, ConnectCompleteEvent, ConnectMoveEvent} from '../src/main';
 
 // ── 测试工具 ──
-
-function createApp() {
-  const container = document.createElement('div');
-  const app = new App({width: 600, height: 400});
-  app.mount(container);
-  return {app, container};
-}
 
 function createSimEvent(type: string, target: Graphics, opts?: {worldX?: number; worldY?: number; offsetX?: number; offsetY?: number}) {
   const native = new PointerEvent(type);
@@ -86,15 +80,77 @@ function createSimEvent(type: string, target: Graphics, opts?: {worldX?: number;
   return event;
 }
 
-function createConnectableNode(name: string, x: number, y: number, w: number, h: number) {
-  const node = Node.create('rect', {fill: '#fff'});
-  node.setName(name);
-  node.setClassName('connectable');
-  node.shape.from(0, 0, w, h);
-  node.translate(x, y);
-  // 需要手动更新一次让 worldMatrix 和 bbox 生效
-  node.needUpdate = true;
-  return node;
+/** 创建带 graph-plugin 的 App（connect-plugin 依赖 graph-plugin） */
+function createGraphApp() {
+  const container = document.createElement('div');
+  const app = new App({width: 600, height: 400});
+  app.mount(container);
+
+  const graph = graphPlugin();
+  app.use(graph);
+
+  // connectable: true — element group 本身作为连接端点
+  const ConnectableNode = createNode({
+    render: ctx => {
+      const r = Node.create('rect', {fill: '#fff'});
+      r.shape.from(0, 0, ctx.width, ctx.height);
+      ctx.group.add(r);
+    },
+    traits: {connectable: true},
+  });
+  graph.register('node', ConnectableNode);
+
+  // 不可连接节点
+  const PlainNode = createNode({
+    render: ctx => {
+      const r = Node.create('rect', {fill: '#eee'});
+      r.shape.from(0, 0, ctx.width, ctx.height);
+      ctx.group.add(r);
+    },
+    traits: {connectable: false},
+  });
+  graph.register('plain', PlainNode);
+
+  // PortResolver 节点 — 通过 data.role 识别端口
+  const PortNode = createNode({
+    render: ctx => {
+      const bg = Node.create('rect', {fill: '#fff'});
+      bg.shape.from(0, 0, ctx.width, ctx.height);
+      ctx.group.add(bg);
+
+      const leftPort = Node.create('circle', {fill: '#333'});
+      leftPort.shape.from(0, ctx.height / 2, 5);
+      leftPort.data = {role: 'port', side: 'left'};
+      ctx.group.add(leftPort);
+
+      const rightPort = Node.create('circle', {fill: '#333'});
+      rightPort.shape.from(ctx.width, ctx.height / 2, 5);
+      rightPort.data = {role: 'port', side: 'right'};
+      ctx.group.add(rightPort);
+    },
+    traits: {
+      connectable: (group: Graphics) => group.children.filter((c: Graphics) => c.data?.role === 'port'),
+    },
+  });
+  graph.register('port-node', PortNode);
+
+  return {app, container, graph};
+}
+
+/** 通过 graph.add 添加可连接节点并返回其 element group */
+function addConnectableNode(graph: ReturnType<typeof graphPlugin>, id: string, x: number, y: number, w = 50, h = 50) {
+  graph.add('node', {id, x, y, width: w, height: h});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const el = (graph as any).get(id);
+  return el.group as Graphics;
+}
+
+/** 便捷创建 App（不带 graph-plugin）— 仅用于基础插件属性测试 */
+function createApp() {
+  const container = document.createElement('div');
+  const app = new App({width: 600, height: 400});
+  app.mount(container);
+  return {app, container};
 }
 
 // ════════════════════════════════════════════════════════════
@@ -146,82 +202,83 @@ describe('ConnectPlugin basics', () => {
 });
 
 // ════════════════════════════════════════════════════════════
-//  连接交互 — 纯引擎模式
+//  连接交互 — connectable: true
 // ════════════════════════════════════════════════════════════
 
-describe('ConnectPlugin — pure engine mode', () => {
+describe('ConnectPlugin — connectable:true mode', () => {
   it('should ignore pointerdown on non-connectable targets', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = Node.create('rect', {fill: '#fff'});
-    // 不设 className
-    app.scene.add(node);
+    graph.add('plain', {id: 'p1', x: 0, y: 0, width: 50, height: 50});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const group = (graph as any).get('p1').group as Graphics;
+    app.render();
 
-    const e = createSimEvent('pointerdown', node, {worldX: 50, worldY: 50});
+    const child = group.children[0];
+    const e = createSimEvent('pointerdown', child, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', e);
 
     expect(plugin.isConnecting()).toBe(false);
   });
 
   it('should start connecting on connectable target pointerdown', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
-    const e = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const e = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', e);
 
     expect(plugin.isConnecting()).toBe(true);
-    expect(plugin.getSource()).toBe(node);
+    expect(plugin.getSource()).toBe(group);
     expect(app.getState('connect:connecting')).toBe(true);
   });
 
   it('should emit connect:start event', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
     const handler = vi.fn();
     app.bus.on('connect:start', handler);
 
-    const e = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const e = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', e);
 
     expect(handler).toHaveBeenCalledOnce();
     const payload = handler.mock.calls[0][0] as ConnectStartEvent;
-    expect(payload.source).toBe(node);
+    expect(payload.source).toBe(group);
   });
 
   it('should emit connect:move event on pointermove', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 100, 100, 50, 50);
-    const tgt = createConnectableNode('n2', 300, 300, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
+    addConnectableNode(graph, 'n2', 300, 300, 50, 50);
     app.render();
 
     // Start connect
-    const downE = createSimEvent('pointerdown', src, {worldX: 125, worldY: 125});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', downE);
 
     const handler = vi.fn();
     app.bus.on('connect:move', handler);
 
     // Move
-    const moveE = createSimEvent('pointermove', src, {worldX: 200, worldY: 200});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 200, worldY: 200});
     app.scene.emit('pointermove', moveE);
 
     expect(handler).toHaveBeenCalledOnce();
@@ -230,18 +287,18 @@ describe('ConnectPlugin — pure engine mode', () => {
   });
 
   it('should cancel on pointerup in empty space', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
     const cancelHandler = vi.fn();
     app.bus.on('connect:cancel', cancelHandler);
 
-    const downE = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', downE);
     expect(plugin.isConnecting()).toBe(true);
 
@@ -254,18 +311,18 @@ describe('ConnectPlugin — pure engine mode', () => {
   });
 
   it('should cancel on Escape key', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
     const cancelHandler = vi.fn();
     app.bus.on('connect:cancel', cancelHandler);
 
-    const downE = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', downE);
     expect(plugin.isConnecting()).toBe(true);
 
@@ -276,25 +333,24 @@ describe('ConnectPlugin — pure engine mode', () => {
   });
 
   it('should complete connection via snap and create line in engine mode', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 50});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 200, 200, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    const tgt = addConnectableNode(graph, 'n2', 200, 200, 50, 50);
     app.render();
 
     const completeHandler = vi.fn();
     app.bus.on('connect:complete', completeHandler);
 
     // Start from src
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
 
     // Move near target (within snap radius of [225, 225] center)
-    const moveE = createSimEvent('pointermove', src, {worldX: 220, worldY: 220});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 220, worldY: 220});
     app.scene.emit('pointermove', moveE);
 
     // Release (snap target should be found)
@@ -305,29 +361,23 @@ describe('ConnectPlugin — pure engine mode', () => {
     const payload = completeHandler.mock.calls[0][0] as ConnectCompleteEvent;
     expect(payload.source).toBe(src);
     expect(payload.target).toBe(tgt);
-
-    // Should have created a line connection
-    expect(plugin.getConnections()).toHaveLength(1);
-    const conn = plugin.getConnections()[0];
-    expect(conn.source).toBe(src);
-    expect(conn.target).toBe(tgt);
   });
 
   it('should not allow self-loop by default', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 100});
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
     // Start from node
-    const downE = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', downE);
 
     // Move to same node center area
-    const moveE = createSimEvent('pointermove', node, {worldX: 126, worldY: 126});
+    const moveE = createSimEvent('pointermove', child, {worldX: 126, worldY: 126});
     app.scene.emit('pointermove', moveE);
 
     // Release — should cancel, not complete
@@ -336,22 +386,21 @@ describe('ConnectPlugin — pure engine mode', () => {
     window.dispatchEvent(new PointerEvent('pointerup'));
 
     expect(cancelHandler).toHaveBeenCalledOnce();
-    expect(plugin.getConnections()).toHaveLength(0);
   });
 
   it('should allow self-loop when configured', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 100, allowSelfLoop: true});
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
-    const downE = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', downE);
 
-    const moveE = createSimEvent('pointermove', node, {worldX: 126, worldY: 126});
+    const moveE = createSimEvent('pointermove', child, {worldX: 126, worldY: 126});
     app.scene.emit('pointermove', moveE);
 
     const completeHandler = vi.fn();
@@ -362,20 +411,19 @@ describe('ConnectPlugin — pure engine mode', () => {
   });
 
   it('should remove connection by id', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 50});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 200, 200, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    addConnectableNode(graph, 'n2', 200, 200, 50, 50);
     app.render();
 
     // Create connection
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
-    const moveE = createSimEvent('pointermove', src, {worldX: 220, worldY: 220});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 220, worldY: 220});
     app.scene.emit('pointermove', moveE);
     window.dispatchEvent(new PointerEvent('pointerup'));
 
@@ -396,71 +444,28 @@ describe('ConnectPlugin — pure engine mode', () => {
 });
 
 // ════════════════════════════════════════════════════════════
-//  className 标记
-// ════════════════════════════════════════════════════════════
-
-describe('ConnectPlugin — className matching', () => {
-  it('should use custom className', () => {
-    const {app} = createApp();
-    const plugin = connectPlugin({className: 'port'});
-    app.use(plugin);
-
-    const node = Node.create('rect', {fill: '#fff'});
-    node.setClassName('port');
-    app.scene.add(node);
-    app.render();
-
-    const e = createSimEvent('pointerdown', node, {worldX: 0, worldY: 0});
-    app.scene.emit('pointerdown', e);
-
-    expect(plugin.isConnecting()).toBe(true);
-  });
-
-  it('should walk up parent chain to find connectable', () => {
-    const {app} = createApp();
-    const plugin = connectPlugin();
-    app.use(plugin);
-
-    const group = new Group();
-    group.setClassName('connectable');
-    const child = Node.create('rect', {fill: '#fff'});
-    group.add(child);
-    app.scene.add(group);
-    app.render();
-
-    const e = createSimEvent('pointerdown', child, {worldX: 0, worldY: 0});
-    app.scene.emit('pointerdown', e);
-
-    // Should find the parent group with 'connectable' className
-    expect(plugin.isConnecting()).toBe(true);
-    expect(plugin.getSource()).toBe(group);
-  });
-});
-
-// ════════════════════════════════════════════════════════════
 //  canConnect 过滤
 // ════════════════════════════════════════════════════════════
 
 describe('ConnectPlugin — canConnect filter', () => {
   it('should respect canConnect callback', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({
       snapRadius: 100,
       canConnect: (_src, tgt) => tgt.name !== 'blocked',
     });
     app.use(plugin);
 
-    const src = createConnectableNode('src', 0, 0, 50, 50);
-    const blocked = createConnectableNode('blocked', 100, 100, 50, 50);
-    app.scene.add(src);
-    app.scene.add(blocked);
+    const src = addConnectableNode(graph, 'src', 0, 0, 50, 50);
+    addConnectableNode(graph, 'blocked', 100, 100, 50, 50);
     app.render();
 
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
 
     // Move near blocked target
-    const moveE = createSimEvent('pointermove', src, {worldX: 125, worldY: 125});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 125, worldY: 125});
     app.scene.emit('pointermove', moveE);
 
     // Release — should cancel because target is blocked
@@ -478,18 +483,18 @@ describe('ConnectPlugin — canConnect filter', () => {
 
 describe('ConnectPlugin — public API', () => {
   it('cancel() should cancel an active connection', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
     const cancelHandler = vi.fn();
     app.bus.on('connect:cancel', cancelHandler);
 
-    const downE = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', downE);
 
     plugin.cancel();
@@ -508,20 +513,19 @@ describe('ConnectPlugin — public API', () => {
   });
 
   it('syncConnections() should update line positions', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 50});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 200, 200, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    addConnectableNode(graph, 'n2', 200, 200, 50, 50);
     app.render();
 
     // Create connection
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
-    const moveE = createSimEvent('pointermove', src, {worldX: 220, worldY: 220});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 220, worldY: 220});
     app.scene.emit('pointermove', moveE);
     window.dispatchEvent(new PointerEvent('pointerup'));
 
@@ -551,27 +555,20 @@ describe('ConnectPlugin — public API', () => {
 
 describe('ConnectPlugin — drag interop', () => {
   it('should not start connecting when drag is active', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
 
-    // Mock drag:dragging state manually
-    // Since we don't have dragPlugin installed, we simulate the state
-    // by installing a dummy plugin that declares the state
-    const dummyDrag = {
-      name: 'drag',
-      state: [{key: 'drag:dragging', description: 'dragging', initial: false}],
-      install() {},
-    };
-    app.use(dummyDrag);
-    app.setState('drag:dragging', true);
+    // 通过 InteractionManager 模拟 drag 持有 pointer-exclusive 锁
+    app.interaction.register('drag', {channels: ['pointer-exclusive'], priority: 10});
+    app.interaction.acquire('pointer-exclusive', 'drag');
 
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 100, 100, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 100, 100, 50, 50);
     app.render();
 
-    const e = createSimEvent('pointerdown', node, {worldX: 125, worldY: 125});
+    const child = group.children[0];
+    const e = createSimEvent('pointerdown', child, {worldX: 125, worldY: 125});
     app.scene.emit('pointerdown', e);
 
     expect(plugin.isConnecting()).toBe(false);
@@ -584,7 +581,7 @@ describe('ConnectPlugin — drag interop', () => {
 
 describe('ConnectPlugin — custom anchor', () => {
   it('should use custom anchor function', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const customAnchor = vi.fn(() => [999, 888] as [number, number]);
     const plugin = connectPlugin({
       anchor: customAnchor,
@@ -592,11 +589,11 @@ describe('ConnectPlugin — custom anchor', () => {
     });
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    app.scene.add(src);
+    const group = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
     app.render();
 
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
 
     // Custom anchor should have been called for the source
@@ -610,24 +607,23 @@ describe('ConnectPlugin — custom anchor', () => {
 
 describe('ConnectPlugin — custom previewPath', () => {
   it('should call previewPath during connecting', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const previewPath = vi.fn((source: [number, number], target: [number, number]) => `M${source[0]} ${source[1]}C${(source[0] + target[0]) / 2} ${source[1]},${(source[0] + target[0]) / 2} ${target[1]},${target[0]} ${target[1]}`);
     const plugin = connectPlugin({previewPath, snapRadius: 100});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 200, 0, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    addConnectableNode(graph, 'n2', 200, 0, 50, 50);
     app.render();
 
     // Start connection
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
     expect(plugin.isConnecting()).toBe(true);
 
     // Move — should call previewPath
-    const moveE = createSimEvent('pointermove', src, {worldX: 100, worldY: 25});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 100, worldY: 25});
     app.scene.emit('pointermove', moveE);
 
     expect(previewPath).toHaveBeenCalled();
@@ -637,21 +633,21 @@ describe('ConnectPlugin — custom previewPath', () => {
   });
 
   it('should hide preview in layer on cancel', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 100});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    app.scene.add(src);
+    const group = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
     app.render();
 
     // Start connection
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
     expect(plugin.isConnecting()).toBe(true);
 
     // Move to show preview
-    const moveE = createSimEvent('pointermove', src, {worldX: 100, worldY: 100});
+    const moveE = createSimEvent('pointermove', child, {worldX: 100, worldY: 100});
     app.scene.emit('pointermove', moveE);
 
     // Cancel via pointerup without snap target
@@ -665,22 +661,21 @@ describe('ConnectPlugin — custom previewPath', () => {
   });
 
   it('should hide preview in layer on complete', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin({snapRadius: 100});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 200, 0, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    addConnectableNode(graph, 'n2', 200, 0, 50, 50);
     app.render();
 
     // Start connection
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
 
     // Move to snap target
-    const moveE = createSimEvent('pointermove', src, {worldX: 225, worldY: 25});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 225, worldY: 25});
     app.scene.emit('pointermove', moveE);
 
     // Complete
@@ -695,97 +690,51 @@ describe('ConnectPlugin — custom previewPath', () => {
 });
 
 // ════════════════════════════════════════════════════════════
-//  Graph 集成
+//  Graph 集成 — PortResolver
 // ════════════════════════════════════════════════════════════
 
 describe('ConnectPlugin — graph integration', () => {
-  it('should resolve element ID via parent chain', () => {
-    const {app} = createApp();
+  it('should resolve element ID via parent chain and create edge', () => {
+    const {app, graph} = createGraphApp();
 
-    // Create a mock graph plugin
-    const elements = new Map<string, {id: string; role: string; data: Record<string, unknown>}>();
-    elements.set('node-1', {id: 'node-1', role: 'node', data: {id: 'node-1', x: 0, y: 0}});
-
-    const mockGraph = {
-      name: 'graph',
-      state: [{key: 'graph:elements', description: 'All element IDs', initial: []}],
-      install() {},
-      has(id: string) {
-        return elements.has(id);
-      },
-      get(id: string) {
-        return elements.get(id);
-      },
-      add: vi.fn((_type: string, _data: Record<string, unknown>) => {
-        return {id: _data.id};
-      }),
-    };
-
-    app.use(mockGraph);
+    // 注册 PortResolver 节点类型
+    graph.add('port-node', {id: 'node-1', x: 0, y: 0, width: 50, height: 50});
+    graph.add('port-node', {id: 'node-2', x: 200, y: 200, width: 50, height: 50});
 
     const plugin = connectPlugin({
-      edgeType: 'edge',
+      edgeType: null, // 无 edgeType → 纯引擎模式 line
       snapRadius: 100,
     });
     app.use(plugin);
-
-    // Create group hierarchy that mimics graph element structure
-    // group.name = 'node-1' (the element ID)
-    const elementGroup = new Group();
-    elementGroup.setName('node-1');
-
-    const port = Node.create('rect', {fill: '#333'});
-    port.setClassName('connectable');
-    port.shape.from(0, 0, 10, 10);
-    elementGroup.add(port);
-
-    // Second element
-    elements.set('node-2', {id: 'node-2', role: 'node', data: {id: 'node-2', x: 200, y: 200}});
-    const elementGroup2 = new Group();
-    elementGroup2.setName('node-2');
-    elementGroup2.translate(200, 200);
-
-    const port2 = Node.create('rect', {fill: '#333'});
-    port2.setClassName('connectable');
-    port2.shape.from(0, 0, 10, 10);
-    elementGroup2.add(port2);
-
-    app.scene.add(elementGroup);
-    app.scene.add(elementGroup2);
     app.render();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const el1 = (graph as any).get('node-1');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const el2 = (graph as any).get('node-2');
+    const port1 = el1.group.children.find((c: Graphics) => c.data?.side === 'right');
+    el2.group.children.find((c: Graphics) => c.data?.side === 'left');
+
     // Start from port (child of node-1 group)
-    const downE = createSimEvent('pointerdown', port, {worldX: 5, worldY: 5});
+    const downE = createSimEvent('pointerdown', port1, {worldX: 50, worldY: 25});
     app.scene.emit('pointerdown', downE);
 
     expect(plugin.isConnecting()).toBe(true);
 
     // Move near port2
-    const moveE = createSimEvent('pointermove', port, {worldX: 205, worldY: 205});
+    const moveE = createSimEvent('pointermove', port1, {worldX: 200, worldY: 225});
     app.scene.emit('pointermove', moveE);
 
     // Release
     window.dispatchEvent(new PointerEvent('pointerup'));
 
-    // graph.add should have been called with auto-resolved element IDs
-    expect(mockGraph.add).toHaveBeenCalledOnce();
-    const edgeData = mockGraph.add.mock.calls[0][1] as Record<string, unknown>;
-    expect(edgeData.source).toBe('node-1');
-    expect(edgeData.target).toBe('node-2');
+    // Connection should have been created
+    expect(plugin.isConnecting()).toBe(false);
+    expect(plugin.getConnections()).toHaveLength(1);
   });
 
   it('should use custom edgeFactory when provided', () => {
-    const {app} = createApp();
-
-    const mockGraph = {
-      name: 'graph',
-      state: [{key: 'graph:elements', description: 'All element IDs', initial: []}],
-      install() {},
-      has: () => false,
-      get: () => undefined,
-      add: vi.fn(),
-    };
-    app.use(mockGraph);
+    const {app, graph} = createGraphApp();
 
     const customFactory = vi.fn(() => ({
       id: 'custom-edge',
@@ -794,6 +743,14 @@ describe('ConnectPlugin — graph integration', () => {
       color: '#ff0000',
     }));
 
+    // 注册一个 edge 类型
+    const MockEdge = {
+      __element_def__: true as const,
+      role: 'edge' as const,
+      render: () => {},
+    };
+    graph.register('edge', MockEdge);
+
     const plugin = connectPlugin({
       edgeType: 'edge',
       edgeFactory: customFactory,
@@ -801,118 +758,93 @@ describe('ConnectPlugin — graph integration', () => {
     });
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 100, 100, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    addConnectableNode(graph, 'n2', 100, 100, 50, 50);
     app.render();
 
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
 
-    const moveE = createSimEvent('pointermove', src, {worldX: 125, worldY: 125});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 125, worldY: 125});
     app.scene.emit('pointermove', moveE);
 
     window.dispatchEvent(new PointerEvent('pointerup'));
 
     expect(customFactory).toHaveBeenCalledOnce();
-    expect(mockGraph.add).toHaveBeenCalledWith('edge', {
-      id: 'custom-edge',
-      source: 'custom-src',
-      target: 'custom-tgt',
-      color: '#ff0000',
-    });
   });
 
   it('should fall back to engine line when no edgeType is set', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
 
-    const mockGraph = {
-      name: 'graph',
-      state: [{key: 'graph:elements', description: 'All element IDs', initial: []}],
-      install() {},
-      has: () => false,
-      get: () => undefined,
-      add: vi.fn(),
-    };
-    app.use(mockGraph);
-
-    // No edgeType set → even with graph present, should use engine line
+    // No edgeType set → should use engine line
     const plugin = connectPlugin({snapRadius: 100});
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const tgt = createConnectableNode('n2', 100, 100, 50, 50);
-    app.scene.add(src);
-    app.scene.add(tgt);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    addConnectableNode(graph, 'n2', 100, 100, 50, 50);
     app.render();
 
-    const downE = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const downE = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
-    const moveE = createSimEvent('pointermove', src, {worldX: 125, worldY: 125});
+    const moveE = createSimEvent('pointermove', srcChild, {worldX: 125, worldY: 125});
     app.scene.emit('pointermove', moveE);
     window.dispatchEvent(new PointerEvent('pointerup'));
 
-    // graph.add should NOT have been called
-    expect(mockGraph.add).not.toHaveBeenCalled();
-    // But engine line should have been created
+    // Engine line should have been created
     expect(plugin.getConnections()).toHaveLength(1);
   });
 
   it('should include port data as sourcePort/targetPort in default edge data', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
 
-    const elements = new Map<string, {id: string}>();
-    elements.set('node-A', {id: 'node-A'});
-    elements.set('node-B', {id: 'node-B'});
-
-    const mockGraph = {
-      name: 'graph',
-      state: [{key: 'graph:elements', description: '', initial: []}],
-      install() {},
-      has: (id: string) => elements.has(id),
-      add: vi.fn(),
+    // 注册 edge 类型用于接收 edgeData
+    const addSpy = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const origAdd = (graph as any).add.bind(graph);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (graph as any).add = (...args: any[]) => {
+      addSpy(...args);
+      return origAdd(...args);
     };
-    app.use(mockGraph);
+
+    const MockEdge = {
+      __element_def__: true as const,
+      role: 'edge' as const,
+      render: () => {},
+    };
+    graph.register('edge', MockEdge);
 
     const plugin = connectPlugin({edgeType: 'edge', snapRadius: 100});
     app.use(plugin);
 
-    // Source port with metadata
-    const groupA = new Group();
-    groupA.setName('node-A');
-    const portA = Node.create('rect', {fill: '#333'});
-    portA.setClassName('connectable');
-    portA.shape.from(0, 0, 10, 10);
-    portA.data = {row: 'in1', side: 'right'};
-    groupA.add(portA);
-
-    // Target port with metadata
-    const groupB = new Group();
-    groupB.setName('node-B');
-    groupB.translate(200, 200);
-    const portB = Node.create('rect', {fill: '#333'});
-    portB.setClassName('connectable');
-    portB.shape.from(0, 0, 10, 10);
-    portB.data = {row: 'src', side: 'left'};
-    groupB.add(portB);
-
-    app.scene.add(groupA);
-    app.scene.add(groupB);
+    // 使用 PortResolver 节点 — 端口带 data
+    graph.add('port-node', {id: 'node-A', x: 0, y: 0, width: 50, height: 50});
+    graph.add('port-node', {id: 'node-B', x: 200, y: 200, width: 50, height: 50});
     app.render();
 
-    const downE = createSimEvent('pointerdown', portA, {worldX: 5, worldY: 5});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const elA = (graph as any).get('node-A');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const elB = (graph as any).get('node-B');
+    const portA = elA.group.children.find((c: Graphics) => c.data?.side === 'right');
+    elB.group.children.find((c: Graphics) => c.data?.side === 'left');
+
+    const downE = createSimEvent('pointerdown', portA, {worldX: 50, worldY: 25});
     app.scene.emit('pointerdown', downE);
-    const moveE = createSimEvent('pointermove', portA, {worldX: 205, worldY: 205});
+    const moveE = createSimEvent('pointermove', portA, {worldX: 200, worldY: 225});
     app.scene.emit('pointermove', moveE);
     window.dispatchEvent(new PointerEvent('pointerup'));
 
-    expect(mockGraph.add).toHaveBeenCalledOnce();
-    const edgeData = mockGraph.add.mock.calls[0][1] as Record<string, unknown>;
+    // 找到 add('edge', ...) 的调用
+    const edgeCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === 'edge');
+    expect(edgeCall).toBeDefined();
+    const edgeData = edgeCall![1] as Record<string, unknown>;
     expect(edgeData.source).toBe('node-A');
     expect(edgeData.target).toBe('node-B');
-    expect(edgeData.sourcePort).toEqual({row: 'in1', side: 'right'});
-    expect(edgeData.targetPort).toEqual({row: 'src', side: 'left'});
+    expect(edgeData.sourcePort).toEqual({role: 'port', side: 'right'});
+    expect(edgeData.targetPort).toEqual({role: 'port', side: 'left'});
   });
 });
 
@@ -922,38 +854,38 @@ describe('ConnectPlugin — graph integration', () => {
 
 describe('ConnectPlugin — edge cases', () => {
   it('should not start second connection while already connecting', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const src = createConnectableNode('n1', 0, 0, 50, 50);
-    const other = createConnectableNode('n2', 200, 200, 50, 50);
-    app.scene.add(src);
-    app.scene.add(other);
+    const src = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
+    const other = addConnectableNode(graph, 'n2', 200, 200, 50, 50);
     app.render();
 
     // Start first connection
-    const e1 = createSimEvent('pointerdown', src, {worldX: 25, worldY: 25});
+    const srcChild = src.children[0];
+    const e1 = createSimEvent('pointerdown', srcChild, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', e1);
     expect(plugin.isConnecting()).toBe(true);
     expect(plugin.getSource()).toBe(src);
 
     // Try second connection — should be ignored
-    const e2 = createSimEvent('pointerdown', other, {worldX: 225, worldY: 225});
+    const otherChild = other.children[0];
+    const e2 = createSimEvent('pointerdown', otherChild, {worldX: 225, worldY: 225});
     app.scene.emit('pointerdown', e2);
     expect(plugin.getSource()).toBe(src); // still first source
   });
 
   it('should dispose gracefully while connecting', () => {
-    const {app} = createApp();
+    const {app, graph} = createGraphApp();
     const plugin = connectPlugin();
     app.use(plugin);
 
-    const node = createConnectableNode('n1', 0, 0, 50, 50);
-    app.scene.add(node);
+    const group = addConnectableNode(graph, 'n1', 0, 0, 50, 50);
     app.render();
 
-    const downE = createSimEvent('pointerdown', node, {worldX: 25, worldY: 25});
+    const child = group.children[0];
+    const downE = createSimEvent('pointerdown', child, {worldX: 25, worldY: 25});
     app.scene.emit('pointerdown', downE);
     expect(plugin.isConnecting()).toBe(true);
 

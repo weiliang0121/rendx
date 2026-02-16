@@ -45,6 +45,7 @@ export * from './app'; // App, AppConfig
 export * from './transforms'; // BaseTransform, GraphicsTransform, AttributeTransform, ClipBoxTransform, ArcTransform, SectorTransform
 export * from './serialization'; // serialize, deserialize, RendxJSON 等类型
 export * from './plugin'; // Plugin 接口
+export * from './interaction'; // InteractionManager, PluginRegistration, TraitProvider, TraitMap
 ```
 
 ## 核心模块
@@ -290,6 +291,97 @@ interface Plugin {
   install(app: App): void;
   resize?(width: number, height: number): void;
   dispose?(): void;
+}
+```
+
+### interaction.ts — 交互协调管理器
+
+`InteractionManager` 是插件间交互协调的核心基础设施，通过 `app.interaction` 访问。
+
+#### 核心概念
+
+- **通道锁（Channel Lock）**：命名互斥通道（如 `pointer-exclusive`），同一时刻只有一个插件可持有锁
+- **优先级抢占**：高优先级插件可抢占低优先级插件持有的锁，同时触发 `interaction:preempted` 事件
+- **Trait 提供者**：插件通过注册 `TraitProvider` 回调，让其他插件查询任意 Graphics 的能力特征（如 `draggable`、`selectable`、`connectable`）
+
+#### API
+
+```typescript
+interface PluginRegistration {
+  channels?: string[]; // 参与的通道列表
+  priority?: number; // 优先级（数值越大越高，默认 0）
+}
+
+interface TraitMap {
+  [key: string]: unknown; // 如 draggable, selectable, connectable, deletable 等
+}
+
+type TraitProvider = (target: Graphics) => TraitMap;
+
+class InteractionManager {
+  // ── 插件注册 ──
+  register(pluginName: string, registration?: PluginRegistration): void;
+  unregister(pluginName: string): void;
+
+  // ── 通道锁 ──
+  acquire(channel: string, pluginName: string): boolean; // 获取锁，成功返回 true
+  release(channel: string, pluginName: string): void; // 释放锁
+  isLocked(channel: string): boolean; // 通道是否被锁定
+  isLockedByOther(channel: string, pluginName: string): boolean; // 被其他插件锁定？
+  getHolder(channel: string): string | null; // 当前锁持有者
+
+  // ── Trait 查询 ──
+  registerTraitProvider(pluginName: string, provider: TraitProvider): void;
+  queryTraits(target: Graphics): TraitMap; // 聚合所有 provider 的结果
+  queryTrait(target: Graphics, key: string): unknown; // 查询单个 trait
+
+  // ── 事件（通过 EventEmitter3） ──
+  // 'interaction:acquired'  — { channel, pluginName }
+  // 'interaction:released'  — { channel, pluginName }
+  // 'interaction:preempted' — { channel, preempted, by }
+
+  dispose(): void;
+}
+```
+
+#### 插件优先级约定
+
+| 插件      | 优先级 | 说明                             |
+| --------- | ------ | -------------------------------- |
+| connect   | 15     | 最高，连线操作不可被打断         |
+| drag      | 10     | 中等，拖拽可被连线抢占           |
+| selection | 5      | 最低，被动退让给 drag 和 connect |
+
+#### 使用模式
+
+```typescript
+// 1. 插件 install 时注册
+install(app: App) {
+  app.interaction.register('drag', {
+    channels: ['pointer-exclusive'],
+    priority: 10,
+  });
+}
+
+// 2. 事件入口检查通道锁
+#onPointerDown = (e) => {
+  if (app.interaction.isLockedByOther('pointer-exclusive', 'drag')) return;
+  // ...
+  app.interaction.acquire('pointer-exclusive', 'drag');
+};
+
+// 3. 操作结束释放锁
+#cleanup() {
+  app.interaction.release('pointer-exclusive', 'drag');
+}
+
+// 4. 查询元素 traits（替代硬编码 filter）
+const traits = app.interaction.queryTraits(target);
+if (traits.draggable === false) return null;
+
+// 5. dispose 时注销
+dispose() {
+  app.interaction.unregister('drag');
 }
 ```
 

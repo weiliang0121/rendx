@@ -127,31 +127,86 @@ app.render(); // 静态渲染一帧
 
 ## 跨插件互斥（Cross-Plugin Mutual Exclusion）
 
-交互类插件（selection、drag、connect）共享同一套 pointer 事件流，存在操作冲突。通过 **State 软感知** 模式实现互斥：
+交互类插件（selection、drag、connect）共享同一套 pointer 事件流，存在操作冲突。通过 **InteractionManager** 提供的通道锁机制进行协调，并保留 **State 软感知** 作为向后兼容 fallback。
 
-### 协议
+### InteractionManager（推荐）
 
-- 每个交互插件在 `state[]` 中声明自己的忙碌状态（如 `drag:dragging`、`connect:connecting`）
-- 需要退让的插件通过 `app.getState(key)` 读取其他插件状态，在事件处理入口提前返回
+`app.interaction` 提供结构化的插件协调机制：
+
+- **通道锁**：`pointer-exclusive` 通道，同一时刻只有一个插件可持有锁
+- **优先级抢占**：按注册优先级决定谁可以获取锁（connect=15 > drag=10 > selection=5）
+- **Trait 提供者**：通过 `registerTraitProvider` 回调查询 Graphics 的能力特征（`draggable`、`selectable`、`connectable`）
+
+#### 通道锁协议
+
+```typescript
+// install 时注册
+app.interaction.register('drag', {channels: ['pointer-exclusive'], priority: 10});
+
+// 事件入口检查
+if (app.interaction.isLockedByOther('pointer-exclusive', 'drag')) return;
+
+// 操作开始时获取锁
+app.interaction.acquire('pointer-exclusive', 'drag');
+
+// 操作结束时释放锁
+app.interaction.release('pointer-exclusive', 'drag');
+
+// dispose 时注销
+app.interaction.unregister('drag');
+```
+
+#### Element Traits 协议
+
+`graph-plugin` 注册 `TraitProvider`，根据元素定义中的 `traits` 字段返回能力特征。其他插件通过 `app.interaction.queryTraits(target)` 查询，避免硬编码 filter。
+
+**内置 Trait**:
+
+| Trait             | Node 默认 | Edge 默认 | 说明                   |
+| ----------------- | --------- | --------- | ---------------------- |
+| `draggable`       | `true`    | `false`   | 是否可拖拽             |
+| `selectable`      | `true`    | `true`    | 是否可选中             |
+| `connectable`     | `true`    | `false`   | 是否可作为连线端点     |
+| `deletable`       | `true`    | `true`    | 是否可删除             |
+| `positionDerived` | `false`   | `true`    | 位置是否由其他元素决定 |
+
+用户在定义元素时可覆盖默认值：
+
+```typescript
+createNode({
+  render: g => {
+    /* ... */
+  },
+  traits: {draggable: false, connectable: false},
+});
+```
+
+### State 软感知（兼容 fallback）
+
+- 每个交互插件仍在 `state[]` 中声明自己的忙碌状态（如 `drag:dragging`、`connect:connecting`）
+- `selection-plugin` 在 InteractionManager 检查之后，额外 fallback 读取 state key
 - 对应插件未安装时，`getState()` 抛出异常，catch 后视为 false（无硬依赖）
 
 ### 感知关系图
 
 ```
-connect-plugin ──发布 connect:connecting──→ selection-plugin（屏蔽 click/hover/marquee）
-drag-plugin    ──发布 drag:dragging     ──→ selection-plugin（屏蔽 click/hover/marquee）
-drag-plugin    ──发布 drag:dragging     ──→ connect-plugin  （拖拽中不触发连线）
-drag-plugin    ──读取 selection:selected──→ selection-plugin （多选联动拖拽）
-drag-plugin    ──调用 refreshOverlay()  ──→ selection-plugin （拖拽后刷新选框）
+connect-plugin ──acquire('pointer-exclusive')──→ selection-plugin（通道锁屏蔽 click/hover/marquee）
+drag-plugin    ──acquire('pointer-exclusive')──→ selection-plugin（通道锁屏蔽 click/hover/marquee）
+drag-plugin    ──acquire('pointer-exclusive')──→ connect-plugin  （通道锁屏蔽连线触发）
+drag-plugin    ──读取 selection:selected      ──→ selection-plugin （多选联动拖拽）
+drag-plugin    ──调用 refreshOverlay()        ──→ selection-plugin （拖拽后刷新选框）
+graph-plugin   ──registerTraitProvider()      ──→ drag/selection/connect（元素 trait 查询）
 ```
 
 ### 设计约束
 
-1. **单向感知**：只有被动方读取主动方的 state，不反向通知
-2. **无硬依赖**：所有跨插件读取均包裹在 try/catch 中，缺失时静默降级
-3. **入口守卫**：互斥检查统一放在事件回调的第一行，不散布在逻辑中间
+1. **通道锁优先**：插件间互斥优先通过 `InteractionManager` 通道锁协调
+2. **fallback 兼容**：selection-plugin 保留旧版 state 软感知，兼容未适配的第三方插件
+3. **无硬依赖**：所有跨插件读取均包裹在 try/catch 中，缺失时静默降级
+4. **入口守卫**：互斥检查统一放在事件回调的第一行，不散布在逻辑中间
+5. **Trait 声明式**：元素能力通过 `traits` 字段声明，不在 filter 函数中硬编码
 
-各插件 `AGENTS.md` 的「跨插件互斥」章节有具体实现细节。
+各插件 `AGENTS.md` 的「跨插件互斥」章节有具体实现细节。详见 `packages/engine/AGENTS.md` 中 `interaction.ts` 章节。
 
 ## 编码规范
 

@@ -162,7 +162,10 @@ app.use(
     hitDelegate: target => {
       let node = target;
       while (node && node.type !== 4) {
-        if (node.hasClassName('graph-node')) return node;
+        // 跳过端口（由 connect-plugin 处理）
+        if (node.data?.role === 'port') return null;
+        // 通过 graph element name 匹配
+        if (node.name && graph.has(node.name)) return node;
         node = node.parent;
       }
       return null;
@@ -185,13 +188,28 @@ app.use(
 
 ## 插件感知机制
 
-Drag Plugin 对其他插件采用**软感知**策略：通过 `app.getPlugin()` / `app.getState()` 在运行时探测，不产生包级别的 `import` 依赖。
+Drag Plugin 对其他插件采用**软感知**策略，通过 `app.getPlugin()` / `app.getState()` 在运行时探测，不产生包级别的 `import` 依赖。
 
 | 被感知插件       | 探测方式                             | 增强行为                                             | 未安装时降级                  |
 | ---------------- | ------------------------------------ | ---------------------------------------------------- | ----------------------------- |
 | graph-plugin     | `app.getPlugin('graph')`             | `element.update({x,y})` 写入，自动触发 edge 依赖重绘 | `target.translate()` 直接移动 |
 | selection-plugin | `app.getPlugin('selection')`         | 拖拽后调用 `refreshOverlay()` 刷新选框 overlay 位置  | 跳过                          |
 | selection-plugin | `app.getState('selection:selected')` | 读取选中集合实现多选联动                             | 始终单节点拖拽                |
+
+### InteractionManager 通道锁
+
+Drag Plugin 注册到 `pointer-exclusive` 通道（优先级 10），拖拽开始时获取通道锁，防止拖拽期间 selection/connect 产生干扰：
+
+```typescript
+// install 时注册
+app.interaction.register('drag', {channels: ['pointer-exclusive'], priority: 10});
+
+// 拖拽开始时
+app.interaction.acquire('pointer-exclusive', 'drag');
+
+// 拖拽结束/取消时
+app.interaction.release('pointer-exclusive', 'drag');
+```
 
 ::: tip 为什么由 drag 感知 selection？
 拖拽是主动修改位置的一方，它知道目标何时移动。让 drag 在移动后主动通知 selection 刷新 overlay，比让 selection 监听位置变化更自然、更高效。
@@ -207,9 +225,9 @@ import {dragPlugin} from 'rendx-drag-plugin';
 
 const graph = graphPlugin();
 app.use(graph);
-app.use(dragPlugin({filter: t => t.hasClassName('graph-node')}));
+app.use(dragPlugin());
 
-// 拖拽节点时 graph-plugin 的 edge 自动跟随重绘
+// Node 默认 traits.draggable=true，拖拽节点时 graph-plugin 的 edge 自动跟随重绘
 ```
 
 ### 配合 selection-plugin
@@ -221,7 +239,8 @@ import {dragPlugin} from 'rendx-drag-plugin';
 const hitDelegate = target => {
   let node = target;
   while (node && node.type !== 4) {
-    if (node.hasClassName('selectable')) return node;
+    if (node.data?.role === 'port') return null;
+    if (node.name && graph.has(node.name)) return node;
     node = node.parent;
   }
   return null;

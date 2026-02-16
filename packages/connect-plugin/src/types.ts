@@ -55,15 +55,6 @@ export interface ConnectCancelEvent {
 // ── 插件选项 ──────────────────────────────────────────
 
 export interface ConnectPluginOptions {
-  // ── 标识 ──
-
-  /**
-   * 可连接的 className 标记。
-   * 只有 `hasClassName(className)` 为 true 的 Graphics 才响应连接交互。
-   * @default 'connectable'
-   */
-  className?: string;
-
   // ── 过滤 ──
 
   /**

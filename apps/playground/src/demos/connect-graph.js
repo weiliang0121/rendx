@@ -10,44 +10,48 @@ app.mount(container);
 
 // ── 1. 定义 Node 类型 ── 带 connectable 端口
 
-const CardNode = createNode((ctx, data) => {
-  const w = ctx.width;
-  const h = ctx.height;
-  const themeColor = data.color ?? '#6e8efb';
+const CardNode = createNode({
+  render: (ctx, data) => {
+    const w = ctx.width;
+    const h = ctx.height;
+    const themeColor = data.color ?? '#6e8efb';
 
-  // 背景
-  const bg = Node.create('round', {fill: '#ffffff', stroke: themeColor, strokeWidth: 2});
-  bg.shape.from(0, 0, w, h);
-  bg.shape.options(8, 8);
-  ctx.group.add(bg);
+    // 背景
+    const bg = Node.create('round', {fill: '#ffffff', stroke: themeColor, strokeWidth: 2});
+    bg.shape.from(0, 0, w, h);
+    bg.shape.options(8, 8);
+    ctx.group.add(bg);
 
-  // 标题
-  if (data.title) {
-    const label = Node.create('text', {
-      fill: '#333',
-      fontSize: 13,
-      fontWeight: 'bold',
-      textAnchor: 'middle',
-      dominantBaseline: 'central',
-    });
-    label.shape.from(data.title, w / 2, h / 2);
-    ctx.group.add(label);
-  }
+    // 标题
+    if (data.title) {
+      const label = Node.create('text', {
+        fill: '#333',
+        fontSize: 13,
+        fontWeight: 'bold',
+        textAnchor: 'middle',
+        dominantBaseline: 'central',
+      });
+      label.shape.from(data.title, w / 2, h / 2);
+      ctx.group.add(label);
+    }
 
-  // 左侧端口 — 可连接
-  const portSize = 10;
-  const leftPort = Node.create('circle', {fill: '#fff', stroke: themeColor, strokeWidth: 2});
-  leftPort.shape.from(0, h / 2, portSize / 2);
-  leftPort.setClassName('connectable');
-  leftPort.data = {side: 'left'};
-  ctx.group.add(leftPort);
+    // 左侧端口
+    const portSize = 10;
+    const leftPort = Node.create('circle', {fill: '#fff', stroke: themeColor, strokeWidth: 2});
+    leftPort.shape.from(0, h / 2, portSize / 2);
+    leftPort.data = {role: 'port', side: 'left'};
+    ctx.group.add(leftPort);
 
-  // 右侧端口 — 可连接
-  const rightPort = Node.create('circle', {fill: '#fff', stroke: themeColor, strokeWidth: 2});
-  rightPort.shape.from(w, h / 2, portSize / 2);
-  rightPort.setClassName('connectable');
-  rightPort.data = {side: 'right'};
-  ctx.group.add(rightPort);
+    // 右侧端口
+    const rightPort = Node.create('circle', {fill: '#fff', stroke: themeColor, strokeWidth: 2});
+    rightPort.shape.from(w, h / 2, portSize / 2);
+    rightPort.data = {role: 'port', side: 'right'};
+    ctx.group.add(rightPort);
+  },
+  // PortResolver — 通过 data.role 识别端口
+  traits: {
+    connectable: group => group.children.filter(c => c.data?.role === 'port'),
+  },
 });
 
 // ── 2. 定义 Edge 类型 ── 贝塞尔曲线
@@ -91,12 +95,12 @@ app.use(graph);
 graph.register('card', CardNode);
 graph.register('edge', BezierEdge);
 
-// drag 只对 node group 生效（通过 hitDelegate 向上找 element group）
+// drag — hitDelegate 向上找 element group
+// 不再需要手动排除 edge（Edge.traits.draggable=false 自动跳过）
 const drag = dragPlugin({
   hitDelegate: target => {
-    // 不拖 connectable 的端口
-    if (target.hasClassName('connectable')) return null;
-    // 向上找到 graph element group
+    // 端口不作为拖拽目标
+    if (target.data?.role === 'port') return null;
     let current = target;
     while (current.parent) {
       if (current.name && graph.has(current.name)) return current;
@@ -196,4 +200,5 @@ console.log('Connect + Graph + Drag 集成 Demo');
 console.log('• 拖拽 Node 背景移动节点，边自动跟随');
 console.log('• 点击端口小圆点开始连线，拖拽到另一端口完成');
 console.log('• 按 Escape 或空白处释放取消连线');
+console.log('✨ 拖拽/连线互斥由 InteractionManager 通道锁自动协调');
 console.log(`初始边数: ${graph.getEdges().length}`);

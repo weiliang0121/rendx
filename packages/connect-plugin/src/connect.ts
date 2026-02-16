@@ -7,7 +7,6 @@ import type {ConnectPluginOptions, ConnectStartEvent, ConnectMoveEvent, ConnectC
 
 // ── 默认值 ───────────────────────────────────────────────
 
-const DEFAULT_CLASS_NAME = 'connectable';
 const DEFAULT_SNAP_RADIUS = 20;
 const DEFAULT_CURSOR = 'crosshair';
 const DEFAULT_PREVIEW_STROKE = '#1890ff';
@@ -26,7 +25,6 @@ const enum ConnectState {
 // ── 内部完整配置 ─────────────────────────────────────────
 
 interface ResolvedOptions {
-  className: string;
   canConnect: ((source: Graphics, target: Graphics) => boolean) | null;
   allowSelfLoop: boolean;
   anchor: ((target: Graphics) => Point) | null;
@@ -92,7 +90,6 @@ export class ConnectPlugin implements Plugin {
 
   constructor(options: ConnectPluginOptions = {}) {
     this.#opts = {
-      className: options.className ?? DEFAULT_CLASS_NAME,
       canConnect: options.canConnect ?? null,
       allowSelfLoop: options.allowSelfLoop ?? false,
       anchor: options.anchor ?? null,
@@ -115,6 +112,12 @@ export class ConnectPlugin implements Plugin {
 
   install(app: App) {
     this.#app = app;
+
+    // 注册到交互管理器（最高优先级，连线操作不可被抢占）
+    app.interaction.register('connect', {
+      channels: ['pointer-exclusive'],
+      priority: 15,
+    });
 
     // 获取交互层（与 selection-plugin 共享 'selection' 层）
     this.#overlayLayer = app.getLayer('selection')!;
@@ -167,6 +170,7 @@ export class ConnectPlugin implements Plugin {
     for (const fn of this.#cleanups) fn();
     this.#cleanups = [];
 
+    this.#app?.interaction.unregister('connect');
     this.#app?.resetCursor();
     this.#reset();
     this.#app = null;
@@ -271,12 +275,17 @@ export class ConnectPlugin implements Plugin {
   #onPointerDown = (e: SimulatedEvent) => {
     if (this.#state !== ConnectState.Idle) return;
 
-    // 检查是否有其他互斥插件正在工作
-    if (this.#isDragActive()) return;
+    // 通道锁检查：pointer-exclusive 被其他插件占用时跳过
+    if (this.#app!.interaction.isLockedByOther('pointer-exclusive', 'connect')) return;
 
     // 解析连接起点
     const source = this.#resolveConnectable(e.target);
     if (!source) return;
+
+    // 获取 pointer-exclusive 通道锁
+    if (!this.#app!.interaction.acquire('pointer-exclusive', 'connect')) {
+      return;
+    }
 
     // 开始连接
     this.#source = source;
@@ -289,7 +298,8 @@ export class ConnectPlugin implements Plugin {
     this.#app!.setState('connect:source', source);
 
     // 显示预览线（起点 = 终点，后续 pointermove 更新）
-    this.#showPreview(this.#sourceAnchor[0], this.#sourceAnchor[1], e.worldX, e.worldY);
+    // offsetX/offsetY = 画布像素坐标，与 #getAnchor()、selection 层坐标系一致
+    this.#showPreview(this.#sourceAnchor[0], this.#sourceAnchor[1], e.offsetX, e.offsetY);
     this.#app!.requestRender();
 
     this.#app!.bus.emit('connect:start', {
@@ -314,12 +324,13 @@ export class ConnectPlugin implements Plugin {
       return;
     }
 
-    const worldX = e.worldX;
-    const worldY = e.worldY;
+    // offsetX/offsetY = 画布像素坐标，与 #getAnchor()、selection 层坐标系一致
+    const px = e.offsetX;
+    const py = e.offsetY;
 
     // 扫描吸附目标
     const prevSnap = this.#snapTarget;
-    this.#snapTarget = this.#findSnapTarget(worldX, worldY);
+    this.#snapTarget = this.#findSnapTarget(px, py);
 
     // 吸附目标变化 → 更新光标
     if (this.#snapTarget !== prevSnap) {
@@ -327,8 +338,8 @@ export class ConnectPlugin implements Plugin {
     }
 
     // 更新预览线终点
-    let endX = worldX;
-    let endY = worldY;
+    let endX = px;
+    let endY = py;
     if (this.#snapTarget) {
       const anchor = this.#getAnchor(this.#snapTarget);
       endX = anchor[0];
@@ -340,7 +351,7 @@ export class ConnectPlugin implements Plugin {
 
     this.#app!.bus.emit('connect:move', {
       source: this.#source!,
-      cursor: [worldX, worldY],
+      cursor: [e.worldX, e.worldY],
       snapTarget: this.#snapTarget,
     } satisfies ConnectMoveEvent);
   };
@@ -409,6 +420,7 @@ export class ConnectPlugin implements Plugin {
    * 连接结束后的状态清理
    */
   #cleanupState() {
+    this.#app!.interaction.release('pointer-exclusive', 'connect');
     this.#app!.resetCursor();
     this.#app!.setState('connect:connecting', false);
     this.#app!.setState('connect:source', null);
@@ -527,17 +539,59 @@ export class ConnectPlugin implements Plugin {
   // ════════════════════════════════════════════════════════════
 
   /**
-   * 检查 Graphics 是否是可连接的。
-   * 沿 parent chain 向上搜索，找到第一个带有 connectable className 的节点。
+   * 检查 Graphics 是否是可连接端口。
+   *
+   * 解析策略：
+   * 1. 沿 parent chain 走到 element group（graph.has(name)）。
+   * 2. 查询 connectable trait：
+   *    - false → 不可连线
+   *    - PortResolver 函数 → 调用取端口列表，匹配 target
+   *    - true → element group 本身作为连接目标
    */
   #resolveConnectable(target: Graphics): Graphics | null {
     if (target === this.#app!.scene) return null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const graph = this.#getGraph() as any;
+    if (!graph) return null;
+
+    // 沿 parent chain 走到 element group
+    let elementGroup: Graphics | null = null;
     let current: Graphics | null = target;
     while (current) {
-      if (current.hasClassName(this.#opts.className)) {
-        return current;
+      if (current.name && graph.has(current.name)) {
+        elementGroup = current;
+        break;
       }
+      current = current.parent;
+    }
+
+    if (!elementGroup) return null;
+
+    const traits = this.#app!.interaction.queryTraits(elementGroup);
+    const connectable = traits.connectable;
+
+    // connectable === false → 不可连线
+    if (connectable === false) return null;
+
+    if (typeof connectable === 'function') {
+      // PortResolver：调用函数获取端口列表，匹配 target
+      const ports = (connectable as (g: Graphics) => Graphics[])(elementGroup);
+      return this.#matchPort(target, elementGroup, ports);
+    }
+
+    // connectable === true → element group 本身作为连接目标
+    return elementGroup;
+  }
+
+  /**
+   * 在 ports 列表中查找与 target 匹配的端口。
+   * target 本身或其祖先（不超过 elementGroup）若在 ports 中则返回。
+   */
+  #matchPort(target: Graphics, elementGroup: Graphics, ports: Graphics[]): Graphics | null {
+    let current: Graphics | null = target;
+    while (current && current !== elementGroup.parent) {
+      if (ports.includes(current)) return current;
       current = current.parent;
     }
     return null;
@@ -546,7 +600,7 @@ export class ConnectPlugin implements Plugin {
   /**
    * 在 snapRadius 内寻找最近的可连接目标
    */
-  #findSnapTarget(worldX: number, worldY: number): Graphics | null {
+  #findSnapTarget(px: number, py: number): Graphics | null {
     const candidates = this.#collectConnectables();
     const radius = this.#opts.snapRadius;
     const radiusSq = radius * radius;
@@ -565,9 +619,10 @@ export class ConnectPlugin implements Plugin {
         continue;
       }
 
+      // px/py 和 anchor 都是画布像素坐标，可直接做距离比较
       const [ax, ay] = this.#getAnchor(candidate);
-      const dx = worldX - ax;
-      const dy = worldY - ay;
+      const dx = px - ax;
+      const dy = py - ay;
       const distSq = dx * dx + dy * dy;
 
       if (distSq < radiusSq && distSq < bestDistSq) {
@@ -580,17 +635,39 @@ export class ConnectPlugin implements Plugin {
   }
 
   /**
-   * 收集场景中所有可连接的 Graphics
+   * 收集场景中所有可连接的端口 Graphics。
+   *
+   * 遍历所有 graph 元素，根据 connectable trait 收集端口：
+   * - false → 跳过
+   * - PortResolver → 调用函数获取端口
+   * - true → element group 本身
    */
   #collectConnectables(): Graphics[] {
     const result: Graphics[] = [];
-    const className = this.#opts.className;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const graph = this.#getGraph() as any;
 
-    this.#app!.scene.traverse((g: Graphics) => {
-      if (g.hasClassName(className) && g.display) {
-        result.push(g);
+    if (!graph || typeof graph.getAll !== 'function') return result;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const elements = graph.getAll() as any[];
+
+    for (const el of elements) {
+      const connectable = el.traits?.connectable;
+
+      if (connectable === false || connectable === undefined) continue;
+
+      if (typeof connectable === 'function') {
+        // PortResolver
+        const ports = (connectable as (g: Graphics) => Graphics[])(el.group);
+        for (const port of ports) {
+          if (port.display) result.push(port);
+        }
+      } else if (connectable === true) {
+        // element group 本身作为连接目标
+        if (el.group.display) result.push(el.group);
       }
-    });
+    }
 
     return result;
   }
@@ -628,7 +705,8 @@ export class ConnectPlugin implements Plugin {
   /**
    * 默认锚点计算：
    * - Node（type=3）: 取 getWorldBBox() 中心
-   * - Group / 其他: 取 worldMatrix 的 translation 部分
+   * - Group: 遍历子节点合并 worldBBox 取中心
+   * - fallback: 取 worldMatrix 的 translation 部分
    */
   #defaultAnchor(target: Graphics): Point {
     // type=3 是 Node，有 getWorldBBox
@@ -637,6 +715,30 @@ export class ConnectPlugin implements Plugin {
       const bbox = (target as any).getWorldBBox();
       if (bbox && !bbox.empty) {
         return [bbox.cx, bbox.cy];
+      }
+    }
+
+    // Group: 遍历子节点，合并 worldBBox 取中心
+    if (target.children.length) {
+      let minX = Infinity,
+        minY = Infinity,
+        maxX = -Infinity,
+        maxY = -Infinity;
+      let found = false;
+      for (const child of target.children) {
+        if (child.type !== 3) continue;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bbox = (child as any).getWorldBBox();
+        if (bbox && !bbox.empty) {
+          if (bbox.x < minX) minX = bbox.x;
+          if (bbox.y < minY) minY = bbox.y;
+          if (bbox.right > maxX) maxX = bbox.right;
+          if (bbox.bottom > maxY) maxY = bbox.bottom;
+          found = true;
+        }
+      }
+      if (found) {
+        return [(minX + maxX) / 2, (minY + maxY) / 2];
       }
     }
 
@@ -665,6 +767,9 @@ export class ConnectPlugin implements Plugin {
 
   /**
    * 检查 graph-plugin 中是否已存在相同 source→target 的边（防止重复连线）。
+   *
+   * 当 source/target 是端口级 Graphics（PortResolver 模式）时，
+   * 仅节点 ID 相同不算重复，还需端口 uid 也相同才是真正重复。
    */
   #hasDuplicateEdge(source: Graphics, target: Graphics): boolean {
     const graph = this.#getGraph();
@@ -676,7 +781,25 @@ export class ConnectPlugin implements Plugin {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const edges = graph.getEdges() as any[];
-    return edges.some((e: {data: {source: string; target: string}}) => e.data.source === sourceId && e.data.target === targetId);
+
+    return edges.some((e: {data: Record<string, unknown>}) => {
+      if (e.data.source !== sourceId || e.data.target !== targetId) return false;
+
+      // 节点 ID 匹配后，检查端口级别是否也匹配
+      // sourcePort/targetPort 存在时说明是端口模式，需要进一步比较
+      const srcPortData = source.data;
+      const tgtPortData = target.data;
+      const edgeSrcPort = e.data.sourcePort as Record<string, unknown> | undefined;
+      const edgeTgtPort = e.data.targetPort as Record<string, unknown> | undefined;
+
+      // 两端都没有端口信息 → connectable: true 模式，节点 ID 匹配即为重复
+      if (!srcPortData && !edgeSrcPort && !tgtPortData && !edgeTgtPort) return true;
+
+      // 比较端口：通过 JSON 序列化比较端口 data
+      const srcMatch = JSON.stringify(srcPortData ?? null) === JSON.stringify(edgeSrcPort ?? null);
+      const tgtMatch = JSON.stringify(tgtPortData ?? null) === JSON.stringify(edgeTgtPort ?? null);
+      return srcMatch && tgtMatch;
+    });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -693,18 +816,6 @@ export class ConnectPlugin implements Plugin {
     const graph = this.#app.getPlugin('graph') as any;
     if (!graph || typeof graph.add !== 'function' || typeof graph.has !== 'function') return null;
     return graph;
-  }
-
-  /**
-   * 检查 drag-plugin 是否正在拖拽
-   */
-  #isDragActive(): boolean {
-    if (!this.#app) return false;
-    try {
-      return this.#app.getState<boolean>('drag:dragging') === true;
-    } catch {
-      return false;
-    }
   }
 }
 

@@ -1,4 +1,4 @@
-import type {Group} from 'rendx-engine';
+import type {Group, Graphics} from 'rendx-engine';
 
 // ═══════════════════════════════════════════════
 // Base data — 所有元素的公共字段
@@ -49,6 +49,47 @@ export type NodeRenderFn<T extends NodeBase = NodeBase> = (ctx: NodeContext, dat
 export type EdgeRenderFn<T extends EdgeBase = EdgeBase> = (ctx: EdgeContext, data: T & EdgeBase, graph: GraphQuery) => void;
 
 // ═══════════════════════════════════════════════
+// Element traits — 元素特征声明
+// ═══════════════════════════════════════════════
+
+/**
+ * 端口解析器 — 从元素 Group 中返回可连接的端口 Graphics。
+ *
+ * 替代 className('connectable') 标记，在元素定义时声明端口解析逻辑，
+ * 不可变、类型安全、与 CSS className 解耦。
+ *
+ * @example
+ * ```ts
+ * connectable: (group) => group.children.filter(c => c.data?.role === 'port')
+ * ```
+ */
+export type PortResolver = (group: Group) => Graphics[];
+
+/**
+ * 元素特征声明。
+ * 在 createNode / createEdge 时声明，供其他插件（drag、selection 等）
+ * 通过 `app.interaction.queryTraits(target)` 查询。
+ *
+ * 已知特征：
+ * - `draggable`        — 是否可拖拽（默认 node=true, edge=false）
+ * - `selectable`       — 是否可选中（默认 true）
+ * - `connectable`      — 是否可连线 / 端口解析器（默认 node=true, edge=false）
+ *     - `false`        — 不可连线
+ *     - `true`         — 可连线，element group 本身作为连接目标
+ *     - `PortResolver` — 可连线，端口由函数返回（推荐）
+ * - `deletable`        — 是否可删除（默认 true）
+ * - `positionDerived`  — 位置是否由其他元素派生（默认 edge=true, node=false）
+ */
+export interface GraphElementTraits {
+  draggable?: boolean;
+  selectable?: boolean;
+  connectable?: boolean | PortResolver;
+  deletable?: boolean;
+  positionDerived?: boolean;
+  [key: string]: unknown;
+}
+
+// ═══════════════════════════════════════════════
 // Element definition — createNode / createEdge 的返回值
 // ═══════════════════════════════════════════════
 
@@ -56,12 +97,16 @@ export interface NodeDef<T extends NodeBase = NodeBase> {
   __element_def__: true;
   role: 'node';
   render: NodeRenderFn<T>;
+  /** 元素特征声明，供其他插件查询。缺省时使用 node 默认值（draggable: true） */
+  traits?: GraphElementTraits;
 }
 
 export interface EdgeDef<T extends EdgeBase = EdgeBase> {
   __element_def__: true;
   role: 'edge';
   render: EdgeRenderFn<T>;
+  /** 元素特征声明，供其他插件查询。缺省时使用 edge 默认值（draggable: false, positionDerived: true） */
+  traits?: GraphElementTraits;
 }
 
 export type ElementDef = NodeDef | EdgeDef;
@@ -78,6 +123,8 @@ export interface Element<T = Record<string, unknown>> {
   readonly mounted: boolean;
   readonly layer: string;
   readonly deps: string[];
+  /** 元素特征（合并后的）— 来自定义时的 traits + 角色默认值 */
+  readonly traits: Readonly<GraphElementTraits>;
   update(patch: Partial<T>): void;
   dispose(): void;
 }

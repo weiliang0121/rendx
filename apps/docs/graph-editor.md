@@ -6,16 +6,6 @@
 
 **[打开在线 Graph Editor →](https://weiliang0121.github.io/rendx/playground/editor.html)**
 
-## 本地运行
-
-```bash
-# 在仓库根目录
-pnpm install
-pnpm --filter rendx-playground dev
-```
-
-启动后访问 `http://localhost:5174/editor.html`。
-
 ## 功能特性
 
 | 功能        | 说明                                      |
@@ -28,6 +18,16 @@ pnpm --filter rendx-playground dev
 | 小地图      | 右下角缩略视图导航                        |
 | 网格背景    | 点阵网格辅助对齐                          |
 | 信息面板    | 选中节点/边时显示属性信息                 |
+
+## 本地开发
+
+```bash
+# 在仓库根目录
+pnpm install
+pnpm --filter rendx-playground dev
+```
+
+启动后访问 `http://localhost:5174/editor.html`。
 
 ## 架构概览
 
@@ -98,32 +98,37 @@ Grid 最先注册（提供视觉底层），Graph 其次（管理元素生命周
 ```typescript
 import {createNode} from 'rendx-graph-plugin';
 
-const GenericNode = createNode<NodeData>((ctx, data) => {
-  const theme = NODE_THEMES[data.nodeType];
+const GenericNode = createNode<NodeData>({
+  render: (ctx, data) => {
+    const theme = NODE_THEMES[data.nodeType];
 
-  // 1. 背景圆角矩形
-  const bg = Node.create('round', {fill: theme.fill, ...});
-  bg.shape.from(0, 0, ctx.width, ctx.height);
-  ctx.group.add(bg);
+    // 1. 背景圆角矩形
+    const bg = Node.create('round', {fill: theme.fill, ...});
+    bg.shape.from(0, 0, ctx.width, ctx.height);
+    ctx.group.add(bg);
 
-  // 2. 标题文字
-  const label = Node.create('text', {...});
-  label.shape.from(data.title, ctx.width / 2, ctx.height / 2);
-  ctx.group.add(label);
+    // 2. 标题文字
+    const label = Node.create('text', {...});
+    label.shape.from(data.title, ctx.width / 2, ctx.height / 2);
+    ctx.group.add(label);
 
-  // 3. 连接端口（标记 className='connectable'）
-  const port = Node.create('circle', {...});
-  port.setClassName('connectable');
-  port.data = {side: 'right'};
-  ctx.group.add(port);
+    // 3. 连接端口 — 通过 data.role 标记
+    const port = Node.create('circle', {...});
+    port.data = {role: 'port', side: 'right'};
+    ctx.group.add(port);
+  },
+  // PortResolver — 通过 data.role 识别端口
+  traits: {
+    connectable: (group) => group.children.filter(c => c.data?.role === 'port'),
+  },
 });
 ```
 
 关键设计点：
 
 - **主题驱动**：6 种节点类型（start/end/process/condition/data/custom）的颜色通过 `NODE_THEMES` 映射
-- **端口标识**：端口 Circle 使用 `setClassName('connectable')` 标记，`connect-plugin` 通过此标识识别可连接目标
-- **端口数据**：`port.data = {side: 'left'}` 携带连接方向，边定义中据此计算锚点
+- **端口标识**：端口 Circle 使用 `data = {role: 'port'}` 标记，通过 `PortResolver` 函数返回端口列表供 `connect-plugin` 识别可连接目标
+- **端口数据**：`port.data = {role: 'port', side: 'left'}` 携带连接方向，边定义中据此计算锚点
 
 ### 3. 边类型定义 (edges.ts)
 
@@ -158,16 +163,13 @@ const BezierEdge = createEdge<EdgeData>((ctx, data) => {
   arrow.setPointerEvents(false);
   ctx.group.add(arrow);
 
-  // 标记可选中
-  ctx.group.addClassName('selectable');
-  ctx.group.addClassName('graph-edge');
 });
 ```
 
 关键设计点：
 
 - **三层结构**：透明宽区域（命中检测）→ 细描边（视觉）→ 箭头。视觉层使用 `setPointerEvents(false)` 确保只有命中区域接收事件
-- **选中 overlay**：Selection 插件的 `renderOverlay` 回调识别 `graph-edge` className，为边绘制加粗高亮路径，而非默认矩形框
+- **选中 overlay**：Selection 插件的 `renderOverlay` 回调通过 `graph.get()` 判断元素角色，为边绘制加粗高亮路径，而非默认矩形框
 - **曲线算法**：使用 `rendx-curve` 的 `bumpX` 算法，生成水平方向的 bump 贝塞尔曲线
 
 ### 4. 选中与命中委托 (hitDelegate)
@@ -176,14 +178,12 @@ Selection 和 Drag 插件都使用 `hitDelegate` 回调，将叶子节点（如�
 
 ```typescript
 hitDelegate: (target: Graphics) => {
-  // 跳过连接端口
-  if (target.hasClassName('connectable')) return null;
+  // 跳过连接端口（端口由 connect-plugin 处理）
+  if (target.data?.role === 'port') return null;
 
-  // 沿 parent chain 向上搜索
+  // 沿 parent chain 向上搜索到 graph element
   let current = target;
   while (current && current.type !== 4) {
-    // type=4 是 Scene
-    if (current.hasClassName('selectable')) return current;
     if (current.name && graph.has(current.name)) return current;
     current = current.parent;
   }
@@ -193,11 +193,13 @@ hitDelegate: (target: Graphics) => {
 
 ### 5. 边的选中高亮 (renderOverlay)
 
-Selection 插件的 `renderOverlay` 回调为边生成加粗描边 overlay：
+Selection 插件的 `renderOverlay` 回调为边生成加粗描边 overlay。通过 `graph.get()` 判断元素角色：
 
 ```typescript
 renderOverlay: (target: Graphics, type: 'selection' | 'hover') => {
-  if (!target.hasClassName('graph-edge')) return null; // 只处理边
+  // 通过 element 角色判断是否是边
+  const el = graph.get(target.name);
+  if (!el || el.role !== 'edge') return null;
 
   // 找到视觉路径（pointerEvents=false 的 path 节点）
   const visualPath = target.children.find(c => c.pointerEvents === false);
@@ -215,7 +217,9 @@ renderOverlay: (target: Graphics, type: 'selection' | 'hover') => {
 
 ### 6. 插件间协作模式
 
-Editor 中的插件通过 **事件总线** (`app.bus`) 和 **全局状态** (`app.getState/setState`) 实现松耦合协作：
+Editor 中的插件通过三种机制实现松耦合协作：
+
+#### 事件总线（业务协作）
 
 ```typescript
 // Connect 开始前保存历史
@@ -229,10 +233,19 @@ app.bus.on('connect:complete', () => {
 
 // Drag 开始前保存历史
 app.bus.on('drag:start', () => history.push());
-
-// Selection 检查 Connect 状态防止冲突
-// Selection 内部: app.getState('connect:connecting')
 ```
+
+#### InteractionManager（互斥协调）
+
+交互插件通过 `app.interaction` 的通道锁自动协调互斥：
+
+- 连接中：`connect` 获取 `pointer-exclusive` 锁 → `selection` 和 `drag` 自动跳过事件处理
+- 拖拽中：`drag` 获取 `pointer-exclusive` 锁 → `selection` 和 `connect` 自动跳过
+- 优先级：connect(15) > drag(10) > selection(5)
+
+#### Element Traits（能力查询）
+
+graph-plugin 注册 TraitProvider，其他插件通过 `app.interaction.queryTraits(target)` 查询元素能力（可拖拽、可连接、可选中等），无需硬编码 className 检查。
 
 ### 7. 拖拽创建节点
 

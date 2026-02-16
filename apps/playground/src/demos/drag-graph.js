@@ -92,11 +92,10 @@ app.use(
   }),
 );
 
-// drag-plugin：共享同一个 hitDelegate，仅允许拖拽 graph-node
+// drag-plugin：无需 filter — 边的 draggable trait 默认为 false，自动排除
 app.use(
   dragPlugin({
     hitDelegate,
-    filter: target => target.hasClassName('graph-node'),
     enableGroupDrag: true, // 多选联动
     constraint: {
       bounds: {minX: 0, minY: 0, maxX: 700, maxY: 450},
@@ -152,3 +151,4 @@ app.scene.add(hint);
 app.render();
 
 console.log('Drag + Graph + Selection — 拖拽节点，边自动重绘，多选联动');
+console.log('✨ 边不可拖拽由 Edge.traits.draggable=false 自动保证（无需 filter）');

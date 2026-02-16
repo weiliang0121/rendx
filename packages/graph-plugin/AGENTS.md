@@ -41,13 +41,87 @@ src/
 
 ### 工厂函数
 
-#### `createNode<T>(render): NodeDef<T>`
+#### `createNode<T>(options): NodeDef<T>`
 
-定义一个 Node 类型元素。`render` 签名：`(ctx: NodeContext, data: T, graph: GraphQuery) => void`。
+定义一个 Node 类型元素。支持两种调用形式：
 
-#### `createEdge<T>(render): EdgeDef<T>`
+```typescript
+// 简写形式（仅 render 函数）
+createNode<T>((ctx, data, graph) => { ... });
 
-定义一个 Edge 类型元素。`render` 签名：`(ctx: EdgeContext, data: T, graph: GraphQuery) => void`。
+// 完整形式（render + traits）
+createNode<T>({
+  render: (ctx, data, graph) => { ... },
+  traits: { draggable: true, selectable: true, connectable: true },
+});
+```
+
+`render` 签名：`(ctx: NodeContext, data: T & NodeBase, graph: GraphQuery) => void`
+
+#### `createEdge<T>(options): EdgeDef<T>`
+
+定义一个 Edge 类型元素。支持两种调用形式（同 `createNode`）。
+
+`render` 签名：`(ctx: EdgeContext, data: T & EdgeBase, graph: GraphQuery) => void`
+
+### Element Traits
+
+`createNode` / `createEdge` 的 `traits` 字段声明元素的交互能力，供其他插件通过 `app.interaction.queryTraits()` 查询。
+
+#### 内置 Trait
+
+| Trait             | Node 默认 | Edge 默认 | 类型                      | 说明                   |
+| ----------------- | --------- | --------- | ------------------------- | ---------------------- |
+| `draggable`       | `true`    | `false`   | `boolean`                 | 是否可拖拽             |
+| `selectable`      | `true`    | `true`    | `boolean`                 | 是否可选中             |
+| `connectable`     | `true`    | `false`   | `boolean \| PortResolver` | 是否可作为连线端点     |
+| `deletable`       | `true`    | `true`    | `boolean`                 | 是否可删除             |
+| `positionDerived` | `false`   | `true`    | `boolean`                 | 位置是否由其他元素决定 |
+
+#### PortResolver
+
+`connectable` trait 可以是 `boolean` 或 `PortResolver` 函数：
+
+```typescript
+type PortResolver = (group: Group) => Graphics[];
+```
+
+- `false` — 不可连接
+- `true` — element group 本身作为连接端点
+- `PortResolver` — 函数返回端口 Graphics 数组，只有这些端口可连接
+
+```typescript
+// 示例：指定特定子 Graphics 作为端口
+const CardNode = createNode({
+  render: ctx => {
+    const leftPort = Node.create('circle', {fill: '#333'});
+    leftPort.shape.from(0, ctx.height / 2, 5);
+    leftPort.data = {role: 'port', side: 'left'};
+    ctx.group.add(leftPort);
+
+    const rightPort = Node.create('circle', {fill: '#333'});
+    rightPort.shape.from(ctx.width, ctx.height / 2, 5);
+    rightPort.data = {role: 'port', side: 'right'};
+    ctx.group.add(rightPort);
+  },
+  traits: {
+    connectable: group => group.children.filter(c => c.data?.role === 'port'),
+  },
+});
+```
+
+#### TraitProvider 注册
+
+`graph-plugin` 在 `install()` 时向 `app.interaction` 注册 `TraitProvider`：
+
+```typescript
+app.interaction.registerTraitProvider('graph', (target: Graphics) => {
+  // 从 target 向上溯源找到 element group，返回该元素定义的 traits
+  // 返回 { draggable, selectable, connectable, deletable, positionDerived }
+});
+```
+
+其他插件通过 `app.interaction.queryTraits(target)` 或 `app.interaction.queryTrait(target, 'connectable')` 查询。
 
 ### GraphPlugin（实现 `Plugin` + `GraphQuery`）
 
@@ -92,6 +166,7 @@ src/
 | `layer`         | 所属分层名称（只读）                     |
 | `deps`          | 依赖的元素 ID 列表（只读）               |
 | `typeName`      | 创建时使用的类型名称（只读，用于序列化） |
+| `traits`        | 元素定义的 traits 对象（只读）           |
 | `update(patch)` | 部分更新数据，Node 位移优化              |
 | `dispose()`     | 销毁元素，执行 cleanup 回调              |
 
@@ -114,10 +189,15 @@ src/
 
 ### 定义与实例
 
-- `NodeDef<T>` — `{ __element_def__: true, role: 'node', render }`
-- `EdgeDef<T>` — `{ __element_def__: true, role: 'edge', render }`
+- `NodeDef<T>` — `{ __element_def__: true, role: 'node', render, traits? }`
+- `EdgeDef<T>` — `{ __element_def__: true, role: 'edge', render, traits? }`
 - `ElementDef` — `NodeDef | EdgeDef`
 - `Element<T>` — 运行时元素实例接口
+
+### Traits 相关
+
+- `PortResolver` — `(group: Group) => Graphics[]`，返回端口 Graphics 列表
+- `ElementTraits` — `{ draggable?, selectable?, connectable?, deletable?, positionDerived? }`
 
 ### 图查询
 

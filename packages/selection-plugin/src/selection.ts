@@ -117,6 +117,12 @@ export class SelectionPlugin implements Plugin {
   install(app: App) {
     this.#app = app;
 
+    // 注册到交互管理器（低优先级，被 drag/connect 抢占）
+    app.interaction.register('selection', {
+      channels: ['pointer-exclusive'],
+      priority: 5,
+    });
+
     const layer = app.getLayer('selection');
     if (!layer) {
       throw new Error('[rendx-selection-plugin] Layer "selection" not acquired. ' + 'Ensure the plugin is installed via app.use() so layers are auto-created.');
@@ -157,6 +163,7 @@ export class SelectionPlugin implements Plugin {
     this.#hoverGroup?.removeChildren();
     if (this.#marqueeNode) this.#marqueeNode.setDisplay(false);
 
+    this.#app?.interaction.unregister('selection');
     this.#app?.resetCursor();
     this.#selected = [];
     this.#hovering = null;
@@ -590,19 +597,19 @@ export class SelectionPlugin implements Plugin {
   }
 
   /**
-   * 检测其他交互插件是否正忙（连线中 / 拖拽中）。
+   * 检测其他交互插件是否正忙。
    *
-   * 跨插件互斥策略：通过 app 全局 state 软感知，无硬依赖。
-   * 当对应插件未安装时 getState 会抛出异常，catch 后返回 false。
-   *
-   * 已感知的 state key:
-   * - `connect:connecting` — connect-plugin 正在连线
-   * - `drag:dragging`      — drag-plugin 正在拖拽
-   *
-   * @see AGENTS.md "跨插件互斥" 章节
+   * 通过 InteractionManager 的通道锁机制判断：当 pointer-exclusive 通道
+   * 被其他插件（drag / connect）持有时，selection 应退让。
+   * 同时保留旧版 state 软感知作为 fallback，兼容未适配 InteractionManager 的第三方插件。
    */
   #isOtherPluginBusy(): boolean {
     if (!this.#app) return false;
+
+    // 优先通过 InteractionManager 通道锁判断
+    if (this.#app.interaction.isLockedByOther('pointer-exclusive', 'selection')) return true;
+
+    // fallback: 旧版 state 软感知（兼容未适配的第三方插件）
     return this.#readState<boolean>('connect:connecting') || this.#readState<boolean>('drag:dragging');
   }
 
@@ -627,6 +634,11 @@ export class SelectionPlugin implements Plugin {
     const resolved = this.#opts.hitDelegate ? this.#opts.hitDelegate(target) : target;
     if (!resolved) return null;
     if (this.#opts.filter && !this.#opts.filter(resolved)) return null;
+
+    // 通过 InteractionManager 查询 selectable trait
+    const traits = this.#app!.interaction.queryTraits(resolved);
+    if (traits.selectable === false) return null;
+
     return resolved;
   }
 

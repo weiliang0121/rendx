@@ -141,6 +141,10 @@ importers:
       rendx-engine:
         specifier: workspace:^
         version: link:../engine
+    devDependencies:
+      rendx-graph-plugin:
+        specifier: workspace:^
+        version: link:../graph-plugin
 
   packages/core: {}
 

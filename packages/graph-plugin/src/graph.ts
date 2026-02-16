@@ -3,7 +3,7 @@ import {Group} from 'rendx-engine';
 import {ElementImpl} from './element';
 
 import type {App} from 'rendx-engine';
-import type {Element, ElementDef, NodeBase, EdgeBase, GraphQuery} from './types';
+import type {Element, ElementDef, NodeBase, EdgeBase, GraphQuery, GraphElementTraits} from './types';
 import type {Plugin} from 'rendx-engine';
 
 /**
@@ -55,6 +55,12 @@ export class GraphPlugin implements Plugin, GraphQuery {
 
   install(app: App): void {
     this.#app = app;
+
+    // 注册到交互管理器（提供元素特征查询）
+    app.interaction.register('graph');
+    app.interaction.registerTraitProvider('graph', target => {
+      return this.#resolveTraits(target);
+    });
 
     // edges 在下方，nodes 在上方（先添加 edges）
     this.#edgesGroup = new Group();
@@ -331,6 +337,30 @@ export class GraphPlugin implements Plugin, GraphQuery {
 
   #syncState(): void {
     this.#app.setState('graph:elements', this.getIds());
+  }
+
+  /**
+   * 通过 Graphics 节点查找对应 element 的特征。
+   * 作为 TraitProvider 注册到 InteractionManager。
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  #resolveTraits(target: any): GraphElementTraits | null {
+    if (!target || typeof target !== 'object') return null;
+    const name = target.name as string | undefined;
+    if (!name) return null;
+    const el = this.#elements.get(name);
+    if (!el) return null;
+    return {...el.traits};
+  }
+
+  /**
+   * 获取指定元素的特征。
+   * @param id - 元素 ID
+   * @returns 特征对象，或 null（元素不存在）
+   */
+  getTraits(id: string): Readonly<GraphElementTraits> | null {
+    const el = this.#elements.get(id);
+    return el ? el.traits : null;
   }
 
   /**
